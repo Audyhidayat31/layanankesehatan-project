@@ -153,7 +153,7 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={() => {
-                  setEmail('ahmad@patient.com')
+                  setEmail('ahmad@gmail.com')
                   setPassword('demo')
                 }}
                 className="rounded border border-border p-2 hover:bg-muted"
@@ -173,7 +173,7 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={() => {
-                  setEmail('sehat@pharmacy.com')
+                  setEmail('sehat@gmail.com')
                   setPassword('demo')
                 }}
                 className="rounded border border-border p-2 hover:bg-muted"
