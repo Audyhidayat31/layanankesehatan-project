@@ -15,7 +15,7 @@ export function CTASection() {
               Bergabung sebagai Dokter
             </h3>
             <p className="mb-6 text-primary-foreground/80">
-              Perluas jangkauan praktik Anda dengan bergabung bersama ribuan dokter di platform MedCare. Kelola jadwal dengan mudah dan bantu lebih banyak pasien.
+              Perluas jangkauan praktik Anda dengan bergabung bersama ribuan dokter di platform HealthServices. Kelola jadwal dengan mudah dan bantu lebih banyak pasien.
             </p>
             <Button
               variant="secondary"

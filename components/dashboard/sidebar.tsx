@@ -83,7 +83,7 @@ export function DashboardSidebar({ role }: SidebarProps) {
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-sidebar-primary">
               <Stethoscope className="h-5 w-5 text-sidebar-primary-foreground" />
             </div>
-            <span className="text-xl font-bold text-sidebar-foreground">MedCare</span>
+            <span className="text-xl font-bold text-sidebar-foreground">HealthServices</span>
           </Link>
         </div>
 

@@ -91,7 +91,7 @@ function RegisterForm() {
       <CardHeader className="text-center">
         <CardTitle className="text-2xl">Buat Akun Baru</CardTitle>
         <CardDescription>
-          Daftar untuk mulai menggunakan layanan MedCare
+          Daftar untuk mulai menggunakan layanan HealthServices
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -109,11 +109,10 @@ function RegisterForm() {
                 key={role.value}
                 type="button"
                 onClick={() => setFormData({ ...formData, role: role.value })}
-                className={`rounded-lg border p-3 text-center transition-colors ${
-                  formData.role === role.value
-                    ? 'border-primary bg-primary/5 text-primary'
-                    : 'border-border hover:border-primary/50'
-                }`}
+                className={`rounded-lg border p-3 text-center transition-colors ${formData.role === role.value
+                  ? 'border-primary bg-primary/5 text-primary'
+                  : 'border-border hover:border-primary/50'
+                  }`}
               >
                 <span className="block text-sm font-medium">{role.label}</span>
               </button>
@@ -256,7 +255,7 @@ export default function RegisterPage() {
         <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
           <Stethoscope className="h-6 w-6 text-primary-foreground" />
         </div>
-        <span className="text-2xl font-bold text-foreground">MedCare</span>
+        <span className="text-2xl font-bold text-foreground">HealthServices</span>
       </Link>
 
       <Suspense fallback={<div className="flex items-center justify-center"><Spinner className="h-8 w-8" /></div>}>

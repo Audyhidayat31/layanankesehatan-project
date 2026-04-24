@@ -11,7 +11,7 @@ export function Footer() {
               <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
                 <Stethoscope className="h-5 w-5 text-primary-foreground" />
               </div>
-              <span className="text-xl font-bold text-foreground">MedCare</span>
+              <span className="text-xl font-bold text-foreground">HealthServices</span>
             </Link>
             <p className="text-sm text-muted-foreground">
               Platform kesehatan digital terpercaya untuk konsultasi dokter online, pembelian obat, dan layanan kesehatan lainnya.
@@ -90,7 +90,7 @@ export function Footer() {
         <div className="mt-8 border-t border-border pt-8">
           <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
             <p className="text-sm text-muted-foreground">
-              2024 MedCare. Semua hak dilindungi.
+              2024 HealthServices. Semua hak dilindungi.
             </p>
             <div className="flex items-center gap-4">
               <span className="text-xs text-muted-foreground">Terdaftar di:</span>
