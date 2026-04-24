@@ -14,6 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { Button } from '@/components/ui/button'
 import {
   Search,
   CreditCard,
@@ -21,7 +22,6 @@ import {
   ArrowDownRight,
   Filter,
   Download,
-  Button,
 } from 'lucide-react'
 
 const initialTransactions = [
