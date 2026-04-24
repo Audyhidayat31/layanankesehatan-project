@@ -1,0 +1,276 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  PATIENT
+  DOCTOR
+  PHARMACY
+  ADMIN
+}
+
+enum AppointmentType {
+  ONLINE
+  OFFLINE
+}
+
+enum AppointmentStatus {
+  PENDING
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+}
+
+enum OrderStatus {
+  PENDING
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum TransactionType {
+  APPOINTMENT
+  ORDER
+}
+
+enum MessageType {
+  TEXT
+  IMAGE
+  FILE
+}
+
+enum NotificationType {
+  APPOINTMENT
+  ORDER
+  CHAT
+  SYSTEM
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String
+  email         String    @unique
+  password      String
+  role          UserRole  @default(PATIENT)
+  avatar        String?
+  phone         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  patientProfile  PatientProfile?
+  doctorProfile   DoctorProfile?
+  pharmacyProfile PharmacyProfile?
+  
+  sentMessages     ChatMessage[] @relation("SentMessages")
+  receivedMessages ChatMessage[] @relation("ReceivedMessages")
+  notifications    Notification[]
+  transactions     Transaction[]
+  chatRooms        ChatRoom[]
+}
+
+model PatientProfile {
+  id             String   @id @default(cuid())
+  userId         String   @unique
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dateOfBirth    DateTime?
+  gender         String?
+  bloodType      String?
+  allergies      String[]
+  medicalHistory String[]
+  address        String?
+
+  appointments   Appointment[]
+  orders         Order[]
+}
+
+model DoctorProfile {
+  id             String   @id @default(cuid())
+  userId         String   @unique
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  specialization String
+  hospital       String
+  experience     Int
+  rating         Float    @default(0)
+  reviewCount    Int      @default(0)
+  price          Float
+  bio            String?
+  education      String[]
+  isVerified     Boolean  @default(false)
+  isOnline       Boolean  @default(false)
+
+  availableSlots TimeSlot[]
+  appointments   Appointment[]
+}
+
+model PharmacyProfile {
+  id             String   @id @default(cuid())
+  userId         String   @unique
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name           String
+  address        String
+  city           String
+  phone          String
+  operatingHours String
+  isVerified     Boolean  @default(false)
+  isOpen         Boolean  @default(true)
+  rating         Float    @default(0)
+  reviewCount    Int      @default(0)
+
+  medicines      Medicine[]
+  orders         Order[]
+}
+
+model TimeSlot {
+  id             String        @id @default(cuid())
+  doctorId       String
+  doctor         DoctorProfile @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  date           DateTime
+  startTime      String
+  endTime        String
+  isBooked       Boolean       @default(false)
+}
+
+model Appointment {
+  id             String            @id @default(cuid())
+  patientId      String
+  patient        PatientProfile    @relation(fields: [patientId], references: [id])
+  doctorId       String
+  doctor         DoctorProfile     @relation(fields: [doctorId], references: [id])
+  date           DateTime
+  time           String
+  type           AppointmentType   @default(ONLINE)
+  status         AppointmentStatus @default(PENDING)
+  complaint      String?
+  diagnosis      String?
+  notes          String?
+  createdAt      DateTime          @default(now())
+
+  prescription   Prescription?
+  chatRoom       ChatRoom?
+}
+
+model Medicine {
+  id                  String          @id @default(cuid())
+  name                String
+  genericName         String
+  description         String
+  category            String
+  price               Float
+  stock               Int
+  unit                String
+  requiresPrescription Boolean         @default(false)
+  image               String?
+  pharmacyId          String
+  pharmacy            PharmacyProfile @relation(fields: [pharmacyId], references: [id], onDelete: Cascade)
+
+  orderItems          OrderItem[]
+  prescriptionItems   PrescriptionItem[]
+}
+
+model Prescription {
+  id             String             @id @default(cuid())
+  appointmentId  String             @unique
+  appointment    Appointment        @relation(fields: [appointmentId], references: [id])
+  doctorId       String
+  patientId      String
+  instructions   String
+  createdAt      DateTime           @default(now())
+
+  items          PrescriptionItem[]
+}
+
+model PrescriptionItem {
+  id             String       @id @default(cuid())
+  prescriptionId String
+  prescription   Prescription @relation(fields: [prescriptionId], references: [id], onDelete: Cascade)
+  medicineId     String
+  medicine       Medicine     @relation(fields: [medicineId], references: [id])
+  quantity       Int
+  dosage         String
+  frequency      String
+  duration       String
+}
+
+model Order {
+  id              String        @id @default(cuid())
+  patientId       String
+  patient         PatientProfile @relation(fields: [patientId], references: [id])
+  pharmacyId      String
+  pharmacy        PharmacyProfile @relation(fields: [pharmacyId], references: [id])
+  totalAmount     Float
+  status          OrderStatus   @default(PENDING)
+  shippingAddress String
+  paymentStatus   PaymentStatus @default(PENDING)
+  createdAt       DateTime      @default(now())
+
+  items           OrderItem[]
+}
+
+model OrderItem {
+  id         String   @id @default(cuid())
+  orderId    String
+  order      Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  medicineId String
+  medicine   Medicine @relation(fields: [medicineId], references: [id])
+  quantity   Int
+  price      Float
+}
+
+model ChatRoom {
+  id            String       @id @default(cuid())
+  appointmentId String?      @unique
+  appointment   Appointment? @relation(fields: [appointmentId], references: [id])
+  createdAt     DateTime     @default(now())
+
+  participants  User[]
+  messages      ChatMessage[]
+}
+
+model ChatMessage {
+  id         String      @id @default(cuid())
+  senderId   String
+  sender     User        @relation("SentMessages", fields: [senderId], references: [id])
+  receiverId String
+  receiver   User        @relation("ReceivedMessages", fields: [receiverId], references: [id])
+  chatRoomId String
+  chatRoom   ChatRoom    @relation(fields: [chatRoomId], references: [id], onDelete: Cascade)
+  content    String
+  type       MessageType @default(TEXT)
+  isRead     Boolean     @default(false)
+  createdAt  DateTime    @default(now())
+}
+
+model Transaction {
+  id            String          @id @default(cuid())
+  userId        String
+  user          User            @relation(fields: [userId], references: [id])
+  type          TransactionType
+  referenceId   String
+  amount        Float
+  status        PaymentStatus   @default(PENDING)
+  paymentMethod String?
+  createdAt     DateTime        @default(now())
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  message   String
+  type      NotificationType
+  isRead    Boolean          @default(false)
+  createdAt DateTime         @default(now())
+}
