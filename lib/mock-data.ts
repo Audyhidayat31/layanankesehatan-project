@@ -26,7 +26,7 @@ export const mockUsers: User[] = [
   {
     id: 'user-2',
     name: 'Dr. Sarah Wijaya',
-    email: 'sarah@doctor.com',
+    email: 'sarah@gmail.com',
     role: 'doctor',
     avatar: '/avatars/doctor-1.jpg',
     phone: '+62823456789',
@@ -35,7 +35,7 @@ export const mockUsers: User[] = [
   {
     id: 'user-3',
     name: 'Dr. Budi Santoso',
-    email: 'budi@doctor.com',
+    email: 'budi@gmail.com',
     role: 'doctor',
     avatar: '/avatars/doctor-2.jpg',
     phone: '+62834567890',
@@ -62,7 +62,7 @@ export const mockUsers: User[] = [
   {
     id: 'user-6',
     name: 'Dr. Maya Putri',
-    email: 'maya@doctor.com',
+    email: 'maya@gmail.com',
     role: 'doctor',
     avatar: '/avatars/doctor-3.jpg',
     phone: '+62867890123',
@@ -71,7 +71,7 @@ export const mockUsers: User[] = [
   {
     id: 'user-7',
     name: 'Dr. Rizki Pratama',
-    email: 'rizki@doctor.com',
+    email: 'rizki@gmail.com',
     role: 'doctor',
     avatar: '/avatars/doctor-4.jpg',
     phone: '+62878901234',
