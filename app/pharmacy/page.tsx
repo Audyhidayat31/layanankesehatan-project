@@ -1,0 +1,217 @@
+'use client'
+
+import { useState, useMemo } from 'react'
+import { Header } from '@/components/header'
+import { Footer } from '@/components/footer'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Card, CardContent } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { Search, ShoppingCart, Filter, Pill, AlertCircle } from 'lucide-react'
+import { mockMedicines, medicineCategories } from '@/lib/mock-data'
+import { useCartStore, useAuthStore } from '@/lib/store'
+import { useRouter } from 'next/navigation'
+
+export default function PharmacyPage() {
+  const router = useRouter()
+  const { user, isAuthenticated } = useAuthStore()
+  const { addItem, items } = useCartStore()
+  const [searchQuery, setSearchQuery] = useState('')
+  const [selectedCategory, setSelectedCategory] = useState('all')
+  const [sortBy, setSortBy] = useState('name')
+
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat('id-ID', {
+      style: 'currency',
+      currency: 'IDR',
+      minimumFractionDigits: 0,
+    }).format(price)
+  }
+
+  const filteredMedicines = useMemo(() => {
+    let medicines = [...mockMedicines]
+
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase()
+      medicines = medicines.filter(
+        (med) =>
+          med.name.toLowerCase().includes(query) ||
+          med.genericName.toLowerCase().includes(query) ||
+          med.category.toLowerCase().includes(query)
+      )
+    }
+
+    if (selectedCategory !== 'all') {
+      medicines = medicines.filter((med) => med.category === selectedCategory)
+    }
+
+    switch (sortBy) {
+      case 'name':
+        medicines.sort((a, b) => a.name.localeCompare(b.name))
+        break
+      case 'price-low':
+        medicines.sort((a, b) => a.price - b.price)
+        break
+      case 'price-high':
+        medicines.sort((a, b) => b.price - a.price)
+        break
+    }
+
+    return medicines
+  }, [searchQuery, selectedCategory, sortBy])
+
+  const handleAddToCart = (medicine: typeof mockMedicines[0]) => {
+    if (!isAuthenticated) {
+      router.push('/login')
+      return
+    }
+    addItem(medicine)
+  }
+
+  const isInCart = (medicineId: string) => {
+    return items.some((item) => item.medicine.id === medicineId)
+  }
+
+  return (
+    <div className="flex min-h-screen flex-col">
+      <Header />
+      <main className="flex-1 bg-muted/30">
+        <div className="container mx-auto px-4 py-8">
+          <div className="mb-8">
+            <h1 className="mb-2 text-3xl font-bold text-foreground">Apotek Online</h1>
+            <p className="text-muted-foreground">
+              Beli obat dan produk kesehatan dengan mudah dan aman
+            </p>
+          </div>
+
+          <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div className="relative flex-1 lg:max-w-md">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Cari obat atau produk kesehatan..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3">
+              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                <SelectTrigger className="w-[180px]">
+                  <Filter className="mr-2 h-4 w-4" />
+                  <SelectValue placeholder="Kategori" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Semua Kategori</SelectItem>
+                  {medicineCategories.map((cat) => (
+                    <SelectItem key={cat} value={cat}>
+                      {cat}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select value={sortBy} onValueChange={setSortBy}>
+                <SelectTrigger className="w-[160px]">
+                  <SelectValue placeholder="Urutkan" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="name">Nama A-Z</SelectItem>
+                  <SelectItem value="price-low">Harga Terendah</SelectItem>
+                  <SelectItem value="price-high">Harga Tertinggi</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="mb-4 text-sm text-muted-foreground">
+            Menampilkan {filteredMedicines.length} produk
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+            {filteredMedicines.map((medicine) => (
+              <Card key={medicine.id} className="overflow-hidden transition-all hover:shadow-lg">
+                <div className="relative aspect-square bg-muted/50">
+                  <div className="flex h-full items-center justify-center">
+                    <Pill className="h-16 w-16 text-muted-foreground/30" />
+                  </div>
+                  {medicine.requiresPrescription && (
+                    <Badge
+                      variant="destructive"
+                      className="absolute right-2 top-2 text-xs"
+                    >
+                      Resep
+                    </Badge>
+                  )}
+                </div>
+                <CardContent className="p-4">
+                  <div className="mb-2">
+                    <Badge variant="secondary" className="mb-2 text-xs">
+                      {medicine.category}
+                    </Badge>
+                    <h3 className="font-semibold text-foreground line-clamp-2">
+                      {medicine.name}
+                    </h3>
+                    <p className="text-xs text-muted-foreground">{medicine.genericName}</p>
+                  </div>
+
+                  <p className="mb-3 text-xs text-muted-foreground line-clamp-2">
+                    {medicine.description}
+                  </p>
+
+                  <div className="mb-3 flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">{medicine.unit}</span>
+                    <span className={`text-xs ${medicine.stock > 10 ? 'text-green-600' : 'text-orange-600'}`}>
+                      Stok: {medicine.stock}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <span className="text-lg font-bold text-primary">
+                      {formatPrice(medicine.price)}
+                    </span>
+                  </div>
+
+                  {medicine.requiresPrescription ? (
+                    <div className="mt-3 flex items-center gap-2 rounded-lg bg-destructive/10 p-2 text-xs text-destructive">
+                      <AlertCircle className="h-4 w-4 shrink-0" />
+                      Memerlukan resep dokter
+                    </div>
+                  ) : (
+                    <Button
+                      className="mt-3 w-full"
+                      variant={isInCart(medicine.id) ? 'secondary' : 'default'}
+                      onClick={() => handleAddToCart(medicine)}
+                      disabled={medicine.stock === 0}
+                    >
+                      <ShoppingCart className="mr-2 h-4 w-4" />
+                      {isInCart(medicine.id) ? 'Tambah Lagi' : 'Tambah ke Keranjang'}
+                    </Button>
+                  )}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          {filteredMedicines.length === 0 && (
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <Pill className="mb-4 h-12 w-12 text-muted-foreground/50" />
+              <h3 className="mb-2 text-lg font-medium text-foreground">Produk tidak ditemukan</h3>
+              <p className="text-muted-foreground">
+                Coba ubah filter atau kata kunci pencarian Anda
+              </p>
+            </div>
+          )}
+        </div>
+      </main>
+      <Footer />
+    </div>
+  )
+}
