@@ -29,6 +29,7 @@ interface AuthState {
   registeredUsers: User[]
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>
   register: (data: { name: string; email: string; password: string; role: string }) => Promise<{ success: boolean; error?: string }>
+  updatePassword: (userId: string, newPassword: string) => void
   logout: () => void
 }
 
@@ -38,11 +39,14 @@ export const useAuthStore = create<AuthState>()(
       user: null,
       isAuthenticated: false,
       registeredUsers: mockUsers,
-      login: async (email: string) => {
+      login: async (email: string, password?: string) => {
         const user = get().registeredUsers.find((u) => u.email === email)
         if (user) {
-          set({ user, isAuthenticated: true })
-          return { success: true }
+          const userPassword = user.password || 'demo' // default password untuk mock user adalah 'demo'
+          if (userPassword === password) {
+            set({ user, isAuthenticated: true })
+            return { success: true }
+          }
         }
         return { success: false, error: 'Email atau password salah' }
       },
@@ -56,6 +60,7 @@ export const useAuthStore = create<AuthState>()(
           name: data.name,
           email: data.email,
           role: data.role as User['role'],
+          password: data.password,
           createdAt: new Date().toISOString(),
         }
         set({ 
@@ -64,6 +69,16 @@ export const useAuthStore = create<AuthState>()(
           isAuthenticated: true 
         })
         return { success: true }
+      },
+      updatePassword: (userId: string, newPassword: string) => {
+        const registeredUsers = get().registeredUsers.map((u) => 
+          u.id === userId ? { ...u, password: newPassword } : u
+        )
+        const currentUser = get().user
+        set({ 
+          registeredUsers, 
+          user: currentUser?.id === userId ? { ...currentUser, password: newPassword } : currentUser 
+        })
       },
       logout: () => set({ user: null, isAuthenticated: false }),
     }),
@@ -144,7 +159,7 @@ interface AppState {
   
   // Appointment actions
   createAppointment: (appointment: Omit<Appointment, 'id' | 'createdAt'>) => Appointment
-  updateAppointmentStatus: (id: string, status: Appointment['status']) => void
+  updateAppointmentStatus: (id: string, status: Appointment['status'], diagnosis?: string, notes?: string) => void
   getAppointmentsByPatient: (patientId: string) => Appointment[]
   getAppointmentsByDoctor: (doctorId: string) => Appointment[]
   
@@ -162,6 +177,7 @@ interface AppState {
   // Chat actions
   sendMessage: (message: Omit<ChatMessage, 'id' | 'createdAt' | 'isRead'>) => ChatMessage
   getMessagesBetweenUsers: (userId1: string, userId2: string) => ChatMessage[]
+  markMessagesAsRead: (senderId: string, receiverId: string) => void
   
   // Notification actions
   addNotification: (notification: Omit<Notification, 'id' | 'createdAt'>) => void
@@ -190,10 +206,10 @@ export const useAppStore = create<AppState>((set, get) => ({
     return newAppointment
   },
   
-  updateAppointmentStatus: (id, status) => {
+  updateAppointmentStatus: (id, status, diagnosis, notes) => {
     set({
       appointments: get().appointments.map((apt) =>
-        apt.id === id ? { ...apt, status } : apt
+        apt.id === id ? { ...apt, status, diagnosis, notes } : apt
       ),
     })
   },
@@ -260,6 +276,16 @@ export const useAppStore = create<AppState>((set, get) => ({
         (msg.senderId === userId1 && msg.receiverId === userId2) ||
         (msg.senderId === userId2 && msg.receiverId === userId1)
     )
+  },
+  
+  markMessagesAsRead: (senderId, receiverId) => {
+    set({
+      chatMessages: get().chatMessages.map((msg) =>
+        msg.senderId === senderId && msg.receiverId === receiverId
+          ? { ...msg, isRead: true }
+          : msg
+      ),
+    })
   },
   
   addNotification: (notificationData) => {

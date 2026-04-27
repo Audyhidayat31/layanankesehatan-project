@@ -13,7 +13,7 @@ import { useAuthStore } from '@/lib/store'
 
 export default function LoginPage() {
   const router = useRouter()
-  const { login } = useAuthStore()
+  const { login, registeredUsers } = useAuthStore()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -153,8 +153,10 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={() => {
-                  setEmail('ahmad@gmail.com')
-                  setPassword('demo')
+                  const demoEmail = 'ahmad@gmail.com'
+                  setEmail(demoEmail)
+                  const u = registeredUsers.find(u => u.email === demoEmail)
+                  setPassword(u?.password || 'demo')
                 }}
                 className="rounded border border-border p-2 hover:bg-muted"
               >
@@ -163,8 +165,10 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={() => {
-                  setEmail('sarah@gmail.com')
-                  setPassword('demo')
+                  const demoEmail = 'sarah@gmail.com'
+                  setEmail(demoEmail)
+                  const u = registeredUsers.find(u => u.email === demoEmail)
+                  setPassword(u?.password || 'demo')
                 }}
                 className="rounded border border-border p-2 hover:bg-muted"
               >
@@ -173,8 +177,10 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={() => {
-                  setEmail('sehat@gmail.com')
-                  setPassword('demo')
+                  const demoEmail = 'sehat@gmail.com'
+                  setEmail(demoEmail)
+                  const u = registeredUsers.find(u => u.email === demoEmail)
+                  setPassword(u?.password || 'demo')
                 }}
                 className="rounded border border-border p-2 hover:bg-muted"
               >
@@ -183,8 +189,10 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={() => {
-                  setEmail('admin@gmail.com')
-                  setPassword('demo')
+                  const demoEmail = 'admin@gmail.com'
+                  setEmail(demoEmail)
+                  const u = registeredUsers.find(u => u.email === demoEmail)
+                  setPassword(u?.password || 'demo')
                 }}
                 className="rounded border border-border p-2 hover:bg-muted"
               >

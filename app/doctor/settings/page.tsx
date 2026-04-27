@@ -9,14 +9,39 @@ import { Input } from '@/components/ui/input'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { User, Lock, Bell, Camera, Stethoscope } from 'lucide-react'
+import { useAuthStore } from '@/lib/store'
+import { toast } from 'sonner'
 
 export default function DoctorSettingsPage() {
+  const { user, updatePassword } = useAuthStore()
   const [isSaving, setIsSaving] = useState(false)
+  const [currentPassword, setCurrentPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault()
     setIsSaving(true)
     setTimeout(() => setIsSaving(false), 1000)
+  }
+
+  const handlePasswordSave = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!user) return
+    if (newPassword !== confirmPassword) {
+      toast.error('Konfirmasi password tidak cocok!')
+      return
+    }
+    // In a real app we would check currentPassword, but for demo we just update
+    setIsSaving(true)
+    setTimeout(() => {
+      updatePassword(user.id, newPassword)
+      setIsSaving(false)
+      setCurrentPassword('')
+      setNewPassword('')
+      setConfirmPassword('')
+      toast.success('Password berhasil diperbarui!')
+    }, 1000)
   }
 
   return (
@@ -134,18 +159,18 @@ export default function DoctorSettingsPage() {
                   <CardDescription>Pastikan akun Anda menggunakan password yang kuat.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <form onSubmit={handleSave} className="space-y-4 max-w-md">
+                  <form onSubmit={handlePasswordSave} className="space-y-4 max-w-md">
                     <div className="space-y-2">
                       <label className="text-sm font-medium">Password Saat Ini</label>
-                      <Input type="password" />
+                      <Input type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} required />
                     </div>
                     <div className="space-y-2">
                       <label className="text-sm font-medium">Password Baru</label>
-                      <Input type="password" />
+                      <Input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} required minLength={4} />
                     </div>
                     <div className="space-y-2">
                       <label className="text-sm font-medium">Konfirmasi Password Baru</label>
-                      <Input type="password" />
+                      <Input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required minLength={4} />
                     </div>
                     <Button type="submit" disabled={isSaving} className="mt-2">
                       {isSaving ? 'Menyimpan...' : 'Perbarui Password'}
