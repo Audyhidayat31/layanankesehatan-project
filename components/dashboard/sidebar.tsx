@@ -1,10 +1,11 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { useAuthStore } from '@/lib/store'
+import { useState, useEffect } from 'react'
 import {
   Stethoscope,
   LayoutDashboard,
@@ -72,8 +73,18 @@ const navItems: Record<string, NavItem[]> = {
 
 export function DashboardSidebar({ role }: SidebarProps) {
   const pathname = usePathname()
+  const router = useRouter()
   const { logout, user } = useAuthStore()
+  const [mounted, setMounted] = useState(false)
   const items = navItems[role] || []
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  if (!mounted) {
+    return <aside className="fixed left-0 top-0 z-40 hidden h-screen w-64 border-r border-sidebar-border bg-sidebar lg:block" />
+  }
 
   return (
     <aside className="fixed left-0 top-0 z-40 hidden h-screen w-64 border-r border-sidebar-border bg-sidebar lg:block">
@@ -118,7 +129,10 @@ export function DashboardSidebar({ role }: SidebarProps) {
           <Button
             variant="ghost"
             className="w-full justify-start text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-destructive"
-            onClick={() => logout()}
+            onClick={() => {
+              logout()
+              router.push('/login')
+            }}
           >
             <LogOut className="mr-2 h-4 w-4" />
             Keluar

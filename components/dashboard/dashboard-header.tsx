@@ -1,8 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
@@ -87,9 +87,19 @@ const navItems: Record<string, { label: string; href: string; icon: React.Elemen
 
 export function DashboardHeader({ role }: DashboardHeaderProps) {
   const pathname = usePathname()
+  const router = useRouter()
   const { user, logout } = useAuthStore()
   const [sheetOpen, setSheetOpen] = useState(false)
+  const [mounted, setMounted] = useState(false)
   const items = navItems[role] || []
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  if (!mounted) {
+    return <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border bg-card px-4 lg:pl-[272px]" />
+  }
 
   const getInitials = (name: string) => {
     return name
@@ -145,6 +155,7 @@ export function DashboardHeader({ role }: DashboardHeaderProps) {
                 onClick={() => {
                   logout()
                   setSheetOpen(false)
+                  router.push('/login')
                 }}
               >
                 <LogOut className="mr-2 h-4 w-4" />
@@ -200,7 +211,10 @@ export function DashboardHeader({ role }: DashboardHeaderProps) {
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
-              onClick={() => logout()}
+              onClick={() => {
+                logout()
+                router.push('/login')
+              }}
               className="text-destructive focus:text-destructive"
             >
               <LogOut className="mr-2 h-4 w-4" />

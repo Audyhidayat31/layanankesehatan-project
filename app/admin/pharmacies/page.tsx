@@ -25,9 +25,7 @@ import {
 } from '@/components/ui/table'
 import {
   Search,
-  Plus,
   Edit,
-  Trash2,
   Pill,
   MapPin,
   Phone,
@@ -48,30 +46,6 @@ const initialPharmacies = [
     isVerified: true,
     rating: 4.8,
     reviewCount: 120,
-    isOpen: true,
-  },
-  {
-    id: 'ph-2',
-    name: 'Kimia Farma Palmerah',
-    address: 'Jl. Palmerah Barat No. 45, Jakarta Pusat',
-    city: 'Jakarta Pusat',
-    phone: '021-5556789',
-    operatingHours: '24 Jam',
-    isVerified: true,
-    rating: 4.5,
-    reviewCount: 85,
-    isOpen: true,
-  },
-  {
-    id: 'ph-3',
-    name: 'Apotek K-24 Serpong',
-    address: 'Jl. Raya Serpong No. 88, Tangerang',
-    city: 'Tangerang',
-    phone: '021-5559900',
-    operatingHours: '24 Jam',
-    isVerified: false,
-    rating: 4.2,
-    reviewCount: 45,
     isOpen: true,
   }
 ]
@@ -112,9 +86,7 @@ export default function AdminPharmaciesPage() {
   }
 
   const handleDelete = (id: string) => {
-    if (confirm('Apakah Anda yakin ingin menghapus data apotek ini?')) {
-      setPharmacies(pharmacies.filter((p) => p.id !== id))
-    }
+    // Apotek deletion is disabled
   }
 
   const handleSubmit = () => {
@@ -156,15 +128,9 @@ export default function AdminPharmaciesPage() {
               setIsDialogOpen(open)
               if (!open) setEditingPharmacy(null)
             }}>
-              <DialogTrigger asChild>
-                <Button>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Tambah Apotek
-                </Button>
-              </DialogTrigger>
               <DialogContent className="max-w-md">
                 <DialogHeader>
-                  <DialogTitle>{editingPharmacy ? 'Edit Data Apotek' : 'Tambah Apotek Baru'}</DialogTitle>
+                  <DialogTitle>Edit Data Apotek</DialogTitle>
                   <DialogDescription>
                     Lengkapi informasi mitra apotek di bawah ini.
                   </DialogDescription>
@@ -227,7 +193,7 @@ export default function AdminPharmaciesPage() {
                 </div>
                 <div className="flex justify-end gap-2">
                   <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Batal</Button>
-                  <Button onClick={handleSubmit}>{editingPharmacy ? 'Simpan Perubahan' : 'Tambah Apotek'}</Button>
+                  <Button onClick={handleSubmit}>Simpan Perubahan</Button>
                 </div>
               </DialogContent>
             </Dialog>
@@ -312,14 +278,6 @@ export default function AdminPharmaciesPage() {
                             onClick={() => handleEdit(pharmacy)}
                           >
                             <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="text-destructive hover:text-destructive"
-                            onClick={() => handleDelete(pharmacy.id)}
-                          >
-                            <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
                       </TableCell>
