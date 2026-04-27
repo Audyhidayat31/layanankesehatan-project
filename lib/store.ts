@@ -40,35 +40,82 @@ export const useAuthStore = create<AuthState>()(
       isAuthenticated: false,
       registeredUsers: mockUsers,
       login: async (email: string, password?: string) => {
-        const user = get().registeredUsers.find((u) => u.email === email)
-        if (user) {
-          const userPassword = user.password || 'demo' // default password untuk mock user adalah 'demo'
-          if (userPassword === password) {
-            set({ user, isAuthenticated: true })
-            return { success: true }
+        try {
+          const res = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
+          })
+          const json = await res.json()
+          
+          if (!res.ok) {
+            // Jika error dari server (DB tidur) lanjut ke fallback lokal
+            if (res.status === 500) throw new Error('Database unreachable')
+            return { success: false, error: json.error || 'Email atau password salah' }
           }
+          
+          const user = json.user
+          set({ 
+            user, 
+            isAuthenticated: true,
+            registeredUsers: [...get().registeredUsers.filter(u => u.email !== user.email), user]
+          })
+          return { success: true }
+        } catch (err) {
+          // Fallback lokal jika database Neon mati
+          const user = get().registeredUsers.find((u) => u.email === email)
+          if (user) {
+            const userPassword = user.password || 'demo'
+            if (userPassword === password) {
+              set({ user, isAuthenticated: true })
+              return { success: true }
+            }
+          }
+          return { success: false, error: 'Email atau password salah' }
         }
-        return { success: false, error: 'Email atau password salah' }
       },
       register: async (data) => {
-        const exists = get().registeredUsers.find((u) => u.email === data.email)
-        if (exists) {
-          return { success: false, error: 'Email sudah terdaftar' }
+        try {
+          const res = await fetch('/api/auth/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+          })
+          const json = await res.json()
+          
+          if (!res.ok) {
+            if (res.status === 500) throw new Error('Database unreachable')
+            return { success: false, error: json.error || 'Email sudah terdaftar' }
+          }
+          
+          const newUser = json.user
+          set({ 
+            registeredUsers: [...get().registeredUsers.filter(u => u.email !== newUser.email), newUser],
+            user: newUser, 
+            isAuthenticated: true 
+          })
+          return { success: true }
+        } catch (err) {
+          // Fallback lokal jika database Neon mati
+          const exists = get().registeredUsers.find((u) => u.email === data.email)
+          if (exists) {
+            return { success: false, error: 'Email sudah terdaftar' }
+          }
+          const newUser: User = {
+            id: `user-${Date.now()}`,
+            name: data.name,
+            email: data.email,
+            role: data.role as User['role'],
+            password: data.password,
+            createdAt: new Date().toISOString(),
+          }
+          set({ 
+            registeredUsers: [...get().registeredUsers, newUser],
+            user: newUser, 
+            isAuthenticated: true 
+          })
+          return { success: true }
         }
-        const newUser: User = {
-          id: `user-${Date.now()}`,
-          name: data.name,
-          email: data.email,
-          role: data.role as User['role'],
-          password: data.password,
-          createdAt: new Date().toISOString(),
-        }
-        set({ 
-          registeredUsers: [...get().registeredUsers, newUser],
-          user: newUser, 
-          isAuthenticated: true 
-        })
-        return { success: true }
       },
       updatePassword: (userId: string, newPassword: string) => {
         const registeredUsers = get().registeredUsers.map((u) => 
