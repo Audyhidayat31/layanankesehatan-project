@@ -21,7 +21,7 @@ export default function PatientChatPage() {
   // Default to 'user-1' (patient) if not logged in
   const currentUserId = user?.id || 'user-1'
   
-  const { sendMessage, getMessagesBetweenUsers } = useAppStore()
+  const { sendMessage, getMessagesBetweenUsers, markMessagesAsRead } = useAppStore()
   const [selectedChat, setSelectedChat] = useState<string | null>(mockChatRooms[0]?.id || null)
   const [newMessage, setNewMessage] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
@@ -43,7 +43,7 @@ export default function PatientChatPage() {
   }
 
   const selectedRoom = mockChatRooms.find((room) => room.id === selectedChat)
-  const otherParticipant = selectedRoom?.participants.find((p) => p.id !== currentUserId)
+  const otherParticipant = selectedRoom?.participants.find((p) => p.role === 'doctor') || selectedRoom?.participants.find((p) => p.id !== currentUserId)
   
   const messages = selectedRoom
     ? getMessagesBetweenUsers(currentUserId, otherParticipant?.id || '')
@@ -54,6 +54,13 @@ export default function PatientChatPage() {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight
     }
   }, [messages])
+
+  // Menandai pesan sebagai terbaca ketika chat dibuka atau ada pesan baru
+  useEffect(() => {
+    if (otherParticipant) {
+      markMessagesAsRead(otherParticipant.id, currentUserId)
+    }
+  }, [selectedRoom, messages.length, otherParticipant, currentUserId, markMessagesAsRead])
 
   const handleSendMessage = () => {
     if (!newMessage.trim() || !otherParticipant) return
@@ -74,7 +81,7 @@ export default function PatientChatPage() {
       
       <main className="lg:pl-64">
         <div className="container mx-auto px-4 py-8">
-          <Card className="flex h-[calc(100vh-140px)] overflow-hidden shadow-md border-muted">
+          <Card className="flex flex-row p-0 gap-0 h-[calc(100vh-140px)] overflow-hidden shadow-md border-muted">
             {/* Sidebar Chat List */}
             <div className="w-80 border-r border-border bg-card flex flex-col">
               <div className="bg-muted/30 p-3 flex items-center justify-between border-b border-border h-16">
@@ -103,7 +110,7 @@ export default function PatientChatPage() {
               </div>
               <ScrollArea className="flex-1">
                 {mockChatRooms.map((room) => {
-                  const participant = room.participants.find((p) => p.id !== currentUserId)
+                  const participant = room.participants.find((p) => p.role === 'doctor') || room.participants.find((p) => p.id !== currentUserId)
                   return (
                     <button
                       key={room.id}

@@ -21,10 +21,12 @@ import {
   XCircle,
   AlertCircle,
 } from 'lucide-react'
-import { mockAppointments } from '@/lib/mock-data'
+import { useAuthStore, useAppStore } from '@/lib/store'
 
 export default function PatientAppointmentsPage() {
   const [activeTab, setActiveTab] = useState('all')
+  const { user } = useAuthStore()
+  const { getAppointmentsByPatient } = useAppStore()
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('id-ID', {
@@ -84,7 +86,11 @@ export default function PatientAppointmentsPage() {
     }
   }
 
-  const filteredAppointments = mockAppointments.filter((apt) => {
+  // Ambil data appointments dari state store
+  const patientId = user?.id === 'user-1' ? 'pat-1' : `pat-${user?.id}`
+  const allAppointments = user ? getAppointmentsByPatient(patientId) : []
+
+  const filteredAppointments = allAppointments.filter((apt) => {
     if (activeTab === 'all') return true
     if (activeTab === 'upcoming') return apt.status === 'confirmed' || apt.status === 'pending'
     if (activeTab === 'completed') return apt.status === 'completed'
@@ -190,15 +196,19 @@ export default function PatientAppointmentsPage() {
                           </p>
                           <div className="flex gap-2">
                             {apt.status === 'confirmed' && apt.type === 'online' && (
-                              <Button size="sm">
-                                <Video className="mr-1 h-4 w-4" />
-                                Mulai Konsultasi
+                              <Button size="sm" asChild>
+                                <Link href="/patient/chat">
+                                  <Video className="mr-1 h-4 w-4" />
+                                  Mulai Konsultasi
+                                </Link>
                               </Button>
                             )}
                             {apt.status === 'confirmed' && (
-                              <Button variant="outline" size="sm">
-                                <MessageSquare className="mr-1 h-4 w-4" />
-                                Chat
+                              <Button variant="outline" size="sm" asChild>
+                                <Link href="/patient/chat">
+                                  <MessageSquare className="mr-1 h-4 w-4" />
+                                  Chat
+                                </Link>
                               </Button>
                             )}
                             {apt.status === 'completed' && (

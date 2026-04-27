@@ -15,8 +15,11 @@ import { toast } from 'sonner'
 import { User, Lock, Bell, Shield } from 'lucide-react'
 
 export default function PatientSettingsPage() {
-  const { user } = useAuthStore()
+  const { user, updatePassword } = useAuthStore()
   const [isLoading, setIsLoading] = useState(false)
+  const [currentPassword, setCurrentPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
 
   const handleSaveProfile = () => {
     setIsLoading(true)
@@ -27,9 +30,22 @@ export default function PatientSettingsPage() {
   }
 
   const handleSavePassword = () => {
+    if (!user) return
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      toast.error('Mohon isi semua bidang password')
+      return
+    }
+    if (newPassword !== confirmPassword) {
+      toast.error('Konfirmasi password tidak cocok!')
+      return
+    }
     setIsLoading(true)
     setTimeout(() => {
+      updatePassword(user.id, newPassword)
       setIsLoading(false)
+      setCurrentPassword('')
+      setNewPassword('')
+      setConfirmPassword('')
       toast.success('Kata sandi berhasil diubah')
     }, 1000)
   }
@@ -159,15 +175,15 @@ export default function PatientSettingsPage() {
                 <CardContent className="space-y-4">
                   <div className="space-y-2 max-w-md">
                     <Label htmlFor="current">Kata Sandi Saat Ini</Label>
-                    <Input id="current" type="password" />
+                    <Input id="current" type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} />
                   </div>
                   <div className="space-y-2 max-w-md">
                     <Label htmlFor="new">Kata Sandi Baru</Label>
-                    <Input id="new" type="password" />
+                    <Input id="new" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
                   </div>
                   <div className="space-y-2 max-w-md">
                     <Label htmlFor="confirm">Konfirmasi Kata Sandi Baru</Label>
-                    <Input id="confirm" type="password" />
+                    <Input id="confirm" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
                   </div>
                 </CardContent>
                 <CardFooter className="border-t px-6 py-4">

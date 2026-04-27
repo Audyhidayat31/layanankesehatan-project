@@ -32,10 +32,11 @@ import {
   Stethoscope,
 } from 'lucide-react'
 import { mockAppointments } from '@/lib/mock-data'
-import { useAppStore } from '@/lib/store'
+import { useAppStore, useAuthStore } from '@/lib/store'
 
 export default function DoctorAppointmentsPage() {
-  const { updateAppointmentStatus } = useAppStore()
+  const { user } = useAuthStore()
+  const { updateAppointmentStatus, getAppointmentsByDoctor, getDoctors } = useAppStore()
   const [activeTab, setActiveTab] = useState('pending')
   const [selectedAppointment, setSelectedAppointment] = useState<typeof mockAppointments[0] | null>(null)
   const [diagnosisDialogOpen, setDiagnosisDialogOpen] = useState(false)
@@ -76,7 +77,15 @@ export default function DoctorAppointmentsPage() {
     return labels[status] || status
   }
 
-  const filteredAppointments = mockAppointments.filter((apt) => {
+  // Get current logged in doctor's profile
+  const doctor = getDoctors().find(d => d.userId === user?.id)
+  
+  // Ambil data appointments khusus untuk dokter yang sedang login
+  // Fallback ke mock data milik doc-1 jika tidak ada doctor yang login (sebagai demo fallback)
+  const doctorId = doctor ? doctor.id : 'doc-1'
+  const allAppointments = getAppointmentsByDoctor(doctorId)
+
+  const filteredAppointments = allAppointments.filter((apt) => {
     if (activeTab === 'all') return true
     return apt.status === activeTab
   })
@@ -96,7 +105,7 @@ export default function DoctorAppointmentsPage() {
 
   const submitDiagnosis = () => {
     if (selectedAppointment) {
-      updateAppointmentStatus(selectedAppointment.id, 'completed')
+      updateAppointmentStatus(selectedAppointment.id, 'completed', diagnosis, prescription)
       setDiagnosisDialogOpen(false)
       setDiagnosis('')
       setPrescription('')
@@ -122,7 +131,7 @@ export default function DoctorAppointmentsPage() {
               <TabsTrigger value="pending">
                 Menunggu
                 <Badge variant="secondary" className="ml-2 bg-yellow-100 text-yellow-700">
-                  {mockAppointments.filter((a) => a.status === 'pending').length}
+                  {allAppointments.filter((a) => a.status === 'pending').length}
                 </Badge>
               </TabsTrigger>
               <TabsTrigger value="confirmed">Dikonfirmasi</TabsTrigger>
@@ -236,6 +245,12 @@ export default function DoctorAppointmentsPage() {
                           <div className="w-full rounded-lg bg-blue-50 p-3">
                             <p className="text-sm font-medium text-blue-900">Diagnosis:</p>
                             <p className="text-sm text-blue-700">{apt.diagnosis}</p>
+                            {apt.notes && (
+                              <>
+                                <p className="mt-2 text-sm font-medium text-blue-900">Resep/Catatan:</p>
+                                <p className="text-sm text-blue-700">{apt.notes}</p>
+                              </>
+                            )}
                           </div>
                         )}
                       </div>
