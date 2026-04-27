@@ -23,7 +23,7 @@ function RegisterForm() {
     phone: '',
     password: '',
     confirmPassword: '',
-    role: roleParam || 'patient',
+    role: 'patient',
   })
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -80,11 +80,7 @@ function RegisterForm() {
     }
   }
 
-  const roles = [
-    { value: 'patient', label: 'Pasien', description: 'Cari dokter dan pesan obat' },
-    { value: 'doctor', label: 'Dokter', description: 'Layani pasien secara online' },
-    { value: 'pharmacy', label: 'Apotek', description: 'Jual obat dan layanan kesehatan' },
-  ]
+
 
   return (
     <Card className="w-full max-w-md">
@@ -102,22 +98,6 @@ function RegisterForm() {
               {error}
             </div>
           )}
-
-          <div className="grid grid-cols-3 gap-2">
-            {roles.map((role) => (
-              <button
-                key={role.value}
-                type="button"
-                onClick={() => setFormData({ ...formData, role: role.value })}
-                className={`rounded-lg border p-3 text-center transition-colors ${formData.role === role.value
-                  ? 'border-primary bg-primary/5 text-primary'
-                  : 'border-border hover:border-primary/50'
-                  }`}
-              >
-                <span className="block text-sm font-medium">{role.label}</span>
-              </button>
-            ))}
-          </div>
 
           <FieldGroup>
             <Field>
