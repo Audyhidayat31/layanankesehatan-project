@@ -1,29 +1,36 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { DashboardSidebar } from '@/components/dashboard/sidebar'
 import { DashboardHeader } from '@/components/dashboard/dashboard-header'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { Send, Search, Phone, Video, MoreVertical, Paperclip, ImageIcon } from 'lucide-react'
-import { mockChatRooms, mockChatMessages, mockUsers } from '@/lib/mock-data'
+import { 
+  Send, Search, Phone, Video, MoreVertical, 
+  Paperclip, ImageIcon, CheckCheck, Smile, Mic 
+} from 'lucide-react'
+import { mockChatRooms, mockUsers } from '@/lib/mock-data'
 import { useAuthStore, useAppStore } from '@/lib/store'
 
 export default function PatientChatPage() {
   const { user } = useAuthStore()
+  // Default to 'user-1' (patient) if not logged in
+  const currentUserId = user?.id || 'user-1'
+  
   const { sendMessage, getMessagesBetweenUsers } = useAppStore()
   const [selectedChat, setSelectedChat] = useState<string | null>(mockChatRooms[0]?.id || null)
   const [newMessage, setNewMessage] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
+  const scrollRef = useRef<HTMLDivElement>(null)
 
   const getInitials = (name: string) => {
     return name
       .split(' ')
-      .filter((n) => !n.startsWith('Dr'))
+      .filter((n) => !n.startsWith('Dr.'))
       .map((n) => n[0])
       .join('')
       .toUpperCase()
@@ -36,17 +43,23 @@ export default function PatientChatPage() {
   }
 
   const selectedRoom = mockChatRooms.find((room) => room.id === selectedChat)
-  const otherParticipant = selectedRoom?.participants.find((p) => p.id !== user?.id)
+  const otherParticipant = selectedRoom?.participants.find((p) => p.id !== currentUserId)
   
   const messages = selectedRoom
-    ? getMessagesBetweenUsers(user?.id || '', otherParticipant?.id || '')
+    ? getMessagesBetweenUsers(currentUserId, otherParticipant?.id || '')
     : []
 
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight
+    }
+  }, [messages])
+
   const handleSendMessage = () => {
-    if (!newMessage.trim() || !otherParticipant || !user) return
+    if (!newMessage.trim() || !otherParticipant) return
     
     sendMessage({
-      senderId: user.id,
+      senderId: currentUserId,
       receiverId: otherParticipant.id,
       content: newMessage.trim(),
       type: 'text',
@@ -61,154 +74,215 @@ export default function PatientChatPage() {
       
       <main className="lg:pl-64">
         <div className="container mx-auto px-4 py-8">
-          <h1 className="mb-6 text-2xl font-bold text-foreground">Pesan</h1>
-
-          <Card className="flex h-[calc(100vh-200px)] overflow-hidden">
-            <div className="w-80 border-r border-border">
-              <div className="border-b border-border p-4">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Card className="flex h-[calc(100vh-140px)] overflow-hidden shadow-md border-muted">
+            {/* Sidebar Chat List */}
+            <div className="w-80 border-r border-border bg-card flex flex-col">
+              <div className="bg-muted/30 p-3 flex items-center justify-between border-b border-border h-16">
+                <Avatar className="h-10 w-10">
+                  <AvatarImage src={mockUsers.find(u => u.id === currentUserId)?.avatar} />
+                  <AvatarFallback className="bg-primary/10 text-primary">
+                    {getInitials(mockUsers.find(u => u.id === currentUserId)?.name || 'ME')}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex gap-1">
+                  <Button variant="ghost" size="icon" className="text-muted-foreground rounded-full">
+                    <MoreVertical className="h-5 w-5" />
+                  </Button>
+                </div>
+              </div>
+              <div className="p-2 border-b border-border bg-card">
+                <div className="relative bg-muted/50 rounded-lg flex items-center px-3 py-1">
+                  <Search className="h-4 w-4 text-muted-foreground mr-2" />
                   <Input
-                    placeholder="Cari percakapan..."
+                    placeholder="Cari atau mulai chat baru"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10"
+                    className="border-0 bg-transparent shadow-none focus-visible:ring-0 px-0 h-8"
                   />
                 </div>
               </div>
-              <ScrollArea className="h-[calc(100%-73px)]">
+              <ScrollArea className="flex-1">
                 {mockChatRooms.map((room) => {
-                  const participant = room.participants.find((p) => p.id !== user?.id)
+                  const participant = room.participants.find((p) => p.id !== currentUserId)
                   return (
                     <button
                       key={room.id}
                       onClick={() => setSelectedChat(room.id)}
-                      className={`flex w-full items-center gap-3 border-b border-border p-4 text-left transition-colors hover:bg-muted/50 ${
+                      className={`flex w-full items-center gap-3 p-3 text-left transition-colors hover:bg-muted/50 ${
                         selectedChat === room.id ? 'bg-muted' : ''
                       }`}
                     >
-                      <div className="relative">
-                        <Avatar className="h-12 w-12">
-                          <AvatarFallback className="bg-primary/10 text-primary">
-                            {participant ? getInitials(participant.name) : '?'}
-                          </AvatarFallback>
-                        </Avatar>
-                        <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-card bg-green-500" />
-                      </div>
-                      <div className="flex-1 overflow-hidden">
-                        <div className="flex items-center justify-between">
-                          <h4 className="font-medium text-foreground truncate">
+                      <Avatar className="h-12 w-12 shrink-0">
+                        <AvatarImage src={participant?.avatar} />
+                        <AvatarFallback className="bg-primary/10 text-primary">
+                          {participant ? getInitials(participant.name) : '?'}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 overflow-hidden border-b border-border/50 pb-3">
+                        <div className="flex items-center justify-between mb-1">
+                          <h4 className="font-semibold text-foreground truncate text-sm">
                             {participant?.name}
                           </h4>
-                          <span className="text-xs text-muted-foreground">
+                          <span className={`text-xs ${room.unreadCount > 0 ? 'text-emerald-500 font-medium' : 'text-muted-foreground'}`}>
                             {room.lastMessage && formatTime(room.lastMessage.createdAt)}
                           </span>
                         </div>
-                        <p className="truncate text-sm text-muted-foreground">
-                          {room.lastMessage?.content}
-                        </p>
+                        <div className="flex items-center justify-between">
+                          <p className="truncate text-sm text-muted-foreground">
+                            {room.lastMessage?.senderId === currentUserId && (
+                              <CheckCheck className={`inline-block h-3 w-3 mr-1 ${room.lastMessage.isRead ? 'text-blue-500' : 'text-muted-foreground'}`} />
+                            )}
+                            {room.lastMessage?.content}
+                          </p>
+                          {room.unreadCount > 0 && (
+                            <Badge className="h-5 w-5 rounded-full p-0 flex items-center justify-center bg-emerald-500 text-white text-[10px] shrink-0">
+                              {room.unreadCount}
+                            </Badge>
+                          )}
+                        </div>
                       </div>
-                      {room.unreadCount > 0 && (
-                        <Badge className="h-5 w-5 rounded-full p-0 text-xs">
-                          {room.unreadCount}
-                        </Badge>
-                      )}
                     </button>
                   )
                 })}
               </ScrollArea>
             </div>
 
-            <div className="flex flex-1 flex-col">
+            {/* Chat Area */}
+            <div className="flex flex-1 flex-col bg-[#efeae2] dark:bg-muted/10 relative">
+              {/* Subtle WhatsApp-like doodle background pattern can be applied here using a pseudo element or image */}
+              <div className="absolute inset-0 opacity-40 pointer-events-none" style={{ backgroundImage: 'url("https://web.whatsapp.com/img/bg-chat-tile-dark_a4be512e7195b6b733d9110b408f075d.png")', backgroundRepeat: 'repeat' }}></div>
+              
               {selectedRoom && otherParticipant ? (
                 <>
-                  <div className="flex items-center justify-between border-b border-border p-4">
-                    <div className="flex items-center gap-3">
+                  {/* Chat Header */}
+                  <div className="flex items-center justify-between bg-card p-3 border-b border-border h-16 z-10 relative">
+                    <div className="flex items-center gap-3 cursor-pointer">
                       <Avatar className="h-10 w-10">
+                        <AvatarImage src={otherParticipant.avatar} />
                         <AvatarFallback className="bg-primary/10 text-primary">
                           {getInitials(otherParticipant.name)}
                         </AvatarFallback>
                       </Avatar>
                       <div>
-                        <h3 className="font-semibold text-foreground">
+                        <h3 className="font-semibold text-foreground text-sm">
                           {otherParticipant.name}
                         </h3>
-                        <p className="text-xs text-green-600">Online</p>
+                        <p className="text-xs text-muted-foreground">Online</p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Button variant="ghost" size="icon">
-                        <Phone className="h-5 w-5" />
-                      </Button>
-                      <Button variant="ghost" size="icon">
+                    <div className="flex items-center gap-1">
+                      <Button variant="ghost" size="icon" className="text-muted-foreground rounded-full hover:bg-muted">
                         <Video className="h-5 w-5" />
                       </Button>
-                      <Button variant="ghost" size="icon">
+                      <Button variant="ghost" size="icon" className="text-muted-foreground rounded-full hover:bg-muted">
+                        <Phone className="h-5 w-5" />
+                      </Button>
+                      <div className="w-px h-6 bg-border mx-1"></div>
+                      <Button variant="ghost" size="icon" className="text-muted-foreground rounded-full hover:bg-muted">
+                        <Search className="h-5 w-5" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="text-muted-foreground rounded-full hover:bg-muted">
                         <MoreVertical className="h-5 w-5" />
                       </Button>
                     </div>
                   </div>
 
-                  <ScrollArea className="flex-1 p-4">
-                    <div className="space-y-4">
-                      {mockChatMessages.map((message) => {
-                        const isOwn = message.senderId === user?.id
+                  {/* Chat Messages */}
+                  <div className="flex-1 overflow-y-auto p-4 z-10" ref={scrollRef}>
+                    <div className="flex justify-center mb-6">
+                      <div className="bg-background/80 backdrop-blur-sm px-3 py-1 rounded-lg text-xs text-muted-foreground shadow-sm">
+                        Hari ini
+                      </div>
+                    </div>
+                    <div className="space-y-3">
+                      {messages.map((message) => {
+                        const isOwn = message.senderId === currentUserId
                         return (
                           <div
                             key={message.id}
                             className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}
                           >
                             <div
-                              className={`max-w-[70%] rounded-2xl px-4 py-2 ${
+                              className={`relative max-w-[75%] px-3 py-2 text-[15px] shadow-sm ${
                                 isOwn
-                                  ? 'bg-primary text-primary-foreground'
-                                  : 'bg-muted text-foreground'
+                                  ? 'bg-[#d9fdd3] dark:bg-emerald-900 text-foreground rounded-lg rounded-tr-none'
+                                  : 'bg-card text-foreground rounded-lg rounded-tl-none'
                               }`}
                             >
-                              <p className="text-sm">{message.content}</p>
-                              <p
-                                className={`mt-1 text-right text-xs ${
-                                  isOwn ? 'text-primary-foreground/70' : 'text-muted-foreground'
-                                }`}
-                              >
-                                {formatTime(message.createdAt)}
-                              </p>
+                              {/* Tail for bubbles */}
+                              <div className={`absolute top-0 w-3 h-3 ${isOwn ? '-right-2 text-[#d9fdd3] dark:text-emerald-900' : '-left-2 text-card'}`}>
+                                <svg viewBox="0 0 8 13" width="8" height="13" className="fill-current">
+                                  {isOwn ? (
+                                    <path d="M5.188 1H0v11.193l6.467-8.625C7.526 2.156 6.958 1 5.188 1z"></path>
+                                  ) : (
+                                    <path d="M1.533 3.568L8 12.193V1H2.812C1.042 1 .474 2.156 1.533 3.568z"></path>
+                                  )}
+                                </svg>
+                              </div>
+                              
+                              <div className="flex flex-col">
+                                <span>{message.content}</span>
+                                <div className={`flex items-center justify-end gap-1 text-[11px] mt-1 -mb-1 ${
+                                    isOwn ? 'text-emerald-700 dark:text-emerald-200' : 'text-muted-foreground'
+                                  }`}
+                                >
+                                  <span>{formatTime(message.createdAt)}</span>
+                                  {isOwn && (
+                                    <CheckCheck className={`h-3.5 w-3.5 ${message.isRead ? 'text-blue-500' : ''}`} />
+                                  )}
+                                </div>
+                              </div>
                             </div>
                           </div>
                         )
                       })}
                     </div>
-                  </ScrollArea>
+                  </div>
 
-                  <div className="border-t border-border p-4">
+                  {/* Chat Input */}
+                  <div className="bg-card p-3 flex items-center gap-2 border-t border-border z-10 relative">
+                    <Button type="button" variant="ghost" size="icon" className="text-muted-foreground rounded-full hover:bg-muted shrink-0">
+                      <Smile className="h-6 w-6" />
+                    </Button>
+                    <Button type="button" variant="ghost" size="icon" className="text-muted-foreground rounded-full hover:bg-muted shrink-0">
+                      <Paperclip className="h-5 w-5" />
+                    </Button>
+                    
                     <form
                       onSubmit={(e) => {
                         e.preventDefault()
                         handleSendMessage()
                       }}
-                      className="flex items-center gap-2"
+                      className="flex-1 flex items-center"
                     >
-                      <Button type="button" variant="ghost" size="icon">
-                        <Paperclip className="h-5 w-5" />
-                      </Button>
-                      <Button type="button" variant="ghost" size="icon">
-                        <ImageIcon className="h-5 w-5" />
-                      </Button>
                       <Input
-                        placeholder="Tulis pesan..."
+                        placeholder="Ketik pesan"
                         value={newMessage}
                         onChange={(e) => setNewMessage(e.target.value)}
-                        className="flex-1"
+                        className="flex-1 rounded-lg border-0 bg-muted/50 px-4 py-6 focus-visible:ring-0 focus-visible:ring-offset-0"
                       />
-                      <Button type="submit" size="icon" disabled={!newMessage.trim()}>
-                        <Send className="h-5 w-5" />
-                      </Button>
                     </form>
+
+                    {newMessage.trim() ? (
+                      <Button onClick={handleSendMessage} size="icon" className="rounded-full bg-emerald-500 hover:bg-emerald-600 text-white shrink-0 ml-1 h-10 w-10">
+                        <Send className="h-4 w-4 ml-1" />
+                      </Button>
+                    ) : (
+                      <Button type="button" variant="ghost" size="icon" className="text-muted-foreground rounded-full hover:bg-muted shrink-0 ml-1 h-10 w-10">
+                        <Mic className="h-5 w-5" />
+                      </Button>
+                    )}
                   </div>
                 </>
               ) : (
-                <div className="flex flex-1 items-center justify-center text-muted-foreground">
-                  Pilih percakapan untuk memulai chat
+                <div className="flex flex-1 flex-col items-center justify-center z-10 relative">
+                  <div className="bg-card/80 p-6 rounded-full mb-6">
+                    <Phone className="h-16 w-16 text-muted-foreground/30" />
+                  </div>
+                  <h2 className="text-xl font-medium text-foreground mb-2">HealthServices Web</h2>
+                  <p className="text-muted-foreground text-sm text-center max-w-md">
+                    Kirim dan terima pesan dengan dokter Anda secara aman dan privat. Konsultasi menjadi lebih mudah dan cepat.
+                  </p>
                 </div>
               )}
             </div>
