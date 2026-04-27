@@ -26,6 +26,7 @@ import {
 interface AuthState {
   user: User | null
   isAuthenticated: boolean
+  registeredUsers: User[]
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>
   register: (data: { name: string; email: string; password: string; role: string }) => Promise<{ success: boolean; error?: string }>
   logout: () => void
@@ -33,11 +34,12 @@ interface AuthState {
 
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       user: null,
       isAuthenticated: false,
+      registeredUsers: mockUsers,
       login: async (email: string) => {
-        const user = mockUsers.find((u) => u.email === email)
+        const user = get().registeredUsers.find((u) => u.email === email)
         if (user) {
           set({ user, isAuthenticated: true })
           return { success: true }
@@ -45,7 +47,7 @@ export const useAuthStore = create<AuthState>()(
         return { success: false, error: 'Email atau password salah' }
       },
       register: async (data) => {
-        const exists = mockUsers.find((u) => u.email === data.email)
+        const exists = get().registeredUsers.find((u) => u.email === data.email)
         if (exists) {
           return { success: false, error: 'Email sudah terdaftar' }
         }
@@ -56,8 +58,11 @@ export const useAuthStore = create<AuthState>()(
           role: data.role as User['role'],
           createdAt: new Date().toISOString(),
         }
-        mockUsers.push(newUser)
-        set({ user: newUser, isAuthenticated: true })
+        set({ 
+          registeredUsers: [...get().registeredUsers, newUser],
+          user: newUser, 
+          isAuthenticated: true 
+        })
         return { success: true }
       },
       logout: () => set({ user: null, isAuthenticated: false }),
