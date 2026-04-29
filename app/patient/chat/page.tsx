@@ -17,15 +17,41 @@ import { mockChatRooms, mockUsers } from '@/lib/mock-data'
 import { useAuthStore, useAppStore } from '@/lib/store'
 
 export default function PatientChatPage() {
-  const { user } = useAuthStore()
+  const { user, registeredUsers } = useAuthStore()
   // Default to 'user-1' (patient) if not logged in
   const currentUserId = user?.id || 'user-1'
   
-  const { sendMessage, getMessagesBetweenUsers, markMessagesAsRead } = useAppStore()
-  const [selectedChat, setSelectedChat] = useState<string | null>(mockChatRooms[0]?.id || null)
+  const { sendMessage, getMessagesBetweenUsers, markMessagesAsRead, chatMessages, appointments, fetchMessages } = useAppStore()
+  
+  const doctorIdsFromMessages = chatMessages
+    .filter(m => m.senderId === currentUserId || m.receiverId === currentUserId)
+    .map(m => m.senderId === currentUserId ? m.receiverId : m.senderId)
+    
+  const doctorIdsFromAppointments = appointments
+    .filter(a => a.patientId === currentUserId || a.patient.userId === currentUserId)
+    .map(a => a.doctor.userId)
+    
+  const uniqueDoctorIds = Array.from(new Set([...doctorIdsFromMessages, ...doctorIdsFromAppointments]))
+  
+  const patientRooms = uniqueDoctorIds.map(doctorId => {
+    const doctorUser = registeredUsers.find(u => u.id === doctorId)
+    const currentUserProfile = registeredUsers.find(u => u.id === currentUserId)
+    return {
+      id: `room-${doctorId}`,
+      participants: doctorUser && currentUserProfile ? [doctorUser, currentUserProfile] : []
+    }
+  }).filter(r => r.participants.length > 0)
+
+  const [selectedChat, setSelectedChat] = useState<string | null>(patientRooms.length > 0 ? patientRooms[0].id : null)
   const [newMessage, setNewMessage] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
   const scrollRef = useRef<HTMLDivElement>(null)
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
 
   const getInitials = (name: string) => {
     return name
@@ -42,7 +68,7 @@ export default function PatientChatPage() {
     return date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
   }
 
-  const selectedRoom = mockChatRooms.find((room) => room.id === selectedChat)
+  const selectedRoom = patientRooms.find((room) => room.id === selectedChat)
   const otherParticipant = selectedRoom?.participants.find((p) => p.role === 'doctor') || selectedRoom?.participants.find((p) => p.id !== currentUserId)
   
   const messages = selectedRoom
@@ -50,17 +76,29 @@ export default function PatientChatPage() {
     : []
 
   useEffect(() => {
+    if (otherParticipant?.id) {
+      fetchMessages(currentUserId, otherParticipant.id)
+      
+      const interval = setInterval(() => {
+        fetchMessages(currentUserId, otherParticipant.id)
+      }, 3000) // Poll every 3 seconds
+      
+      return () => clearInterval(interval)
+    }
+  }, [selectedChat, otherParticipant?.id, currentUserId, fetchMessages])
+
+  useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight
     }
-  }, [messages])
+  }, [messages.length])
 
   // Menandai pesan sebagai terbaca ketika chat dibuka atau ada pesan baru
   useEffect(() => {
-    if (otherParticipant) {
+    if (otherParticipant?.id) {
       markMessagesAsRead(otherParticipant.id, currentUserId)
     }
-  }, [selectedRoom, messages.length, otherParticipant, currentUserId, markMessagesAsRead])
+  }, [selectedChat, messages.length, otherParticipant?.id, currentUserId, markMessagesAsRead])
 
   const handleSendMessage = () => {
     if (!newMessage.trim() || !otherParticipant) return
@@ -74,6 +112,8 @@ export default function PatientChatPage() {
     setNewMessage('')
   }
 
+  if (!mounted) return null
+
   return (
     <div className="min-h-screen bg-muted/30">
       <DashboardSidebar role="patient" />
@@ -86,9 +126,9 @@ export default function PatientChatPage() {
             <div className="w-80 border-r border-border bg-card flex flex-col">
               <div className="bg-muted/30 p-3 flex items-center justify-between border-b border-border h-16">
                 <Avatar className="h-10 w-10">
-                  <AvatarImage src={mockUsers.find(u => u.id === currentUserId)?.avatar} />
+                  <AvatarImage src={registeredUsers.find(u => u.id === currentUserId)?.avatar} />
                   <AvatarFallback className="bg-primary/10 text-primary">
-                    {getInitials(mockUsers.find(u => u.id === currentUserId)?.name || 'ME')}
+                    {getInitials(registeredUsers.find(u => u.id === currentUserId)?.name || 'ME')}
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex gap-1">
@@ -109,8 +149,15 @@ export default function PatientChatPage() {
                 </div>
               </div>
               <ScrollArea className="flex-1">
-                {mockChatRooms.map((room) => {
+                {patientRooms.map((room) => {
                   const participant = room.participants.find((p) => p.role === 'doctor') || room.participants.find((p) => p.id !== currentUserId)
+                  
+                  const unreadCount = getMessagesBetweenUsers(currentUserId, participant?.id || '').filter(
+                    (msg) => msg.senderId === participant?.id && !msg.isRead
+                  ).length
+                  const roomMessages = getMessagesBetweenUsers(currentUserId, participant?.id || '')
+                  const lastMessage = roomMessages.length > 0 ? roomMessages[roomMessages.length - 1] : null
+
                   return (
                     <button
                       key={room.id}
@@ -130,20 +177,20 @@ export default function PatientChatPage() {
                           <h4 className="font-semibold text-foreground truncate text-sm">
                             {participant?.name}
                           </h4>
-                          <span className={`text-xs ${room.unreadCount > 0 ? 'text-emerald-500 font-medium' : 'text-muted-foreground'}`}>
-                            {room.lastMessage && formatTime(room.lastMessage.createdAt)}
+                          <span className={`text-xs ${unreadCount > 0 ? 'text-emerald-500 font-medium' : 'text-muted-foreground'}`}>
+                            {lastMessage && formatTime(lastMessage.createdAt)}
                           </span>
                         </div>
                         <div className="flex items-center justify-between">
                           <p className="truncate text-sm text-muted-foreground">
-                            {room.lastMessage?.senderId === currentUserId && (
-                              <CheckCheck className={`inline-block h-3 w-3 mr-1 ${room.lastMessage.isRead ? 'text-blue-500' : 'text-muted-foreground'}`} />
+                            {lastMessage?.senderId === currentUserId && (
+                              <CheckCheck className={`inline-block h-3 w-3 mr-1 ${lastMessage.isRead ? 'text-blue-500' : 'text-muted-foreground'}`} />
                             )}
-                            {room.lastMessage?.content}
+                            {lastMessage?.content || 'Belum ada pesan'}
                           </p>
-                          {room.unreadCount > 0 && (
+                          {unreadCount > 0 && (
                             <Badge className="h-5 w-5 rounded-full p-0 flex items-center justify-center bg-emerald-500 text-white text-[10px] shrink-0">
-                              {room.unreadCount}
+                              {unreadCount}
                             </Badge>
                           )}
                         </div>

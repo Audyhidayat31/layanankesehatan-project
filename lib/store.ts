@@ -222,142 +222,258 @@ interface AppState {
   updateMedicineStock: (id: string, stock: number) => void
   
   // Chat actions
-  sendMessage: (message: Omit<ChatMessage, 'id' | 'createdAt' | 'isRead'>) => ChatMessage
+  sendMessage: (message: Omit<ChatMessage, 'id' | 'createdAt' | 'isRead'>) => Promise<ChatMessage>
   getMessagesBetweenUsers: (userId1: string, userId2: string) => ChatMessage[]
+  fetchMessages: (userId1: string, userId2: string) => Promise<void>
   markMessagesAsRead: (senderId: string, receiverId: string) => void
   
   // Notification actions
   addNotification: (notification: Omit<Notification, 'id' | 'createdAt'>) => void
   markNotificationRead: (id: string) => void
   getUnreadCount: (userId: string) => number
+  refreshData: (userId: string, role: string) => Promise<void>
 }
 
-export const useAppStore = create<AppState>((set, get) => ({
-  doctors: mockDoctors,
-  appointments: mockAppointments,
-  orders: mockOrders,
-  medicines: mockMedicines,
-  chatMessages: mockChatMessages,
-  notifications: mockNotifications,
-  
-  getDoctors: () => get().doctors,
-  getDoctorById: (id) => get().doctors.find((d) => d.id === id),
-  
-  createAppointment: (appointmentData) => {
-    const newAppointment: Appointment = {
-      ...appointmentData,
-      id: `apt-${Date.now()}`,
-      createdAt: new Date().toISOString(),
-    }
-    set({ appointments: [...get().appointments, newAppointment] })
-    return newAppointment
-  },
-  
-  updateAppointmentStatus: (id, status, diagnosis, notes) => {
-    set({
-      appointments: get().appointments.map((apt) =>
-        apt.id === id ? { ...apt, status, diagnosis, notes } : apt
-      ),
-    })
-  },
-  
-  getAppointmentsByPatient: (patientId) => {
-    return get().appointments.filter((apt) => apt.patientId === patientId)
-  },
-  
-  getAppointmentsByDoctor: (doctorId) => {
-    return get().appointments.filter((apt) => apt.doctorId === doctorId)
-  },
-  
-  createOrder: (orderData) => {
-    const newOrder: Order = {
-      ...orderData,
-      id: `ord-${Date.now()}`,
-      createdAt: new Date().toISOString(),
-    }
-    set({ orders: [...get().orders, newOrder] })
-    return newOrder
-  },
-  
-  updateOrderStatus: (id, status) => {
-    set({
-      orders: get().orders.map((order) =>
-        order.id === id ? { ...order, status } : order
-      ),
-    })
-  },
-  
-  getOrdersByPatient: (patientId) => {
-    return get().orders.filter((order) => order.patientId === patientId)
-  },
-  
-  getOrdersByPharmacy: (pharmacyId) => {
-    return get().orders.filter((order) => order.pharmacyId === pharmacyId)
-  },
-  
-  getMedicines: () => get().medicines,
-  getMedicineById: (id) => get().medicines.find((m) => m.id === id),
-  
-  updateMedicineStock: (id, stock) => {
-    set({
-      medicines: get().medicines.map((med) =>
-        med.id === id ? { ...med, stock } : med
-      ),
-    })
-  },
-  
-  sendMessage: (messageData) => {
-    const newMessage: ChatMessage = {
-      ...messageData,
-      id: `msg-${Date.now()}`,
-      createdAt: new Date().toISOString(),
-      isRead: false,
-    }
-    set({ chatMessages: [...get().chatMessages, newMessage] })
-    return newMessage
-  },
-  
-  getMessagesBetweenUsers: (userId1, userId2) => {
-    return get().chatMessages.filter(
-      (msg) =>
-        (msg.senderId === userId1 && msg.receiverId === userId2) ||
-        (msg.senderId === userId2 && msg.receiverId === userId1)
-    )
-  },
-  
-  markMessagesAsRead: (senderId, receiverId) => {
-    set({
-      chatMessages: get().chatMessages.map((msg) =>
-        msg.senderId === senderId && msg.receiverId === receiverId
-          ? { ...msg, isRead: true }
-          : msg
-      ),
-    })
-  },
-  
-  addNotification: (notificationData) => {
-    const newNotification: Notification = {
-      ...notificationData,
-      id: `notif-${Date.now()}`,
-      createdAt: new Date().toISOString(),
-    }
-    set({ notifications: [...get().notifications, newNotification] })
-  },
-  
-  markNotificationRead: (id) => {
-    set({
-      notifications: get().notifications.map((notif) =>
-        notif.id === id ? { ...notif, isRead: true } : notif
-      ),
-    })
-  },
-  
-  getUnreadCount: (userId) => {
-    return get().notifications.filter(
-      (notif) => notif.userId === userId && !notif.isRead
-    ).length
-  },
-}))
+export const useAppStore = create<AppState>()(
+  persist(
+    (set, get) => ({
+      doctors: mockDoctors,
+      appointments: mockAppointments,
+      orders: mockOrders,
+      medicines: mockMedicines,
+      chatMessages: mockChatMessages,
+      notifications: mockNotifications,
+      
+      getDoctors: () => get().doctors,
+      getDoctorById: (id) => get().doctors.find((d) => d.id === id),
+      
+      createAppointment: async (appointmentData) => {
+        try {
+          const res = await fetch('/api/appointments', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(appointmentData)
+          })
+          if (res.ok && res.headers.get('content-type')?.includes('application/json')) {
+            const json = await res.json()
+            if (json.success) {
+              set({ appointments: [...get().appointments, json.appointment] })
+              return json.appointment
+            }
+          } else {
+            console.warn('Backend unavailable, using local fallback. Status:', res.status)
+          }
+        } catch (err) {
+          console.warn('Backend unavailable, using local fallback:', err)
+        }
+        // Fallback
+        const newAppointment: Appointment = {
+          ...appointmentData,
+          id: `apt-${Date.now()}`,
+          createdAt: new Date().toISOString(),
+        } as any
+        set({ appointments: [...get().appointments, newAppointment] })
+        return newAppointment as any
+      },
+      
+      updateAppointmentStatus: async (id, status, diagnosis, notes) => {
+        try {
+          const res = await fetch(`/api/appointments/${id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status, diagnosis, notes })
+          })
+          if (res.ok) {
+            set({
+              appointments: get().appointments.map((apt) =>
+                apt.id === id ? { ...apt, status, diagnosis, notes } : apt
+              ),
+            })
+            return
+          }
+        } catch (err) {
+          console.error('Store updateAppointmentStatus error:', err)
+        }
+        
+        set({
+          appointments: get().appointments.map((apt) =>
+            apt.id === id ? { ...apt, status, diagnosis, notes } : apt
+          ),
+        })
+      },
+      
+      getAppointmentsByPatient: (patientId) => {
+        return get().appointments.filter((apt) => apt.patientId === patientId)
+      },
+      
+      getAppointmentsByDoctor: (doctorId) => {
+        return get().appointments.filter((apt) => apt.doctorId === doctorId)
+      },
+      
+      createOrder: (orderData) => {
+        const newOrder: Order = {
+          ...orderData,
+          id: `ord-${Date.now()}`,
+          createdAt: new Date().toISOString(),
+        }
+        set({ orders: [...get().orders, newOrder] })
+        return newOrder
+      },
+      
+      updateOrderStatus: (id, status) => {
+        set({
+          orders: get().orders.map((order) =>
+            order.id === id ? { ...order, status } : order
+          ),
+        })
+      },
+      
+      getOrdersByPatient: (patientId) => {
+        return get().orders.filter((order) => order.patientId === patientId)
+      },
+      
+      getOrdersByPharmacy: (pharmacyId) => {
+        return get().orders.filter((order) => order.pharmacyId === pharmacyId)
+      },
+      
+      getMedicines: () => get().medicines,
+      getMedicineById: (id) => get().medicines.find((m) => m.id === id),
+      
+      updateMedicineStock: (id, stock) => {
+        set({
+          medicines: get().medicines.map((med) =>
+            med.id === id ? { ...med, stock } : med
+          ),
+        })
+      },
+      
+      sendMessage: async (messageData) => {
+        try {
+          const res = await fetch('/api/messages', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(messageData)
+          })
+          if (res.ok && res.headers.get('content-type')?.includes('application/json')) {
+            const json = await res.json()
+            if (json.success) {
+              set({ chatMessages: [...get().chatMessages, json.message] })
+              return json.message
+            }
+          } else {
+            console.warn('Backend unavailable, using local fallback. Status:', res.status)
+          }
+        } catch (err) {
+          console.warn('Backend unavailable, using local fallback:', err)
+        }
+
+        const newMessage: ChatMessage = {
+          ...messageData,
+          id: `msg-${Date.now()}`,
+          createdAt: new Date().toISOString(),
+          isRead: false,
+        }
+        set({ chatMessages: [...get().chatMessages, newMessage] })
+        return newMessage
+      },
+      
+      getMessagesBetweenUsers: (userId1, userId2) => {
+        return get().chatMessages.filter(
+          (msg) =>
+            (msg.senderId === userId1 && msg.receiverId === userId2) ||
+            (msg.senderId === userId2 && msg.receiverId === userId1)
+        ).sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+      },
+      
+      fetchMessages: async (userId1, userId2) => {
+        try {
+          const res = await fetch(`/api/messages?userId1=${userId1}&userId2=${userId2}`)
+          if (res.ok && res.headers.get('content-type')?.includes('application/json')) {
+            const json = await res.json()
+            if (json.success) {
+              const currentMessages = get().chatMessages
+              // Merge unique messages
+              const newMessages = json.messages.filter(
+                (nm: any) => !currentMessages.some((cm) => cm.id === nm.id)
+              )
+              if (newMessages.length > 0) {
+                set({ chatMessages: [...currentMessages, ...newMessages] })
+              }
+            }
+          }
+        } catch (err) {
+          // Silent catch to prevent error overlays if backend is not running
+        }
+      },
+      
+      markMessagesAsRead: (senderId, receiverId) => {
+        set({
+          chatMessages: get().chatMessages.map((msg) =>
+            msg.senderId === senderId && msg.receiverId === receiverId
+              ? { ...msg, isRead: true }
+              : msg
+          ),
+        })
+      },
+      
+      addNotification: (notificationData) => {
+        const newNotification: Notification = {
+          ...notificationData,
+          id: `notif-${Date.now()}`,
+          createdAt: new Date().toISOString(),
+        }
+        set({ notifications: [...get().notifications, newNotification] })
+      },
+      
+      markNotificationRead: (id) => {
+        set({
+          notifications: get().notifications.map((notif) =>
+            notif.id === id ? { ...notif, isRead: true } : notif
+          ),
+        })
+      },
+      
+      getUnreadCount: (userId) => {
+        return get().notifications.filter(
+          (notif) => notif.userId === userId && !notif.isRead
+        ).length
+      },
+      
+      refreshData: async (userId, role) => {
+        try {
+          const [aptRes, msgRes] = await Promise.all([
+            fetch(`/api/appointments?userId=${userId}&role=${role}`),
+            // Fetching messages is harder because it needs another userId. 
+            // For now let's just refresh appointments.
+          ])
+          
+          if (aptRes.ok && aptRes.headers.get('content-type')?.includes('application/json')) {
+            const aptJson = await aptRes.json()
+            if (aptJson.success) {
+              const currentAppointments = get().appointments;
+              const dbAppointments = aptJson.appointments;
+              
+              // Merge dbAppointments into currentAppointments
+              const merged = [...currentAppointments];
+              dbAppointments.forEach((dbApt: any) => {
+                const idx = merged.findIndex((a) => a.id === dbApt.id);
+                if (idx >= 0) {
+                  merged[idx] = dbApt;
+                } else {
+                  merged.push(dbApt);
+                }
+              });
+              set({ appointments: merged })
+            }
+          }
+        } catch (err) {
+          // Silent catch to prevent error overlays if backend is not running
+        }
+      },
+    }),
+    { name: 'app-storage' }
+  )
+)
 
 // Export mock data for direct access
 export { mockUsers, mockDoctors, mockPatients, mockPharmacies, mockMedicines, mockAppointments, mockOrders, mockTransactions }
