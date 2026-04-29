@@ -20,15 +20,46 @@ import {
   TrendingUp,
   Star,
 } from 'lucide-react'
-import { useAuthStore } from '@/lib/store'
-import { mockOrders, mockMedicines, mockPharmacies } from '@/lib/mock-data'
-import { useState } from 'react'
+import { useAuthStore, useAppStore } from '@/lib/store'
+import { useState, useEffect, useMemo } from 'react'
+import { mockPharmacies } from '@/lib/mock-data'
 
 export default function PharmacyDashboardPage() {
+  const [mounted, setMounted] = useState(false)
   const { user } = useAuthStore()
+  const { orders: allOrders, getMedicines } = useAppStore()
   const [isOpen, setIsOpen] = useState(true)
   
-  const pharmacy = mockPharmacies[0]
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  // Find pharmacy profile for the current user
+  const pharmacyProfile = useMemo(() => 
+    user ? mockPharmacies.find(p => p.userId === user.id) : null,
+  [user])
+  
+  const pharmacyId = pharmacyProfile?.id || 'pharm-1'
+  
+  const orders = useMemo(() => {
+    return allOrders.filter(o => o.pharmacyId === pharmacyId)
+  }, [allOrders, pharmacyId])
+
+  const medicines = getMedicines()
+
+  if (!mounted) {
+    return null
+  }
+  
+  const pharmacy = pharmacyProfile || {
+    name: 'Apotek Sehat Selalu',
+    address: 'Jl. Thamrin No. 100, Jakarta Pusat',
+    city: 'Jakarta',
+    operatingHours: '08:00 - 22:00',
+    isVerified: true,
+    rating: 4.6,
+    reviewCount: 320,
+  }
   
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('id-ID', {
@@ -63,8 +94,8 @@ export default function PharmacyDashboardPage() {
     return labels[status] || status
   }
 
-  const pendingOrders = mockOrders.filter((o) => o.status === 'pending' || o.status === 'processing')
-  const lowStockMedicines = mockMedicines.filter((m) => m.stock < 20)
+  const pendingOrders = orders.filter((o) => o.status === 'pending' || o.status === 'processing')
+  const lowStockMedicines = medicines.filter((m) => m.stock < 20)
 
   const stats = [
     {
@@ -76,7 +107,7 @@ export default function PharmacyDashboardPage() {
     },
     {
       label: 'Total Produk',
-      value: mockMedicines.length,
+      value: medicines.length,
       icon: Pill,
       color: 'text-accent',
       bgColor: 'bg-accent/10',
@@ -182,7 +213,7 @@ export default function PharmacyDashboardPage() {
                 </Button>
               </CardHeader>
               <CardContent className="space-y-4">
-                {mockOrders.slice(0, 4).map((order) => (
+                {[...orders].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 4).map((order) => (
                   <div
                     key={order.id}
                     className="flex items-center justify-between rounded-lg border border-border p-4"

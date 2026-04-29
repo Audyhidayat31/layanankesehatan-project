@@ -277,11 +277,13 @@ export default function CartPage() {
             <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
               <CheckCircle className="h-8 w-8 text-green-600" />
             </div>
-            <h2 className="mb-2 text-xl font-bold text-foreground">Pesanan Berhasil!</h2>
-            <p className="mb-6 text-muted-foreground">
-              Pesanan Anda sedang diproses dan akan segera dikirim
-            </p>
-            <div className="flex gap-3">
+            <DialogHeader className="items-center">
+              <DialogTitle className="text-xl font-bold text-foreground">Pesanan Berhasil!</DialogTitle>
+              <DialogDescription className="text-muted-foreground">
+                Pesanan Anda sedang diproses dan akan segera dikirim
+              </DialogDescription>
+            </DialogHeader>
+            <div className="mt-6 flex gap-3">
               <Button variant="outline" asChild>
                 <Link href="/pharmacy">Lanjut Belanja</Link>
               </Button>

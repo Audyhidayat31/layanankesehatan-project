@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { DashboardSidebar } from '@/components/dashboard/sidebar'
 import { DashboardHeader } from '@/components/dashboard/dashboard-header'
 import { Card, CardContent } from '@/components/ui/card'
@@ -26,16 +26,62 @@ import {
   Eye,
 } from 'lucide-react'
 
-const initialOrders = [
-  { id: 'ORD-1001', patient: 'Budi Santoso', items: 'Paracetamol, Amoxicillin', total: 125000, status: 'pending', date: '2024-04-23 10:30', address: 'Jl. Melati No. 5, Jakarta' },
-  { id: 'ORD-1002', patient: 'Siti Aminah', items: 'Vitamin C, Masker Medis', total: 45000, status: 'processing', date: '2024-04-23 11:15', address: 'Apartemen Green View, Jakarta' },
-  { id: 'ORD-1003', patient: 'Andi Pratama', items: 'Obat Batuk Syrup', total: 35000, status: 'shipped', date: '2024-04-22 14:20', address: 'Perum Gading Serpong, Tangerang' },
-  { id: 'ORD-1004', patient: 'Dewi Lestari', items: 'Insulin Pen, Glukometer', total: 850000, status: 'delivered', date: '2024-04-21 09:00', address: 'Jl. Diponegoro No. 12, Bekasi' },
-]
+import { useAppStore, useAuthStore } from '@/lib/store'
+import { mockPharmacies, mockPatients } from '@/lib/mock-data'
+import { useMemo } from 'react'
 
 export default function PharmacyOrdersPage() {
-  const [orders, setOrders] = useState(initialOrders)
+  const [mounted, setMounted] = useState(false)
+  const { user, registeredUsers } = useAuthStore()
+  const { orders, updateOrderStatus } = useAppStore()
   const [searchQuery, setSearchQuery] = useState('')
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  // Find pharmacy profile for the current user
+  const pharmacyProfile = useMemo(() => 
+    user ? mockPharmacies.find(p => p.userId === user.id) : null,
+  [user])
+  
+  const pharmacyId = pharmacyProfile?.id || 'pharm-1'
+  
+  // Filter orders reactively
+  const pharmacyOrders = useMemo(() => {
+    return orders.filter((order) => order.pharmacyId === pharmacyId)
+  }, [orders, pharmacyId])
+
+  const getPatientName = (patientId: string) => {
+    // Check mock patients first
+    const mockPatient = mockPatients.find(p => p.id === patientId || p.userId === patientId.replace('pat-', ''))
+    if (mockPatient) return mockPatient.user.name
+
+    // Check registered users in auth store
+    const userId = patientId.startsWith('pat-user-') ? patientId.replace('pat-user-', 'user-') : patientId.replace('pat-', '')
+    const registeredUser = registeredUsers.find(u => u.id === userId || u.id === patientId)
+    if (registeredUser) return registeredUser.name
+
+    return patientId
+  }
+
+  const filteredOrders = useMemo(() => {
+    return pharmacyOrders
+      .filter((o) => {
+        const query = searchQuery.toLowerCase()
+        const patientName = getPatientName(o.patientId).toLowerCase()
+        return (
+          o.id.toLowerCase().includes(query) ||
+          o.patientId.toLowerCase().includes(query) ||
+          patientName.includes(query)
+        )
+      })
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+  }, [pharmacyOrders, searchQuery])
+
+  if (!mounted) {
+    return null
+  }
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -55,13 +101,8 @@ export default function PharmacyOrdersPage() {
   }
 
   const handleUpdateStatus = (id: string, newStatus: string) => {
-    setOrders(orders.map(o => o.id === id ? { ...o, status: newStatus } : o))
+    updateOrderStatus(id, newStatus as any)
   }
-
-  const filteredOrders = orders.filter(o => 
-    o.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    o.patient.toLowerCase().includes(searchQuery.toLowerCase())
-  )
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('id-ID', {
@@ -117,15 +158,15 @@ export default function PharmacyOrdersPage() {
                     <TableCell className="font-mono text-xs font-bold">{order.id}</TableCell>
                     <TableCell>
                       <div>
-                        <p className="font-medium">{order.patient}</p>
-                        <p className="text-xs text-muted-foreground">{order.date}</p>
+                        <p className="font-medium">{getPatientName(order.patientId)}</p>
+                        <p className="text-xs text-muted-foreground">{order.createdAt}</p>
                       </div>
                     </TableCell>
                     <TableCell className="max-w-[200px] truncate text-sm text-muted-foreground">
-                      {order.items}
+                      {order.items.map(i => i.medicine.name).join(', ')}
                     </TableCell>
                     <TableCell className="font-semibold text-primary">
-                      {formatPrice(order.total)}
+                      {formatPrice(order.totalAmount)}
                     </TableCell>
                     <TableCell>{getStatusBadge(order.status)}</TableCell>
                     <TableCell className="text-right">

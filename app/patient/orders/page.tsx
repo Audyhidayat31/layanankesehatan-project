@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { DashboardSidebar } from '@/components/dashboard/sidebar'
 import { DashboardHeader } from '@/components/dashboard/dashboard-header'
@@ -18,10 +18,33 @@ import {
   ShoppingBag,
   ArrowRight,
 } from 'lucide-react'
-import { mockOrders } from '@/lib/mock-data'
+import { useAppStore, useAuthStore } from '@/lib/store'
 
 export default function PatientOrdersPage() {
+  const [mounted, setMounted] = useState(false)
+  const { user } = useAuthStore()
+  const { getOrdersByPatient, updateOrderStatus } = useAppStore()
   const [activeTab, setActiveTab] = useState('all')
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  if (!mounted) {
+    return null
+  }
+
+  const orders = user ? getOrdersByPatient(`pat-${user.id}`) : []
+
+  const handlePay = (id: string) => {
+    updateOrderStatus(id, 'processing')
+  }
+
+  const handleCancel = (id: string) => {
+    if (confirm('Apakah Anda yakin ingin membatalkan pesanan ini?')) {
+      updateOrderStatus(id, 'cancelled')
+    }
+  }
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('id-ID', {
@@ -76,13 +99,13 @@ export default function PatientOrdersPage() {
     }
   }
 
-  const filteredOrders = mockOrders.filter((order) => {
+  const filteredOrders = orders.filter((order) => {
     if (activeTab === 'all') return true
     if (activeTab === 'active') return ['pending', 'processing', 'shipped'].includes(order.status)
     if (activeTab === 'completed') return order.status === 'delivered'
     if (activeTab === 'cancelled') return order.status === 'cancelled'
     return true
-  })
+  }).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
 
   return (
     <div className="min-h-screen bg-muted/30">
@@ -179,8 +202,8 @@ export default function PatientOrdersPage() {
                           )}
                           {order.status === 'pending' && (
                             <>
-                              <Button variant="outline">Batalkan</Button>
-                              <Button>Bayar Sekarang</Button>
+                              <Button variant="outline" onClick={() => handleCancel(order.id)}>Batalkan</Button>
+                              <Button onClick={() => handlePay(order.id)}>Bayar Sekarang</Button>
                             </>
                           )}
                           <Button variant="ghost" size="icon">
