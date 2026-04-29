@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { DashboardSidebar } from '@/components/dashboard/sidebar'
 import { DashboardHeader } from '@/components/dashboard/dashboard-header'
@@ -26,7 +26,13 @@ import { useAuthStore, useAppStore } from '@/lib/store'
 export default function PatientAppointmentsPage() {
   const [activeTab, setActiveTab] = useState('all')
   const { user } = useAuthStore()
-  const { getAppointmentsByPatient } = useAppStore()
+  const { getAppointmentsByPatient, refreshData } = useAppStore()
+
+  useEffect(() => {
+    if (user?.id) {
+      refreshData(user.id, 'patient')
+    }
+  }, [user?.id, refreshData])
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('id-ID', {

@@ -17,19 +17,44 @@ import { mockChatRooms, mockUsers } from '@/lib/mock-data'
 import { useAuthStore, useAppStore } from '@/lib/store'
 
 export default function DoctorChatPage() {
-  const { user } = useAuthStore()
+  const { user, registeredUsers } = useAuthStore()
   // Default to 'user-2' (Dr. Sarah) if not logged in
   const currentUserId = user?.id || 'user-2'
   
-  const { sendMessage, getMessagesBetweenUsers, markMessagesAsRead } = useAppStore()
+  const { sendMessage, getMessagesBetweenUsers, markMessagesAsRead, chatMessages, appointments, getDoctors, fetchMessages } = useAppStore()
   
-  // Filter chat rooms where current user is a participant
-  const doctorRooms = mockChatRooms.filter(room => room.participants.some(p => p.id === currentUserId))
+  const doctorProfile = getDoctors().find(d => d.userId === currentUserId)
+  const doctorId = doctorProfile?.id || 'doc-1'
+  
+  const patientIdsFromMessages = chatMessages
+    .filter(m => m.senderId === currentUserId || m.receiverId === currentUserId)
+    .map(m => m.senderId === currentUserId ? m.receiverId : m.senderId)
+    
+  const patientIdsFromAppointments = appointments
+    .filter(a => a.doctorId === doctorId)
+    .map(a => a.patient.userId)
+    
+  const uniquePatientIds = Array.from(new Set([...patientIdsFromMessages, ...patientIdsFromAppointments]))
+  
+  const doctorRooms = uniquePatientIds.map(patientId => {
+    const patientUser = registeredUsers.find(u => u.id === patientId)
+    const currentUserProfile = registeredUsers.find(u => u.id === currentUserId)
+    return {
+      id: `room-${patientId}`,
+      participants: patientUser && currentUserProfile ? [patientUser, currentUserProfile] : []
+    }
+  }).filter(r => r.participants.length > 0)
   
   const [selectedChat, setSelectedChat] = useState<string | null>(doctorRooms.length > 0 ? doctorRooms[0].id : null)
   const [newMessage, setNewMessage] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
   const scrollRef = useRef<HTMLDivElement>(null)
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
 
   const getInitials = (name: string) => {
     return name
@@ -55,16 +80,28 @@ export default function DoctorChatPage() {
 
   // Menandai pesan sebagai terbaca ketika chat dibuka atau ada pesan baru
   useEffect(() => {
-    if (otherParticipant) {
+    if (otherParticipant?.id) {
       markMessagesAsRead(otherParticipant.id, currentUserId)
     }
-  }, [selectedRoom, messages.length, otherParticipant, currentUserId, markMessagesAsRead])
+  }, [selectedChat, messages.length, otherParticipant?.id, currentUserId, markMessagesAsRead])
+
+  useEffect(() => {
+    if (otherParticipant?.id) {
+      fetchMessages(currentUserId, otherParticipant.id)
+      
+      const interval = setInterval(() => {
+        fetchMessages(currentUserId, otherParticipant.id)
+      }, 3000) // Poll every 3 seconds
+      
+      return () => clearInterval(interval)
+    }
+  }, [selectedChat, otherParticipant?.id, currentUserId, fetchMessages])
 
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight
     }
-  }, [messages])
+  }, [messages.length])
 
   const handleSendMessage = () => {
     if (!newMessage.trim() || !otherParticipant) return
@@ -83,6 +120,8 @@ export default function DoctorChatPage() {
     return participant?.name.toLowerCase().includes(searchQuery.toLowerCase())
   })
 
+  if (!mounted) return null
+
   return (
     <div className="min-h-screen bg-muted/30">
       <DashboardSidebar role="doctor" />
@@ -95,9 +134,9 @@ export default function DoctorChatPage() {
             <div className="w-80 border-r border-border bg-card flex flex-col">
               <div className="bg-muted/30 p-3 flex items-center justify-between border-b border-border h-16">
                 <Avatar className="h-10 w-10">
-                  <AvatarImage src={mockUsers.find(u => u.id === currentUserId)?.avatar} />
+                  <AvatarImage src={registeredUsers.find(u => u.id === currentUserId)?.avatar} />
                   <AvatarFallback className="bg-primary/10 text-primary">
-                    {getInitials(mockUsers.find(u => u.id === currentUserId)?.name || 'ME')}
+                    {getInitials(registeredUsers.find(u => u.id === currentUserId)?.name || 'ME')}
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex gap-1">

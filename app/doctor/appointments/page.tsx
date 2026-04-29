@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { DashboardSidebar } from '@/components/dashboard/sidebar'
 import { DashboardHeader } from '@/components/dashboard/dashboard-header'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -36,12 +36,20 @@ import { useAppStore, useAuthStore } from '@/lib/store'
 
 export default function DoctorAppointmentsPage() {
   const { user } = useAuthStore()
-  const { updateAppointmentStatus, getAppointmentsByDoctor, getDoctors } = useAppStore()
+  const { updateAppointmentStatus, getAppointmentsByDoctor, getDoctors, refreshData } = useAppStore()
   const [activeTab, setActiveTab] = useState('pending')
   const [selectedAppointment, setSelectedAppointment] = useState<typeof mockAppointments[0] | null>(null)
   const [diagnosisDialogOpen, setDiagnosisDialogOpen] = useState(false)
   const [diagnosis, setDiagnosis] = useState('')
   const [prescription, setPrescription] = useState('')
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+    if (user?.id) {
+      refreshData(user.id, 'doctor')
+    }
+  }, [user?.id, refreshData])
 
   const getInitials = (name: string) => {
     return name
@@ -112,6 +120,8 @@ export default function DoctorAppointmentsPage() {
     }
   }
 
+  if (!mounted) return null
+
   return (
     <div className="min-h-screen bg-muted/30">
       <DashboardSidebar role="doctor" />
@@ -136,6 +146,7 @@ export default function DoctorAppointmentsPage() {
               </TabsTrigger>
               <TabsTrigger value="confirmed">Dikonfirmasi</TabsTrigger>
               <TabsTrigger value="completed">Selesai</TabsTrigger>
+              <TabsTrigger value="cancelled">Dibatalkan</TabsTrigger>
               <TabsTrigger value="all">Semua</TabsTrigger>
             </TabsList>
 
