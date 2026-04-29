@@ -19,11 +19,26 @@ import {
   CheckCircle,
 } from 'lucide-react'
 import { useAuthStore, useAppStore } from '@/lib/store'
-import { mockAppointments, mockOrders } from '@/lib/mock-data'
+import { useState, useEffect } from 'react'
 
 export default function PatientDashboardPage() {
+  const [mounted, setMounted] = useState(false)
   const { user } = useAuthStore()
+  const { getAppointmentsByPatient, getOrdersByPatient, getUnreadCount } = useAppStore()
   
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  if (!mounted) {
+    return null
+  }
+
+  const patientId = user ? `pat-${user.id}` : ''
+  const appointments = getAppointmentsByPatient(patientId)
+  const orders = getOrdersByPatient(patientId)
+  const unreadMessages = user ? getUnreadCount(user.id) : 0
+
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('id-ID', {
       style: 'currency',
@@ -74,30 +89,33 @@ export default function PatientDashboardPage() {
     return labels[status] || status
   }
 
-  const upcomingAppointments = mockAppointments
+  const upcomingAppointments = appointments
     .filter((apt) => apt.status === 'confirmed' || apt.status === 'pending')
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
     .slice(0, 3)
 
-  const recentOrders = mockOrders.slice(0, 3)
+  const recentOrders = [...orders]
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    .slice(0, 3)
 
   const stats = [
     {
       label: 'Total Konsultasi',
-      value: mockAppointments.length,
+      value: appointments.length,
       icon: Calendar,
       color: 'text-primary',
       bgColor: 'bg-primary/10',
     },
     {
       label: 'Pesanan Obat',
-      value: mockOrders.length,
+      value: orders.length,
       icon: Pill,
       color: 'text-accent',
       bgColor: 'bg-accent/10',
     },
     {
       label: 'Pesan Belum Dibaca',
-      value: 3,
+      value: unreadMessages || 0,
       icon: MessageSquare,
       color: 'text-chart-3',
       bgColor: 'bg-chart-3/10',
