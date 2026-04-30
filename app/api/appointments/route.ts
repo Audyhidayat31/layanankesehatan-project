@@ -11,7 +11,7 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: 'User ID dan role diperlukan' }, { status: 400 })
     }
 
-    let appointments = []
+    let appointments: any[] = []
 
     if (role === 'doctor') {
       const doctorProfile = await prisma.doctorProfile.findUnique({

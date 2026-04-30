@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import Link from 'next/link'
 import { Header } from '@/components/header'
 import { Footer } from '@/components/footer'
@@ -25,13 +25,19 @@ import {
   Filter,
   SlidersHorizontal,
 } from 'lucide-react'
-import { mockDoctors, specializations } from '@/lib/mock-data'
+import { specializations } from '@/lib/mock-data'
+import { useAppStore } from '@/lib/store'
 
 export default function DoctorsPage() {
+  const { doctors, fetchDoctors } = useAppStore()
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedSpecialization, setSelectedSpecialization] = useState('all')
   const [sortBy, setSortBy] = useState('rating')
   const [priceRange, setPriceRange] = useState('all')
+
+  useEffect(() => {
+    fetchDoctors()
+  }, [fetchDoctors])
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('id-ID', {
@@ -52,53 +58,53 @@ export default function DoctorsPage() {
   }
 
   const filteredDoctors = useMemo(() => {
-    let doctors = [...mockDoctors]
+    let doctorList = [...doctors]
 
     if (searchQuery) {
       const query = searchQuery.toLowerCase()
-      doctors = doctors.filter(
+      doctorList = doctorList.filter(
         (doc) =>
-          doc.user.name.toLowerCase().includes(query) ||
-          doc.specialization.toLowerCase().includes(query) ||
-          doc.hospital.toLowerCase().includes(query)
+          doc.user?.name?.toLowerCase().includes(query) ||
+          doc.specialization?.toLowerCase().includes(query) ||
+          doc.hospital?.toLowerCase().includes(query)
       )
     }
 
     if (selectedSpecialization !== 'all') {
-      doctors = doctors.filter((doc) => doc.specialization === selectedSpecialization)
+      doctorList = doctorList.filter((doc) => doc.specialization === selectedSpecialization)
     }
 
     if (priceRange !== 'all') {
       switch (priceRange) {
         case 'under-100k':
-          doctors = doctors.filter((doc) => doc.price < 100000)
+          doctorList = doctorList.filter((doc) => doc.price < 100000)
           break
         case '100k-200k':
-          doctors = doctors.filter((doc) => doc.price >= 100000 && doc.price <= 200000)
+          doctorList = doctorList.filter((doc) => doc.price >= 100000 && doc.price <= 200000)
           break
         case 'over-200k':
-          doctors = doctors.filter((doc) => doc.price > 200000)
+          doctorList = doctorList.filter((doc) => doc.price > 200000)
           break
       }
     }
 
     switch (sortBy) {
       case 'rating':
-        doctors.sort((a, b) => b.rating - a.rating)
+        doctorList.sort((a, b) => (b.rating || 0) - (a.rating || 0))
         break
       case 'price-low':
-        doctors.sort((a, b) => a.price - b.price)
+        doctorList.sort((a, b) => a.price - b.price)
         break
       case 'price-high':
-        doctors.sort((a, b) => b.price - a.price)
+        doctorList.sort((a, b) => b.price - a.price)
         break
       case 'experience':
-        doctors.sort((a, b) => b.experience - a.experience)
+        doctorList.sort((a, b) => b.experience - a.experience)
         break
     }
 
-    return doctors
-  }, [searchQuery, selectedSpecialization, sortBy, priceRange])
+    return doctorList
+  }, [searchQuery, selectedSpecialization, sortBy, priceRange, doctors])
 
   return (
     <div className="flex min-h-screen flex-col">

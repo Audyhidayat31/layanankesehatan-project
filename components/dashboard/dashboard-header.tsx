@@ -20,7 +20,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet'
-import { useAuthStore } from '@/lib/store'
+import { useAuthStore, useAppStore } from '@/lib/store'
 import { cn } from '@/lib/utils'
 import {
   Menu,
@@ -89,6 +89,7 @@ export function DashboardHeader({ role }: DashboardHeaderProps) {
   const pathname = usePathname()
   const router = useRouter()
   const { user, logout } = useAuthStore()
+  const { getUnreadCount, notifications, markNotificationRead } = useAppStore()
   const [sheetOpen, setSheetOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
   const items = navItems[role] || []
@@ -179,12 +180,62 @@ export function DashboardHeader({ role }: DashboardHeaderProps) {
           </Link>
         </Button>
 
-        <Button variant="ghost" size="icon" className="relative">
-          <Bell className="h-5 w-5" />
-          <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[10px] text-destructive-foreground">
-            3
-          </span>
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" className="relative">
+              <Bell className="h-5 w-5" />
+              {user && getUnreadCount(user.id) > 0 && (
+                <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[10px] text-destructive-foreground">
+                  {getUnreadCount(user.id)}
+                </span>
+              )}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-80">
+            <div className="flex items-center justify-between px-4 py-2 border-b border-border">
+              <h3 className="text-sm font-semibold">Notifikasi</h3>
+              <Badge variant="secondary" className="text-[10px]">
+                {user ? getUnreadCount(user.id) : 0} Baru
+              </Badge>
+            </div>
+            <div className="max-h-[300px] overflow-y-auto">
+              {user && notifications.filter(n => n.userId === user.id).length > 0 ? (
+                notifications
+                  .filter(n => n.userId === user.id)
+                  .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+                  .slice(0, 5)
+                  .map((notif) => (
+                    <DropdownMenuItem
+                      key={notif.id}
+                      className={cn(
+                        "flex flex-col items-start gap-1 p-4 cursor-pointer",
+                        !notif.isRead && "bg-primary/5"
+                      )}
+                      onClick={() => markNotificationRead(notif.id)}
+                    >
+                      <div className="flex w-full items-center justify-between">
+                        <span className="font-medium text-xs">{notif.title}</span>
+                        <span className="text-[10px] text-muted-foreground">
+                          {new Date(notif.createdAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      </div>
+                      <p className="text-xs text-muted-foreground line-clamp-2">
+                        {notif.message}
+                      </p>
+                    </DropdownMenuItem>
+                  ))
+              ) : (
+                <div className="py-8 text-center text-muted-foreground text-xs">
+                  Tidak ada notifikasi
+                </div>
+              )}
+            </div>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem className="justify-center text-xs text-primary font-medium cursor-pointer">
+              Lihat semua notifikasi
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

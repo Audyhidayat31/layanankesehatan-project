@@ -47,16 +47,16 @@ export const useAuthStore = create<AuthState>()(
             body: JSON.stringify({ email, password })
           })
           const json = await res.json()
-          
+
           if (!res.ok) {
             // Jika error dari server (DB tidur) lanjut ke fallback lokal
             if (res.status === 500) throw new Error('Database unreachable')
             return { success: false, error: json.error || 'Email atau password salah' }
           }
-          
+
           const user = json.user
-          set({ 
-            user, 
+          set({
+            user,
             isAuthenticated: true,
             registeredUsers: [...get().registeredUsers.filter(u => u.email !== user.email), user]
           })
@@ -82,17 +82,17 @@ export const useAuthStore = create<AuthState>()(
             body: JSON.stringify(data)
           })
           const json = await res.json()
-          
+
           if (!res.ok) {
             if (res.status === 500) throw new Error('Database unreachable')
             return { success: false, error: json.error || 'Email sudah terdaftar' }
           }
-          
+
           const newUser = json.user
-          set({ 
+          set({
             registeredUsers: [...get().registeredUsers.filter(u => u.email !== newUser.email), newUser],
-            user: newUser, 
-            isAuthenticated: true 
+            user: newUser,
+            isAuthenticated: true
           })
           return { success: true }
         } catch (err) {
@@ -109,22 +109,22 @@ export const useAuthStore = create<AuthState>()(
             password: data.password,
             createdAt: new Date().toISOString(),
           }
-          set({ 
+          set({
             registeredUsers: [...get().registeredUsers, newUser],
-            user: newUser, 
-            isAuthenticated: true 
+            user: newUser,
+            isAuthenticated: true
           })
           return { success: true }
         }
       },
       updatePassword: (userId: string, newPassword: string) => {
-        const registeredUsers = get().registeredUsers.map((u) => 
+        const registeredUsers = get().registeredUsers.map((u) =>
           u.id === userId ? { ...u, password: newPassword } : u
         )
         const currentUser = get().user
-        set({ 
-          registeredUsers, 
-          user: currentUser?.id === userId ? { ...currentUser, password: newPassword } : currentUser 
+        set({
+          registeredUsers,
+          user: currentUser?.id === userId ? { ...currentUser, password: newPassword } : currentUser
         })
       },
       logout: () => set({ user: null, isAuthenticated: false }),
@@ -199,34 +199,40 @@ interface AppState {
   medicines: Medicine[]
   chatMessages: ChatMessage[]
   notifications: Notification[]
-  
+  knownUsers: User[] // cache user info dari API
+
+  // User lookup
+  getKnownUser: (userId: string) => User | undefined
+
   // Doctor actions
   getDoctors: () => DoctorProfile[]
   getDoctorById: (id: string) => DoctorProfile | undefined
-  
+  fetchDoctors: () => Promise<void>
+  createDoctor: (doctorData: any) => Promise<any>
+
   // Appointment actions
   createAppointment: (appointment: Omit<Appointment, 'id' | 'createdAt'>) => Appointment
   updateAppointmentStatus: (id: string, status: Appointment['status'], diagnosis?: string, notes?: string) => void
   getAppointmentsByPatient: (patientId: string) => Appointment[]
   getAppointmentsByDoctor: (doctorId: string) => Appointment[]
-  
+
   // Order actions
   createOrder: (order: Omit<Order, 'id' | 'createdAt'>) => Order
   updateOrderStatus: (id: string, status: Order['status']) => void
   getOrdersByPatient: (patientId: string) => Order[]
   getOrdersByPharmacy: (pharmacyId: string) => Order[]
-  
+
   // Medicine actions
   getMedicines: () => Medicine[]
   getMedicineById: (id: string) => Medicine | undefined
   updateMedicineStock: (id: string, stock: number) => void
-  
+
   // Chat actions
   sendMessage: (message: Omit<ChatMessage, 'id' | 'createdAt' | 'isRead'>) => Promise<ChatMessage>
   getMessagesBetweenUsers: (userId1: string, userId2: string) => ChatMessage[]
   fetchMessages: (userId1: string, userId2: string) => Promise<void>
   markMessagesAsRead: (senderId: string, receiverId: string) => void
-  
+
   // Notification actions
   addNotification: (notification: Omit<Notification, 'id' | 'createdAt'>) => void
   markNotificationRead: (id: string) => void
@@ -243,10 +249,73 @@ export const useAppStore = create<AppState>()(
       medicines: mockMedicines,
       chatMessages: mockChatMessages,
       notifications: mockNotifications,
-      
+      knownUsers: [],
+
       getDoctors: () => get().doctors,
       getDoctorById: (id) => get().doctors.find((d) => d.id === id),
-      
+      getKnownUser: (userId) => get().knownUsers.find(u => u.id === userId),
+
+      fetchDoctors: async () => {
+        try {
+          const res = await fetch('/api/doctors')
+          if (res.ok) {
+            const json = await res.json()
+            if (json.success && json.doctors.length > 0) {
+              // Merge: DB doctors override matching mock doctors by id,
+              // add new ones that don't exist in the current list
+              const currentDoctors = get().doctors
+              const merged = [...currentDoctors]
+              json.doctors.forEach((dbDoc: any) => {
+                const idx = merged.findIndex(d => d.id === dbDoc.id)
+                // Normalize DB doctor to match frontend DoctorProfile shape
+                const normalized = {
+                  ...dbDoc,
+                  userId: dbDoc.userId || dbDoc.user?.id,
+                  user: dbDoc.user || {},
+                  rating: dbDoc.rating ?? 0,
+                  reviewCount: dbDoc.reviewCount ?? 0,
+                  isVerified: dbDoc.isVerified ?? false,
+                  isOnline: dbDoc.isOnline ?? false,
+                  availableSlots: dbDoc.availableSlots ?? [],
+                  bio: dbDoc.bio ?? '',
+                  education: dbDoc.education ?? [],
+                }
+                if (idx >= 0) {
+                  merged[idx] = normalized
+                } else {
+                  merged.push(normalized)
+                }
+              })
+              set({ doctors: merged })
+            }
+          }
+        } catch (error) {
+          console.error('Fetch doctors failed:', error)
+        }
+      },
+
+      createDoctor: async (doctorData) => {
+        try {
+          const res = await fetch('/api/doctors', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(doctorData)
+          })
+          if (res.ok) {
+            const json = await res.json()
+            if (json.success) {
+              set({ doctors: [...get().doctors, json.doctor] })
+              return { success: true, doctor: json.doctor }
+            }
+          }
+          const error = await res.json()
+          return { success: false, error: error.error || 'Gagal membuat dokter' }
+        } catch (error) {
+          console.error('Create doctor failed:', error)
+          return { success: false, error: 'Terjadi kesalahan koneksi' }
+        }
+      },
+
       createAppointment: async (appointmentData) => {
         try {
           const res = await fetch('/api/appointments', {
@@ -275,8 +344,15 @@ export const useAppStore = create<AppState>()(
         set({ appointments: [...get().appointments, newAppointment] })
         return newAppointment as any
       },
-      
+
       updateAppointmentStatus: async (id, status, diagnosis, notes) => {
+        // Optimistically update local state immediately for instant UI feedback
+        set({
+          appointments: get().appointments.map((apt) =>
+            apt.id === id ? { ...apt, status, diagnosis, notes } : apt
+          ),
+        })
+
         try {
           const res = await fetch(`/api/appointments/${id}`, {
             method: 'PATCH',
@@ -284,32 +360,32 @@ export const useAppStore = create<AppState>()(
             body: JSON.stringify({ status, diagnosis, notes })
           })
           if (res.ok) {
-            set({
-              appointments: get().appointments.map((apt) =>
-                apt.id === id ? { ...apt, status, diagnosis, notes } : apt
-              ),
-            })
-            return
+            const json = await res.json()
+            if (json.success && json.appointment) {
+              // Replace with full DB appointment (includes patient/doctor relations)
+              set({
+                appointments: get().appointments.map((apt) =>
+                  apt.id === id ? { ...apt, ...json.appointment } : apt
+                ),
+              })
+            }
+          } else {
+            const errJson = await res.json().catch(() => ({}))
+            console.error('Update appointment failed:', res.status, errJson)
           }
         } catch (err) {
           console.error('Store updateAppointmentStatus error:', err)
         }
-        
-        set({
-          appointments: get().appointments.map((apt) =>
-            apt.id === id ? { ...apt, status, diagnosis, notes } : apt
-          ),
-        })
       },
-      
+
       getAppointmentsByPatient: (patientId) => {
         return get().appointments.filter((apt) => apt.patientId === patientId)
       },
-      
+
       getAppointmentsByDoctor: (doctorId) => {
         return get().appointments.filter((apt) => apt.doctorId === doctorId)
       },
-      
+
       createOrder: (orderData) => {
         const newOrder: Order = {
           ...orderData,
@@ -319,7 +395,7 @@ export const useAppStore = create<AppState>()(
         set({ orders: [...get().orders, newOrder] })
         return newOrder
       },
-      
+
       updateOrderStatus: (id, status) => {
         set({
           orders: get().orders.map((order) =>
@@ -327,18 +403,18 @@ export const useAppStore = create<AppState>()(
           ),
         })
       },
-      
+
       getOrdersByPatient: (patientId) => {
         return get().orders.filter((order) => order.patientId === patientId)
       },
-      
+
       getOrdersByPharmacy: (pharmacyId) => {
         return get().orders.filter((order) => order.pharmacyId === pharmacyId)
       },
-      
+
       getMedicines: () => get().medicines,
       getMedicineById: (id) => get().medicines.find((m) => m.id === id),
-      
+
       updateMedicineStock: (id, stock) => {
         set({
           medicines: get().medicines.map((med) =>
@@ -346,20 +422,29 @@ export const useAppStore = create<AppState>()(
           ),
         })
       },
-      
+
       sendMessage: async (messageData) => {
         try {
           const res = await fetch('/api/messages', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(messageData)
+            body: JSON.stringify({
+              ...messageData,
+              type: messageData.type?.toUpperCase() || 'TEXT',
+            })
           })
-          if (res.ok && res.headers.get('content-type')?.includes('application/json')) {
+
+          const contentType = res.headers.get('content-type')
+          if (res.ok && contentType?.includes('application/json')) {
             const json = await res.json()
             if (json.success) {
-              set({ chatMessages: [...get().chatMessages, json.message] })
-              return json.message
+              // Normalize type ke lowercase untuk keseragaman dengan ChatMessage type di frontend
+              const msg = { ...json.message, type: (json.message.type || 'text').toLowerCase() }
+              set({ chatMessages: [...get().chatMessages, msg] })
+              return msg
             }
+          } else if (res.status === 404) {
+            console.warn('User tidak ditemukan di DB, pesan hanya tersimpan lokal. Pastikan login menggunakan akun yang terdaftar di database.')
           } else {
             console.warn('Backend unavailable, using local fallback. Status:', res.status)
           }
@@ -367,6 +452,7 @@ export const useAppStore = create<AppState>()(
           console.warn('Backend unavailable, using local fallback:', err)
         }
 
+        // Fallback lokal
         const newMessage: ChatMessage = {
           ...messageData,
           id: `msg-${Date.now()}`,
@@ -376,7 +462,7 @@ export const useAppStore = create<AppState>()(
         set({ chatMessages: [...get().chatMessages, newMessage] })
         return newMessage
       },
-      
+
       getMessagesBetweenUsers: (userId1, userId2) => {
         return get().chatMessages.filter(
           (msg) =>
@@ -384,7 +470,7 @@ export const useAppStore = create<AppState>()(
             (msg.senderId === userId2 && msg.receiverId === userId1)
         ).sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
       },
-      
+
       fetchMessages: async (userId1, userId2) => {
         try {
           const res = await fetch(`/api/messages?userId1=${userId1}&userId2=${userId2}`)
@@ -392,12 +478,26 @@ export const useAppStore = create<AppState>()(
             const json = await res.json()
             if (json.success) {
               const currentMessages = get().chatMessages
-              // Merge unique messages
               const newMessages = json.messages.filter(
                 (nm: any) => !currentMessages.some((cm) => cm.id === nm.id)
               )
               if (newMessages.length > 0) {
                 set({ chatMessages: [...currentMessages, ...newMessages] })
+              }
+
+              // Cache user info dari messages
+              const usersFromMessages: User[] = []
+              json.messages.forEach((msg: any) => {
+                if (msg.sender) usersFromMessages.push({ ...msg.sender, role: msg.sender.role?.toLowerCase() as any, createdAt: msg.createdAt })
+                if (msg.receiver) usersFromMessages.push({ ...msg.receiver, role: msg.receiver.role?.toLowerCase() as any, createdAt: msg.createdAt })
+              })
+              if (usersFromMessages.length > 0) {
+                const currentKnown = get().knownUsers
+                const merged = [...currentKnown]
+                usersFromMessages.forEach(u => {
+                  if (!merged.some(k => k.id === u.id)) merged.push(u)
+                })
+                set({ knownUsers: merged })
               }
             }
           }
@@ -405,7 +505,7 @@ export const useAppStore = create<AppState>()(
           // Silent catch to prevent error overlays if backend is not running
         }
       },
-      
+
       markMessagesAsRead: (senderId, receiverId) => {
         set({
           chatMessages: get().chatMessages.map((msg) =>
@@ -415,7 +515,7 @@ export const useAppStore = create<AppState>()(
           ),
         })
       },
-      
+
       addNotification: (notificationData) => {
         const newNotification: Notification = {
           ...notificationData,
@@ -424,36 +524,41 @@ export const useAppStore = create<AppState>()(
         }
         set({ notifications: [...get().notifications, newNotification] })
       },
-      
-      markNotificationRead: (id) => {
+
+      markNotificationRead: async (id) => {
+        try {
+          fetch(`/api/notifications?id=${id}`, { method: 'PATCH' })
+        } catch (err) {
+          console.error('Failed to update notification status on backend:', err)
+        }
+
         set({
           notifications: get().notifications.map((notif) =>
             notif.id === id ? { ...notif, isRead: true } : notif
           ),
         })
       },
-      
+
       getUnreadCount: (userId) => {
         return get().notifications.filter(
           (notif) => notif.userId === userId && !notif.isRead
         ).length
       },
-      
+
       refreshData: async (userId, role) => {
         try {
-          const [aptRes, msgRes] = await Promise.all([
+          const [aptRes, msgRes, notifRes] = await Promise.all([
             fetch(`/api/appointments?userId=${userId}&role=${role}`),
-            // Fetching messages is harder because it needs another userId. 
-            // For now let's just refresh appointments.
+            fetch(`/api/messages?userId1=${userId}`),
+            fetch(`/api/notifications?userId=${userId}`),
           ])
-          
+
           if (aptRes.ok && aptRes.headers.get('content-type')?.includes('application/json')) {
             const aptJson = await aptRes.json()
             if (aptJson.success) {
               const currentAppointments = get().appointments;
               const dbAppointments = aptJson.appointments;
-              
-              // Merge dbAppointments into currentAppointments
+
               const merged = [...currentAppointments];
               dbAppointments.forEach((dbApt: any) => {
                 const idx = merged.findIndex((a) => a.id === dbApt.id);
@@ -466,8 +571,61 @@ export const useAppStore = create<AppState>()(
               set({ appointments: merged })
             }
           }
+
+          if (msgRes.ok && msgRes.headers.get('content-type')?.includes('application/json')) {
+            const msgJson = await msgRes.json()
+            if (msgJson.success) {
+              const currentMessages = get().chatMessages;
+              const dbMessages = msgJson.messages;
+
+              const merged = [...currentMessages];
+              dbMessages.forEach((dbMsg: any) => {
+                const idx = merged.findIndex((m) => m.id === dbMsg.id);
+                if (idx >= 0) {
+                  merged[idx] = dbMsg;
+                } else {
+                  merged.push(dbMsg);
+                }
+              });
+              set({ chatMessages: merged })
+
+              // Cache semua sender/receiver dari messages ke knownUsers
+              const usersFromMessages: User[] = []
+              dbMessages.forEach((msg: any) => {
+                if (msg.sender) usersFromMessages.push({ ...msg.sender, role: msg.sender.role?.toLowerCase() as any, createdAt: msg.createdAt })
+                if (msg.receiver) usersFromMessages.push({ ...msg.receiver, role: msg.receiver.role?.toLowerCase() as any, createdAt: msg.createdAt })
+              })
+              if (usersFromMessages.length > 0) {
+                const currentKnown = get().knownUsers
+                const mergedUsers = [...currentKnown]
+                usersFromMessages.forEach(u => {
+                  if (!mergedUsers.some(k => k.id === u.id)) mergedUsers.push(u)
+                })
+                set({ knownUsers: mergedUsers })
+              }
+            }
+          }
+
+          if (notifRes.ok && notifRes.headers.get('content-type')?.includes('application/json')) {
+            const notifJson = await notifRes.json()
+            if (notifJson.success) {
+              const currentNotifications = get().notifications;
+              const dbNotifications = notifJson.notifications;
+
+              const merged = [...currentNotifications];
+              dbNotifications.forEach((dbNotif: any) => {
+                const idx = merged.findIndex((n) => n.id === dbNotif.id);
+                if (idx >= 0) {
+                  merged[idx] = dbNotif;
+                } else {
+                  merged.push(dbNotif);
+                }
+              });
+              set({ notifications: merged })
+            }
+          }
         } catch (err) {
-          // Silent catch to prevent error overlays if backend is not running
+          // Silent catch
         }
       },
     }),

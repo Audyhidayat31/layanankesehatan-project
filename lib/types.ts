@@ -174,3 +174,11 @@ export interface Notification {
   isRead: boolean
   createdAt: string
 }
+
+export interface ConsultationMessage {
+  id: string
+  appointmentId: string
+  senderId: string
+  content: string
+  createdAt: string
+}

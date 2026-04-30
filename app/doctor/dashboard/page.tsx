@@ -22,15 +22,30 @@ import {
   Star,
   TrendingUp,
 } from 'lucide-react'
-import { useAuthStore } from '@/lib/store'
-import { mockAppointments, mockDoctors } from '@/lib/mock-data'
-import { useState } from 'react'
+import { useAuthStore, useAppStore } from '@/lib/store'
+import { useState, useEffect } from 'react'
 
 export default function DoctorDashboardPage() {
   const { user } = useAuthStore()
+  const { appointments, getDoctors, refreshData, chatMessages } = useAppStore()
   const [isOnline, setIsOnline] = useState(true)
+  const [mounted, setMounted] = useState(false)
   
-  const doctor = mockDoctors.find((d) => d.user.email === user?.email) || mockDoctors[0]
+  useEffect(() => {
+    setMounted(true)
+    if (user?.id) {
+      refreshData(user.id, 'doctor')
+      
+      // Auto refresh data every 5 seconds for "real-time" experience
+      const interval = setInterval(() => {
+        refreshData(user.id, 'doctor')
+      }, 5000)
+      
+      return () => clearInterval(interval)
+    }
+  }, [user?.id, refreshData])
+
+  const doctor = getDoctors().find((d) => d.user.email === user?.email) || getDoctors()[0]
   
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('id-ID', {
@@ -71,9 +86,15 @@ export default function DoctorDashboardPage() {
     return labels[status] || status
   }
 
-  const todayAppointments = mockAppointments.filter(
+  const doctorAppointments = appointments.filter(a => a.doctorId === doctor.id)
+  
+  const todayAppointments = doctorAppointments.filter(
     (apt) => apt.status === 'confirmed' || apt.status === 'pending'
   )
+
+  const unreadMessages = chatMessages.filter(
+    (msg) => msg.receiverId === user?.id && !msg.isRead
+  ).length
 
   const stats = [
     {
@@ -92,7 +113,7 @@ export default function DoctorDashboardPage() {
     },
     {
       label: 'Pesan Baru',
-      value: 8,
+      value: unreadMessages,
       icon: MessageSquare,
       color: 'text-chart-3',
       bgColor: 'bg-chart-3/10',
@@ -106,6 +127,8 @@ export default function DoctorDashboardPage() {
       isPrice: true,
     },
   ]
+
+  if (!mounted) return null
 
   return (
     <div className="min-h-screen bg-muted/30">
