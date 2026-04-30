@@ -32,17 +32,25 @@ import {
   Stethoscope,
   Star,
   CheckCircle,
-  XCircle,
   ShieldCheck,
   Building,
+  Loader2,
 } from 'lucide-react'
-import { mockDoctors } from '@/lib/mock-data'
+import { useAppStore } from '@/lib/store'
+import { useEffect } from 'react'
+import { useToast } from '@/components/ui/use-toast'
 
 export default function AdminDoctorsPage() {
-  const [doctors, setDoctors] = useState(mockDoctors)
+  const { doctors, fetchDoctors, createDoctor } = useAppStore()
+  const { toast } = useToast()
   const [searchQuery, setSearchQuery] = useState('')
   const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [editingDoctor, setEditingDoctor] = useState<any>(null)
+
+  useEffect(() => {
+    fetchDoctors()
+  }, [fetchDoctors])
 
   const [formData, setFormData] = useState({
     name: '',
@@ -76,54 +84,73 @@ export default function AdminDoctorsPage() {
 
   const handleDelete = (id: string) => {
     if (confirm('Apakah Anda yakin ingin menghapus data dokter ini?')) {
-      setDoctors(doctors.filter((d) => d.id !== id))
+      // Implement delete API call here
+      toast({
+        title: "Info",
+        description: "Fitur hapus sedang dalam pengembangan",
+      })
     }
   }
 
-  const toggleVerification = (id: string) => {
-    setDoctors(doctors.map(d => 
-      d.id === id ? { ...d, isVerified: !d.isVerified } : d
-    ))
+  const toggleVerification = async (id: string) => {
+    // Implement verification toggle API call here if needed
+    // For now, let's just toast
+    toast({
+      title: "Info",
+      description: "Fitur toggle verifikasi sedang dalam pengembangan",
+    })
   }
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
+    if (!formData.name || !formData.specialization || !formData.hospital) {
+      toast({
+        title: "Error",
+        description: "Mohon lengkapi data wajib (Nama, Spesialisasi, RS)",
+        variant: "destructive"
+      })
+      return
+    }
+
+    setIsSubmitting(true)
     if (editingDoctor) {
-      setDoctors(
-        doctors.map((d) =>
-          d.id === editingDoctor.id 
-            ? { 
-                ...d, 
-                specialization: formData.specialization,
-                hospital: formData.hospital,
-                experience: Number(formData.experience),
-                price: Number(formData.price),
-                isVerified: formData.isVerified,
-                user: { ...d.user, name: formData.name }
-              } 
-            : d
-        )
-      )
+      // Implement update doctor API call here
+      toast({
+        title: "Info",
+        description: "Fitur edit sedang dalam pengembangan",
+      })
     } else {
-      const newDoctor = {
-        id: `doc-${Date.now()}`,
-        specialization: formData.specialization,
-        hospital: formData.hospital,
+      const email = `${formData.name.toLowerCase().replace(/\s+/g, '.')}@healthservices.id`
+      const res = await createDoctor({
+        ...formData,
+        email,
+        password: 'demo123',
         experience: Number(formData.experience),
         price: Number(formData.price),
-        rating: 0,
-        reviewCount: 0,
-        isVerified: formData.isVerified,
-        isOnline: false,
-        user: {
-          id: `u-${Date.now()}`,
-          name: formData.name,
-          email: `${formData.name.toLowerCase().replace(' ', '.')}@healthservices.id`,
-          avatar: '',
-        }
+      })
+
+      if (res.success) {
+        toast({
+          title: "Berhasil",
+          description: "Akun dokter berhasil dibuat",
+        })
+        setIsDialogOpen(false)
+        setFormData({
+          name: '',
+          specialization: '',
+          hospital: '',
+          experience: '',
+          price: '',
+          isVerified: false,
+        })
+      } else {
+        toast({
+          title: "Gagal",
+          description: res.error,
+          variant: "destructive"
+        })
       }
-      setDoctors([...doctors, newDoctor as any])
     }
-    setIsDialogOpen(false)
+    setIsSubmitting(false)
     setEditingDoctor(null)
   }
 
@@ -234,8 +261,11 @@ export default function AdminDoctorsPage() {
                   </div>
                 </div>
                 <div className="flex justify-end gap-2">
-                  <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Batal</Button>
-                  <Button onClick={handleSubmit}>{editingDoctor ? 'Simpan Perubahan' : 'Tambah Dokter'}</Button>
+                  <Button variant="outline" onClick={() => setIsDialogOpen(false)} disabled={isSubmitting}>Batal</Button>
+                  <Button onClick={handleSubmit} disabled={isSubmitting}>
+                    {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                    {editingDoctor ? 'Simpan Perubahan' : 'Tambah Dokter'}
+                  </Button>
                 </div>
               </DialogContent>
             </Dialog>

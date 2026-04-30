@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import { DashboardSidebar } from '@/components/dashboard/sidebar'
 import { DashboardHeader } from '@/components/dashboard/dashboard-header'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -9,6 +10,8 @@ import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
+import { Input } from '@/components/ui/input'
+import { ScrollArea } from '@/components/ui/scroll-area'
 import { FieldGroup, Field, FieldLabel } from '@/components/ui/field'
 import {
   Dialog,
@@ -30,26 +33,95 @@ import {
   User,
   Phone,
   Stethoscope,
+  Send,
+  X,
+  CheckCheck,
+  Loader2,
 } from 'lucide-react'
 import { mockAppointments } from '@/lib/mock-data'
 import { useAppStore, useAuthStore } from '@/lib/store'
 
 export default function DoctorAppointmentsPage() {
+  const router = useRouter()
   const { user } = useAuthStore()
-  const { updateAppointmentStatus, getAppointmentsByDoctor, getDoctors, refreshData } = useAppStore()
+  const {
+    updateAppointmentStatus,
+    getAppointmentsByDoctor,
+    getDoctors,
+    refreshData,
+    appointments,
+    sendMessage,
+    fetchMessages,
+    getMessagesBetweenUsers,
+    markMessagesAsRead,
+    chatMessages,
+  } = useAppStore()
   const [activeTab, setActiveTab] = useState('pending')
   const [selectedAppointment, setSelectedAppointment] = useState<typeof mockAppointments[0] | null>(null)
   const [diagnosisDialogOpen, setDiagnosisDialogOpen] = useState(false)
   const [diagnosis, setDiagnosis] = useState('')
   const [prescription, setPrescription] = useState('')
   const [mounted, setMounted] = useState(false)
+  const [doctorProfileId, setDoctorProfileId] = useState<string | null>(null)
+
+  // ─── Chat State ───────────────────────────────────────────────
+  const [chatOpen, setChatOpen] = useState(false)
+  const [chatPatientUserId, setChatPatientUserId] = useState<string | null>(null)
+  const [chatPatientName, setChatPatientName] = useState<string>('')
+  const [newMessage, setNewMessage] = useState('')
+  const [sendingMessage, setSendingMessage] = useState(false)
+  const chatScrollRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     setMounted(true)
     if (user?.id) {
       refreshData(user.id, 'doctor')
+
+      const fromStore = getDoctors().find(d => d.userId === user.id)
+      if (fromStore) {
+        setDoctorProfileId(fromStore.id)
+      } else {
+        fetch(`/api/doctor-profile?userId=${user.id}`)
+          .then(r => r.ok ? r.json() : null)
+          .then(json => {
+            if (json?.doctorProfile?.id) {
+              setDoctorProfileId(json.doctorProfile.id)
+            }
+          })
+          .catch(console.error)
+      }
+      
+      const interval = setInterval(() => {
+        refreshData(user.id, 'doctor')
+      }, 5000)
+      
+      return () => clearInterval(interval)
     }
-  }, [user?.id, refreshData])
+  }, [user?.id, refreshData, getDoctors])
+
+  // ─── Poll messages saat chat terbuka ─────────────────────────
+  useEffect(() => {
+    if (!chatOpen || !chatPatientUserId || !user?.id) return
+    fetchMessages(user.id, chatPatientUserId)
+    const interval = setInterval(() => {
+      fetchMessages(user.id, chatPatientUserId)
+    }, 3000)
+    return () => clearInterval(interval)
+  }, [chatOpen, chatPatientUserId, user?.id, fetchMessages])
+
+  // ─── Auto scroll chat ke bawah ───────────────────────────────
+  useEffect(() => {
+    if (chatScrollRef.current) {
+      chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight
+    }
+  }, [chatMessages, chatOpen])
+
+  // ─── Mark messages as read saat chat terbuka ─────────────────
+  useEffect(() => {
+    if (chatOpen && chatPatientUserId && user?.id) {
+      markMessagesAsRead(chatPatientUserId, user.id)
+    }
+  }, [chatOpen, chatPatientUserId, user?.id, chatMessages.length, markMessagesAsRead])
 
   const getInitials = (name: string) => {
     return name
@@ -85,25 +157,31 @@ export default function DoctorAppointmentsPage() {
     return labels[status] || status
   }
 
-  // Get current logged in doctor's profile
   const doctor = getDoctors().find(d => d.userId === user?.id)
-  
-  // Ambil data appointments khusus untuk dokter yang sedang login
-  // Fallback ke mock data milik doc-1 jika tidak ada doctor yang login (sebagai demo fallback)
-  const doctorId = doctor ? doctor.id : 'doc-1'
-  const allAppointments = getAppointmentsByDoctor(doctorId)
+  const resolvedDoctorId = doctor?.id || doctorProfileId
+
+  const allAppointments = appointments.filter(apt => {
+    if (!resolvedDoctorId && !user?.id) return false
+    return (
+      apt.doctorId === resolvedDoctorId ||
+      apt.doctor?.userId === user?.id ||
+      apt.doctor?.user?.id === user?.id
+    )
+  })
 
   const filteredAppointments = allAppointments.filter((apt) => {
     if (activeTab === 'all') return true
     return apt.status === activeTab
   })
 
-  const handleAccept = (id: string) => {
-    updateAppointmentStatus(id, 'confirmed')
+  const handleAccept = async (id: string) => {
+    await updateAppointmentStatus(id, 'confirmed')
+    if (user?.id) refreshData(user.id, 'doctor')
   }
 
-  const handleReject = (id: string) => {
-    updateAppointmentStatus(id, 'cancelled')
+  const handleReject = async (id: string) => {
+    await updateAppointmentStatus(id, 'cancelled')
+    if (user?.id) refreshData(user.id, 'doctor')
   }
 
   const handleComplete = (apt: typeof mockAppointments[0]) => {
@@ -111,14 +189,54 @@ export default function DoctorAppointmentsPage() {
     setDiagnosisDialogOpen(true)
   }
 
-  const submitDiagnosis = () => {
+  const submitDiagnosis = async () => {
     if (selectedAppointment) {
-      updateAppointmentStatus(selectedAppointment.id, 'completed', diagnosis, prescription)
+      await updateAppointmentStatus(selectedAppointment.id, 'completed', diagnosis, prescription)
+      if (user?.id) refreshData(user.id, 'doctor')
       setDiagnosisDialogOpen(false)
       setDiagnosis('')
       setPrescription('')
     }
   }
+
+  // ─── Open chat with patient ───────────────────────────────────
+  const openChat = (apt: any) => {
+    const patientUserId = apt.patient?.userId || apt.patient?.user?.id
+    const patientName = apt.patient?.user?.name || 'Pasien'
+    setChatPatientUserId(patientUserId)
+    setChatPatientName(patientName)
+    setChatOpen(true)
+    setNewMessage('')
+  }
+
+  const handleSendMessage = async () => {
+    if (!newMessage.trim() || !chatPatientUserId || !user?.id || sendingMessage) return
+    setSendingMessage(true)
+    try {
+      await sendMessage({
+        senderId: user.id,
+        receiverId: chatPatientUserId,
+        content: newMessage.trim(),
+        type: 'text',
+      })
+      setNewMessage('')
+    } finally {
+      setSendingMessage(false)
+    }
+  }
+
+  const formatTime = (dateString: string) => {
+    const date = new Date(dateString)
+    return date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
+  }
+
+  const chatMessages_ = user?.id && chatPatientUserId
+    ? getMessagesBetweenUsers(user.id, chatPatientUserId)
+    : []
+
+  const unreadFromPatient = chatMessages_.filter(
+    m => m.senderId === chatPatientUserId && !m.isRead
+  ).length
 
   if (!mounted) return null
 
@@ -236,10 +354,29 @@ export default function DoctorAppointmentsPage() {
                         )}
                         {apt.status === 'confirmed' && (
                           <>
-                            <Button variant="outline">
+                            {/* ─── Tombol Chat ─────────────────── */}
+                            <Button
+                              variant="outline"
+                              onClick={() => openChat(apt)}
+                              className="relative"
+                            >
                               <MessageSquare className="mr-1 h-4 w-4" />
                               Chat
+                              {/* Badge unread count (opsional - hanya muncul jika ada pesan belum dibaca) */}
+                              {(() => {
+                                const patUId = apt.patient?.userId || apt.patient?.user?.id
+                                if (!patUId || !user?.id) return null
+                                const unread = getMessagesBetweenUsers(user.id, patUId).filter(
+                                  m => m.senderId === patUId && !m.isRead
+                                ).length
+                                return unread > 0 ? (
+                                  <span className="absolute -top-1.5 -right-1.5 h-4 w-4 rounded-full bg-red-500 text-white text-[10px] flex items-center justify-center font-bold">
+                                    {unread}
+                                  </span>
+                                ) : null
+                              })()}
                             </Button>
+
                             {apt.type === 'online' && (
                               <Button variant="outline">
                                 <Video className="mr-1 h-4 w-4" />
@@ -284,6 +421,9 @@ export default function DoctorAppointmentsPage() {
         </div>
       </main>
 
+      {/* ════════════════════════════════════════════════════════════
+          DIALOG INPUT DIAGNOSA
+      ════════════════════════════════════════════════════════════ */}
       <Dialog open={diagnosisDialogOpen} onOpenChange={setDiagnosisDialogOpen}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
@@ -326,6 +466,134 @@ export default function DoctorAppointmentsPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* ════════════════════════════════════════════════════════════
+          CHAT MODAL — floating bottom-right style
+      ════════════════════════════════════════════════════════════ */}
+      {chatOpen && chatPatientUserId && (
+        <div
+          className="fixed bottom-6 right-6 z-50 flex flex-col rounded-2xl shadow-2xl border border-border overflow-hidden"
+          style={{ width: 360, height: 520 }}
+        >
+          {/* Header */}
+          <div className="flex items-center justify-between bg-primary px-4 py-3 text-primary-foreground shrink-0">
+            <div className="flex items-center gap-3">
+              <div className="h-9 w-9 rounded-full bg-primary-foreground/20 flex items-center justify-center font-bold text-sm">
+                {getInitials(chatPatientName)}
+              </div>
+              <div>
+                <p className="font-semibold text-sm leading-tight">{chatPatientName}</p>
+                <p className="text-xs text-primary-foreground/70">Pasien • Online</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-1">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-primary-foreground hover:bg-primary-foreground/10 h-8 w-8 rounded-full"
+                onClick={() => router.push('/doctor/chat')}
+                title="Buka di halaman chat"
+              >
+                <MessageSquare className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-primary-foreground hover:bg-primary-foreground/10 h-8 w-8 rounded-full"
+                onClick={() => setChatOpen(false)}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+
+          {/* Messages area */}
+          <div
+            ref={chatScrollRef}
+            className="flex-1 overflow-y-auto p-3 space-y-2 bg-[#efeae2] dark:bg-muted/10"
+            style={{ backgroundImage: 'repeating-linear-gradient(transparent, transparent 39px, rgba(0,0,0,.03) 40px)' }}
+          >
+            {chatMessages_.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-full text-center gap-3">
+                <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                  <MessageSquare className="h-6 w-6 text-primary" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-foreground">Mulai percakapan</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Kirim pesan pertama ke {chatPatientName}
+                  </p>
+                </div>
+              </div>
+            ) : (
+              chatMessages_.map((msg) => {
+                const isOwn = msg.senderId === user?.id
+                return (
+                  <div key={msg.id} className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}>
+                    <div
+                      className={`relative max-w-[78%] px-3 py-2 text-sm shadow-sm rounded-lg ${
+                        isOwn
+                          ? 'bg-[#d9fdd3] dark:bg-emerald-900 text-foreground rounded-tr-none'
+                          : 'bg-card text-foreground rounded-tl-none'
+                      }`}
+                    >
+                      {/* Chat tail */}
+                      <div className={`absolute top-0 w-2.5 h-2.5 ${isOwn ? '-right-2 text-[#d9fdd3] dark:text-emerald-900' : '-left-2 text-card'}`}>
+                        <svg viewBox="0 0 8 13" width="8" height="13" className="fill-current">
+                          {isOwn ? (
+                            <path d="M5.188 1H0v11.193l6.467-8.625C7.526 2.156 6.958 1 5.188 1z" />
+                          ) : (
+                            <path d="M1.533 3.568L8 12.193V1H2.812C1.042 1 .474 2.156 1.533 3.568z" />
+                          )}
+                        </svg>
+                      </div>
+
+                      <p className="leading-snug">{msg.content}</p>
+                      <div className={`flex items-center justify-end gap-1 text-[10px] mt-0.5 -mb-0.5 ${
+                        isOwn ? 'text-emerald-700 dark:text-emerald-300' : 'text-muted-foreground'
+                      }`}>
+                        <span>{formatTime(msg.createdAt)}</span>
+                        {isOwn && (
+                          <CheckCheck className={`h-3 w-3 ${msg.isRead ? 'text-blue-500' : ''}`} />
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )
+              })
+            )}
+          </div>
+
+          {/* Input area */}
+          <div className="bg-card px-3 py-2 flex items-center gap-2 border-t border-border shrink-0">
+            <Input
+              placeholder={`Pesan ke ${chatPatientName}...`}
+              value={newMessage}
+              onChange={(e) => setNewMessage(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault()
+                  handleSendMessage()
+                }
+              }}
+              className="flex-1 rounded-full border-0 bg-muted/60 px-4 h-9 focus-visible:ring-0 focus-visible:ring-offset-0 text-sm"
+              disabled={sendingMessage}
+            />
+            <Button
+              size="icon"
+              onClick={handleSendMessage}
+              disabled={!newMessage.trim() || sendingMessage}
+              className="h-9 w-9 rounded-full bg-primary hover:bg-primary/90 shrink-0"
+            >
+              {sendingMessage ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Send className="h-4 w-4 ml-0.5" />
+              )}
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

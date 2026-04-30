@@ -3,33 +3,59 @@ import prisma from '@/lib/prisma'
 
 export async function PATCH(
   req: Request,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params
-    const { status, diagnosis, notes } = await req.json()
+    // Next.js 15+: params is now a Promise, must be awaited
+    const { id } = await context.params
+    const body = await req.json()
+    const { status, diagnosis, notes } = body
+
+    if (!id) {
+      return NextResponse.json({ error: 'ID tidak ditemukan' }, { status: 400 })
+    }
+
+    // Validate appointment exists
+    const existing = await prisma.appointment.findUnique({ where: { id } })
+    if (!existing) {
+      return NextResponse.json({ error: 'Konsultasi tidak ditemukan' }, { status: 404 })
+    }
 
     const updatedAppointment = await prisma.appointment.update({
       where: { id },
       data: {
-        status: status ? status.toUpperCase() : undefined,
-        diagnosis,
-        notes
+        ...(status ? { status: status.toUpperCase() as any } : {}),
+        ...(diagnosis !== undefined ? { diagnosis } : {}),
+        ...(notes !== undefined ? { notes } : {}),
+      },
+      include: {
+        patient: { include: { user: true } },
+        doctor: { include: { user: true } },
       }
     })
 
-    // Map Prisma uppercase back to lowercase for frontend compatibility
+    // Format date back to YYYY-MM-DD
+    const dateObj = new Date(updatedAppointment.date)
+    const formattedDate = !isNaN(dateObj.getTime())
+      ? dateObj.toISOString().split('T')[0]
+      : String(updatedAppointment.date)
+
     const formattedAppointment = {
       ...updatedAppointment,
+      date: formattedDate,
       status: updatedAppointment.status.toLowerCase(),
+      type: updatedAppointment.type.toLowerCase(),
     }
 
     return NextResponse.json({
       success: true,
       appointment: formattedAppointment
     })
-  } catch (error) {
-    console.error('Update appointment error:', error)
-    return NextResponse.json({ error: 'Gagal memperbarui janji temu' }, { status: 500 })
+  } catch (error: any) {
+    console.error('Update appointment error:', error?.message || error)
+    return NextResponse.json(
+      { error: 'Gagal memperbarui janji temu', detail: error?.message },
+      { status: 500 }
+    )
   }
 }

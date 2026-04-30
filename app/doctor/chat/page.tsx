@@ -21,11 +21,19 @@ export default function DoctorChatPage() {
   // Default to 'user-2' (Dr. Sarah) if not logged in
   const currentUserId = user?.id || 'user-2'
   
-  const { sendMessage, getMessagesBetweenUsers, markMessagesAsRead, chatMessages, appointments, getDoctors, fetchMessages } = useAppStore()
+  const { sendMessage, getMessagesBetweenUsers, markMessagesAsRead, chatMessages, appointments, getDoctors, fetchMessages, refreshData, knownUsers } = useAppStore()
   
   const doctorProfile = getDoctors().find(d => d.userId === currentUserId)
   const doctorId = doctorProfile?.id || 'doc-1'
   
+  // Gabungkan registeredUsers + knownUsers dari API (knownUsers berisi user yang login di browser lain)
+  const allKnownUsers = [...registeredUsers]
+  knownUsers.forEach(ku => {
+    if (!allKnownUsers.some(u => u.id === ku.id)) {
+      allKnownUsers.push(ku)
+    }
+  })
+
   const patientIdsFromMessages = chatMessages
     .filter(m => m.senderId === currentUserId || m.receiverId === currentUserId)
     .map(m => m.senderId === currentUserId ? m.receiverId : m.senderId)
@@ -37,8 +45,8 @@ export default function DoctorChatPage() {
   const uniquePatientIds = Array.from(new Set([...patientIdsFromMessages, ...patientIdsFromAppointments]))
   
   const doctorRooms = uniquePatientIds.map(patientId => {
-    const patientUser = registeredUsers.find(u => u.id === patientId)
-    const currentUserProfile = registeredUsers.find(u => u.id === currentUserId)
+    const patientUser = allKnownUsers.find(u => u.id === patientId)
+    const currentUserProfile = allKnownUsers.find(u => u.id === currentUserId)
     return {
       id: `room-${patientId}`,
       participants: patientUser && currentUserProfile ? [patientUser, currentUserProfile] : []
@@ -86,12 +94,22 @@ export default function DoctorChatPage() {
   }, [selectedChat, messages.length, otherParticipant?.id, currentUserId, markMessagesAsRead])
 
   useEffect(() => {
+    if (user?.id) {
+      refreshData(user.id, 'doctor')
+      const interval = setInterval(() => {
+        refreshData(user.id, 'doctor')
+      }, 5000)
+      return () => clearInterval(interval)
+    }
+  }, [user?.id, refreshData])
+
+  useEffect(() => {
     if (otherParticipant?.id) {
       fetchMessages(currentUserId, otherParticipant.id)
       
       const interval = setInterval(() => {
         fetchMessages(currentUserId, otherParticipant.id)
-      }, 3000) // Poll every 3 seconds
+      }, 3000) // Poll every 3 seconds for active chat
       
       return () => clearInterval(interval)
     }

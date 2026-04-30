@@ -32,14 +32,18 @@ import {
   ArrowLeft,
   MessageSquare,
 } from 'lucide-react'
-import { mockDoctors } from '@/lib/mock-data'
 import { useAuthStore, useAppStore } from '@/lib/store'
+import { useEffect } from 'react'
 
 export default function DoctorDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params)
   const router = useRouter()
   const { user, isAuthenticated } = useAuthStore()
-  const { createAppointment } = useAppStore()
+  const { createAppointment, doctors, fetchDoctors } = useAppStore()
+
+  useEffect(() => {
+    fetchDoctors()
+  }, [fetchDoctors])
   
   const [selectedDate, setSelectedDate] = useState('')
   const [selectedTime, setSelectedTime] = useState('')
@@ -48,7 +52,7 @@ export default function DoctorDetailPage({ params }: { params: Promise<{ id: str
   const [isBooking, setIsBooking] = useState(false)
   const [bookingDialogOpen, setBookingDialogOpen] = useState(false)
 
-  const doctor = mockDoctors.find((d) => d.id === resolvedParams.id)
+  const doctor = doctors.find((d) => d.id === resolvedParams.id)
 
   if (!doctor) {
     return (
@@ -115,17 +119,31 @@ export default function DoctorDetailPage({ params }: { params: Promise<{ id: str
     }
 
     if (!selectedDate || !selectedTime) {
+      alert('Pilih tanggal dan waktu konsultasi')
       return
     }
 
     setIsBooking(true)
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-      
-      createAppointment({
-        patientId: `pat-${user.id}`,
+      // Dapatkan patientProfile ID yang sesungguhnya dari database
+      const profileRes = await fetch(`/api/patient-profile?userId=${user.id}`)
+      let realPatientId: string
+
+      if (profileRes.ok) {
+        const profileJson = await profileRes.json()
+        realPatientId = profileJson.patientProfile?.id
+      }
+
+      if (!realPatientId!) {
+        alert('Profil pasien tidak ditemukan. Pastikan Anda sudah terdaftar sebagai pasien.')
+        setIsBooking(false)
+        return
+      }
+
+      await createAppointment({
+        patientId: realPatientId,
         patient: {
-          id: `pat-${user.id}`,
+          id: realPatientId,
           userId: user.id,
           user: user,
         },
@@ -142,6 +160,7 @@ export default function DoctorDetailPage({ params }: { params: Promise<{ id: str
       router.push('/patient/appointments')
     } catch (error) {
       console.error('Booking failed:', error)
+      alert('Gagal membuat janji. Silakan coba lagi.')
     } finally {
       setIsBooking(false)
     }

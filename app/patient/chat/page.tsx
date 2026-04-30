@@ -21,8 +21,16 @@ export default function PatientChatPage() {
   // Default to 'user-1' (patient) if not logged in
   const currentUserId = user?.id || 'user-1'
   
-  const { sendMessage, getMessagesBetweenUsers, markMessagesAsRead, chatMessages, appointments, fetchMessages } = useAppStore()
+  const { sendMessage, getMessagesBetweenUsers, markMessagesAsRead, chatMessages, appointments, fetchMessages, knownUsers, refreshData } = useAppStore()
   
+  // Gabungkan registeredUsers + knownUsers dari API
+  const allKnownUsers = [...registeredUsers]
+  knownUsers.forEach(ku => {
+    if (!allKnownUsers.some(u => u.id === ku.id)) {
+      allKnownUsers.push(ku)
+    }
+  })
+
   const doctorIdsFromMessages = chatMessages
     .filter(m => m.senderId === currentUserId || m.receiverId === currentUserId)
     .map(m => m.senderId === currentUserId ? m.receiverId : m.senderId)
@@ -34,8 +42,8 @@ export default function PatientChatPage() {
   const uniqueDoctorIds = Array.from(new Set([...doctorIdsFromMessages, ...doctorIdsFromAppointments]))
   
   const patientRooms = uniqueDoctorIds.map(doctorId => {
-    const doctorUser = registeredUsers.find(u => u.id === doctorId)
-    const currentUserProfile = registeredUsers.find(u => u.id === currentUserId)
+    const doctorUser = allKnownUsers.find(u => u.id === doctorId)
+    const currentUserProfile = allKnownUsers.find(u => u.id === currentUserId)
     return {
       id: `room-${doctorId}`,
       participants: doctorUser && currentUserProfile ? [doctorUser, currentUserProfile] : []
@@ -74,6 +82,17 @@ export default function PatientChatPage() {
   const messages = selectedRoom
     ? getMessagesBetweenUsers(currentUserId, otherParticipant?.id || '')
     : []
+
+  // Global refresh: sinkronisasi semua pesan + notifikasi setiap 5 detik
+  useEffect(() => {
+    if (user?.id) {
+      refreshData(user.id, 'patient')
+      const interval = setInterval(() => {
+        refreshData(user.id, 'patient')
+      }, 5000)
+      return () => clearInterval(interval)
+    }
+  }, [user?.id, refreshData])
 
   useEffect(() => {
     if (otherParticipant?.id) {
