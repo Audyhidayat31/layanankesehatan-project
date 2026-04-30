@@ -211,7 +211,7 @@ interface AppState {
   createDoctor: (doctorData: any) => Promise<any>
 
   // Appointment actions
-  createAppointment: (appointment: Omit<Appointment, 'id' | 'createdAt'>) => Appointment
+  createAppointment: (appointment: Omit<Appointment, 'id' | 'createdAt'>) => Promise<Appointment>
   updateAppointmentStatus: (id: string, status: Appointment['status'], diagnosis?: string, notes?: string) => void
   getAppointmentsByPatient: (patientId: string) => Appointment[]
   getAppointmentsByDoctor: (doctorId: string) => Appointment[]
@@ -316,12 +316,12 @@ export const useAppStore = create<AppState>()(
         }
       },
 
-      createAppointment: async (appointmentData) => {
+      createAppointment: async (appointment) => {
         try {
           const res = await fetch('/api/appointments', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(appointmentData)
+            body: JSON.stringify(appointment)
           })
           if (res.ok && res.headers.get('content-type')?.includes('application/json')) {
             const json = await res.json()
@@ -337,12 +337,12 @@ export const useAppStore = create<AppState>()(
         }
         // Fallback
         const newAppointment: Appointment = {
-          ...appointmentData,
+          ...appointment,
           id: `apt-${Date.now()}`,
           createdAt: new Date().toISOString(),
-        } as any
+        } as Appointment
         set({ appointments: [...get().appointments, newAppointment] })
-        return newAppointment as any
+        return newAppointment
       },
 
       updateAppointmentStatus: async (id, status, diagnosis, notes) => {
