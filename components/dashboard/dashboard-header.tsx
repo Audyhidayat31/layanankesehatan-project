@@ -77,7 +77,6 @@ const navItems: Record<string, { label: string; href: string; icon: React.Elemen
   admin: [
     { label: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
     { label: 'Pengguna', href: '/admin/users', icon: Users },
-    { label: 'Dokter', href: '/admin/doctors', icon: Stethoscope },
     { label: 'Apotek', href: '/admin/pharmacies', icon: Pill },
     { label: 'Verifikasi', href: '/admin/verification', icon: ShieldCheck },
     { label: 'Transaksi', href: '/admin/transactions', icon: CreditCard },

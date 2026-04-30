@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { DashboardSidebar } from '@/components/dashboard/sidebar'
 import { DashboardHeader } from '@/components/dashboard/dashboard-header'
 import { Card, CardContent } from '@/components/ui/card'
@@ -44,19 +44,10 @@ import {
   Stethoscope,
   Pill,
 } from 'lucide-react'
-import { mockDoctors } from '@/lib/mock-data'
-
-// Extended mock data for users
-const initialUsers = [
-  ...mockDoctors.map(d => ({ ...d.user, role: 'DOCTOR' })),
-  { id: 'u1', name: 'Admin Utama', email: 'admin@healthservices.id', role: 'ADMIN', createdAt: '2024-01-01' },
-  { id: 'u2', name: 'Budi Santoso', email: 'budi@gmail.com', role: 'PATIENT', createdAt: '2024-02-15' },
-  { id: 'u3', name: 'Apotek Sehat', email: 'kontak@apoteksehat.id', role: 'PHARMACY', createdAt: '2024-03-10' },
-  { id: 'u4', name: 'Siti Aminah', email: 'siti@gmail.com', role: 'PATIENT', createdAt: '2024-03-20' },
-]
 
 export default function AdminUsersPage() {
-  const [users, setUsers] = useState(initialUsers)
+  const [users, setUsers] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedRole, setSelectedRole] = useState('all')
   const [isDialogOpen, setIsDialogOpen] = useState(false)
@@ -67,6 +58,25 @@ export default function AdminUsersPage() {
     email: '',
     role: 'PATIENT',
   })
+
+  useEffect(() => {
+    fetchUsers()
+  }, [])
+
+  const fetchUsers = async () => {
+    try {
+      setLoading(true)
+      const res = await fetch('/api/users')
+      const data = await res.json()
+      if (data.success) {
+        setUsers(data.users)
+      }
+    } catch (error) {
+      console.error('Failed to fetch users:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const filteredUsers = users.filter((user) => {
     const matchesSearch =
@@ -86,30 +96,65 @@ export default function AdminUsersPage() {
     setIsDialogOpen(true)
   }
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (confirm('Apakah Anda yakin ingin menghapus pengguna ini?')) {
-      setUsers(users.filter((u) => u.id !== id))
+      try {
+        const res = await fetch(`/api/users/${id}`, {
+          method: 'DELETE',
+        })
+        const data = await res.json()
+        if (data.success) {
+          setUsers(users.filter((u) => u.id !== id))
+        } else {
+          alert(data.error || 'Gagal menghapus pengguna')
+        }
+      } catch (error) {
+        console.error('Failed to delete user:', error)
+        alert('Terjadi kesalahan saat menghapus pengguna')
+      }
     }
   }
 
-  const handleSubmit = () => {
-    if (editingUser) {
-      setUsers(
-        users.map((u) =>
-          u.id === editingUser.id ? { ...u, ...formData } : u
-        )
-      )
-    } else {
-      const newUser = {
-        id: `u${Date.now()}`,
-        ...formData,
-        createdAt: new Date().toISOString().split('T')[0],
+  const handleSubmit = async () => {
+    try {
+      if (editingUser) {
+        const res = await fetch(`/api/users/${editingUser.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(formData),
+        })
+        const data = await res.json()
+        if (data.success) {
+          setUsers(
+            users.map((u) =>
+              u.id === editingUser.id ? { ...u, ...data.user } : u
+            )
+          )
+        } else {
+          alert(data.error || 'Gagal mengupdate pengguna')
+          return
+        }
+      } else {
+        const res = await fetch('/api/users', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(formData),
+        })
+        const data = await res.json()
+        if (data.success) {
+          setUsers([data.user, ...users])
+        } else {
+          alert(data.error || 'Gagal membuat pengguna')
+          return
+        }
       }
-      setUsers([...users, newUser])
+      setIsDialogOpen(false)
+      setEditingUser(null)
+      setFormData({ name: '', email: '', role: 'PATIENT' })
+    } catch (error) {
+      console.error('Submit user error:', error)
+      alert('Terjadi kesalahan')
     }
-    setIsDialogOpen(false)
-    setEditingUser(null)
-    setFormData({ name: '', email: '', role: 'PATIENT' })
   }
 
   const getRoleBadge = (role: string) => {
@@ -250,7 +295,13 @@ export default function AdminUsersPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredUsers.length > 0 ? (
+                {loading ? (
+                  <TableRow>
+                    <TableCell colSpan={4} className="h-24 text-center text-muted-foreground">
+                      Memuat data...
+                    </TableCell>
+                  </TableRow>
+                ) : filteredUsers.length > 0 ? (
                   filteredUsers.map((user) => (
                     <TableRow key={user.id}>
                       <TableCell>
@@ -270,7 +321,11 @@ export default function AdminUsersPage() {
                         {getRoleBadge(user.role)}
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground">
-                        {user.createdAt}
+                        {new Date(user.createdAt).toLocaleDateString('id-ID', {
+                          day: 'numeric',
+                          month: 'short',
+                          year: 'numeric'
+                        })}
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
