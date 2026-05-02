@@ -359,10 +359,10 @@ export const useAppStore = create<AppState>()(
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ status, diagnosis, notes })
           })
+
           if (res.ok) {
             const json = await res.json()
             if (json.success && json.appointment) {
-              // Replace with full DB appointment (includes patient/doctor relations)
               set({
                 appointments: get().appointments.map((apt) =>
                   apt.id === id ? { ...apt, ...json.appointment } : apt
@@ -370,11 +370,21 @@ export const useAppStore = create<AppState>()(
               })
             }
           } else {
-            const errJson = await res.json().catch(() => ({}))
-            console.error('Update appointment failed:', res.status, errJson)
+            // Handle non-OK responses gracefully
+            let errData = {}
+            const contentType = res.headers.get('content-type')
+            if (contentType && contentType.includes('application/json')) {
+              errData = await res.json()
+            }
+            
+            if (res.status === 404) {
+              console.warn(`Appointment ${id} not found in database. Local state updated only.`)
+            } else {
+              console.error(`Update appointment failed (${res.status}):`, errData)
+            }
           }
         } catch (err) {
-          console.error('Store updateAppointmentStatus error:', err)
+          console.error('Store updateAppointmentStatus connection error:', err)
         }
       },
 
@@ -506,12 +516,27 @@ export const useAppStore = create<AppState>()(
         }
       },
 
-      markMessagesAsRead: (senderId, receiverId) => {
+      markMessagesAsRead: async (senderId, receiverId) => {
+        try {
+          fetch('/api/messages', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ senderId, receiverId })
+          })
+        } catch (err) {
+          console.error('Failed to mark messages as read on backend:', err)
+        }
+
         set({
           chatMessages: get().chatMessages.map((msg) =>
             msg.senderId === senderId && msg.receiverId === receiverId
               ? { ...msg, isRead: true }
               : msg
+          ),
+          notifications: get().notifications.map((notif) =>
+            notif.userId === receiverId && notif.type === 'CHAT'
+              ? { ...notif, isRead: true }
+              : notif
           ),
         })
       },

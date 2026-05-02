@@ -119,3 +119,47 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Gagal mengirim pesan' }, { status: 500 })
   }
 }
+
+export async function PATCH(req: Request) {
+  try {
+    const { senderId, receiverId } = await req.json()
+
+    if (!senderId || !receiverId) {
+      return NextResponse.json({ error: 'Data tidak lengkap' }, { status: 400 })
+    }
+
+    // Mark messages as read
+    await prisma.chatMessage.updateMany({
+      where: {
+        senderId,
+        receiverId,
+        isRead: false
+      },
+      data: {
+        isRead: true
+      }
+    })
+
+    // Also mark related notifications as read
+    // Since we don't have senderId in Notification model, we try to match by type and recipient
+    // and maybe title 'Pesan Baru'
+    await prisma.notification.updateMany({
+      where: {
+        userId: receiverId,
+        type: 'CHAT',
+        isRead: false
+      },
+      data: {
+        isRead: true
+      }
+    })
+
+    return NextResponse.json({
+      success: true,
+      message: 'Pesan telah ditandai sebagai terbaca'
+    })
+  } catch (error) {
+    console.error('Update messages read status error:', error)
+    return NextResponse.json({ error: 'Gagal memperbarui status pesan' }, { status: 500 })
+  }
+}

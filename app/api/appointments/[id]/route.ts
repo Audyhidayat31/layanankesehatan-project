@@ -18,7 +18,10 @@ export async function PATCH(
     // Validate appointment exists
     const existing = await prisma.appointment.findUnique({ where: { id } })
     if (!existing) {
-      return NextResponse.json({ error: 'Konsultasi tidak ditemukan' }, { status: 404 })
+      return NextResponse.json({ 
+        success: false, 
+        error: `Konsultasi dengan ID ${id} tidak ditemukan di database` 
+      }, { status: 404 })
     }
 
     const updatedAppointment = await prisma.appointment.update({
