@@ -26,7 +26,7 @@ import { useAuthStore, useAppStore } from '@/lib/store'
 export default function PatientAppointmentsPage() {
   const [activeTab, setActiveTab] = useState('all')
   const { user } = useAuthStore()
-  const { getAppointmentsByPatient, refreshData } = useAppStore()
+  const { getAppointmentsByPatient, refreshData, updateAppointmentStatus } = useAppStore()
 
   useEffect(() => {
     if (user?.id) {
@@ -103,6 +103,13 @@ export default function PatientAppointmentsPage() {
     if (activeTab === 'cancelled') return apt.status === 'cancelled'
     return true
   })
+
+  const handleCancel = async (id: string) => {
+    if (confirm('Apakah Anda yakin ingin membatalkan konsultasi ini?')) {
+      await updateAppointmentStatus(id, 'cancelled')
+      if (user?.id) refreshData(user.id, 'patient')
+    }
+  }
 
   return (
     <div className="min-h-screen bg-muted/30">
@@ -230,7 +237,11 @@ export default function PatientAppointmentsPage() {
                               </>
                             )}
                             {apt.status === 'pending' && (
-                              <Button variant="destructive" size="sm">
+                              <Button 
+                                variant="destructive" 
+                                size="sm"
+                                onClick={() => handleCancel(apt.id)}
+                              >
                                 <XCircle className="mr-1 h-4 w-4" />
                                 Batalkan
                               </Button>
