@@ -58,29 +58,81 @@ export default function CartPage() {
 
     setIsCheckingOut(true)
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1500))
+      const orderId = `ord-${Date.now()}`
 
-      createOrder({
-        patientId: `pat-${user.id}`,
-        pharmacyId: mockPharmacies[0].id,
-        pharmacy: mockPharmacies[0],
-        items: items.map((item) => ({
-          medicineId: item.medicine.id,
-          medicine: item.medicine,
-          quantity: item.quantity,
-          price: item.medicine.price * item.quantity,
-        })),
-        totalAmount: grandTotal,
-        status: 'pending',
-        shippingAddress: address,
-        paymentStatus: 'paid',
+      // 1. Buat transaksi di DB
+      const checkoutRes = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user.id,
+          amount: grandTotal,
+          orderId: orderId,
+        }),
       })
 
-      clearCart()
-      setCheckoutDialogOpen(false)
-      setSuccessDialogOpen(true)
-    } catch (error) {
+      const checkoutData = await checkoutRes.json()
+      if (!checkoutData.success) {
+        throw new Error(checkoutData.message || 'Gagal membuat transaksi')
+      }
+
+      // 2. Dapatkan token Snap Midtrans
+      const tokenRes = await fetch('/api/payments/create-token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ transactionId: checkoutData.transactionId }),
+      })
+
+      const tokenData = await tokenRes.json()
+      if (!tokenData.success) {
+        throw new Error(tokenData.message || 'Gagal mendapatkan token pembayaran')
+      }
+
+      // 3. Tampilkan popup Midtrans
+      if ((window as any).snap) {
+        ;(window as any).snap.pay(tokenData.token, {
+          onSuccess: function (result: any) {
+            // Setelah sukses bayar, simpan order
+            createOrder({
+              patientId: `pat-${user.id}`,
+              pharmacyId: mockPharmacies[0].id,
+              pharmacy: mockPharmacies[0],
+              items: items.map((item) => ({
+                medicineId: item.medicine.id,
+                medicine: item.medicine,
+                quantity: item.quantity,
+                price: item.medicine.price * item.quantity,
+              })),
+              totalAmount: grandTotal,
+              status: 'pending',
+              shippingAddress: address,
+              paymentStatus: 'paid',
+            })
+
+            clearCart()
+            setCheckoutDialogOpen(false)
+            setSuccessDialogOpen(true)
+          },
+          onPending: function (result: any) {
+            console.log('Payment pending', result)
+            alert('Menunggu pembayaran Anda.')
+            setCheckoutDialogOpen(false)
+          },
+          onError: function (result: any) {
+            console.error('Payment error', result)
+            alert('Pembayaran gagal, silakan coba lagi.')
+          },
+          onClose: function () {
+            console.log('customer closed the popup without finishing the payment')
+          }
+        })
+      } else {
+        console.error('Midtrans Snap is not loaded')
+        alert('Gagal memuat sistem pembayaran.')
+      }
+    } catch (error: any) {
       console.error('Checkout failed:', error)
+      alert(error.message || 'Terjadi kesalahan saat checkout')
     } finally {
       setIsCheckingOut(false)
     }

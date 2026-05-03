@@ -36,8 +36,56 @@ export default function PatientOrdersPage() {
 
   const orders = user ? getOrdersByPatient(`pat-${user.id}`) : []
 
-  const handlePay = (id: string) => {
-    updateOrderStatus(id, 'processing')
+  const handlePay = async (id: string) => {
+    try {
+      const orderToPay = orders.find((o) => o.id === id)
+      if (!orderToPay || !user) return
+
+      // 1. Create transaction in DB
+      const checkoutRes = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user.id,
+          amount: orderToPay.totalAmount,
+          orderId: orderToPay.id,
+        }),
+      })
+
+      const checkoutData = await checkoutRes.json()
+      if (!checkoutData.success) throw new Error(checkoutData.message)
+
+      // 2. Get Snap token
+      const tokenRes = await fetch('/api/payments/create-token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ transactionId: checkoutData.transactionId }),
+      })
+
+      const tokenData = await tokenRes.json()
+      if (!tokenData.success) throw new Error(tokenData.message)
+
+      // 3. Show Snap popup
+      if ((window as any).snap) {
+        ;(window as any).snap.pay(tokenData.token, {
+          onSuccess: function () {
+            updateOrderStatus(id, 'processing')
+            alert('Pembayaran berhasil!')
+          },
+          onPending: function () {
+            alert('Menunggu pembayaran Anda.')
+          },
+          onError: function () {
+            alert('Pembayaran gagal, silakan coba lagi.')
+          }
+        })
+      } else {
+        alert('Gagal memuat sistem pembayaran.')
+      }
+    } catch (error: any) {
+      console.error('Payment error:', error)
+      alert(error.message || 'Terjadi kesalahan saat memproses pembayaran.')
+    }
   }
 
   const handleCancel = (id: string) => {
