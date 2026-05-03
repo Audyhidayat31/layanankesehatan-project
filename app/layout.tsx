@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
+import Script from 'next/script'
 import './globals.css'
 
 const geist = Geist({
@@ -38,6 +39,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="id" className={`${geist.variable} ${geistMono.variable} bg-background`}>
+      <head>
+        <Script
+          src="https://app.sandbox.midtrans.com/snap/snap.js"
+          data-client-key={process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY || 'Mid-client-RmaDWKX8jsf_1WQH'}
+          strategy="beforeInteractive"
+        />
+      </head>
       <body className="font-sans antialiased min-h-screen">
         {children}
         {process.env.NODE_ENV === 'production' && <Analytics />}

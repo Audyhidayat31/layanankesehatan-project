@@ -534,7 +534,7 @@ export const useAppStore = create<AppState>()(
               : msg
           ),
           notifications: get().notifications.map((notif) =>
-            notif.userId === receiverId && notif.type === 'CHAT'
+            notif.userId === receiverId && notif.type === 'chat'
               ? { ...notif, isRead: true }
               : notif
           ),

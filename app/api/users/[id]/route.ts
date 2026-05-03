@@ -3,9 +3,9 @@ import prisma from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
 
 // PUT /api/users/[id]
-export async function PUT(req: Request, { params }: { params: { id: string } }) {
+export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const id = params.id
+    const { id } = await params
     if (!id) {
       return NextResponse.json({ error: 'User ID is required' }, { status: 400 })
     }
@@ -56,9 +56,9 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
 }
 
 // DELETE /api/users/[id]
-export async function DELETE(req: Request, { params }: { params: { id: string } }) {
+export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const id = params.id
+    const { id } = await params
     if (!id) {
       return NextResponse.json({ error: 'User ID is required' }, { status: 400 })
     }
