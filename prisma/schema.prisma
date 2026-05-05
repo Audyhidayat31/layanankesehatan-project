@@ -76,7 +76,7 @@ model User {
   sentMessages     ChatMessage[] @relation("SentMessages")
   receivedMessages ChatMessage[] @relation("ReceivedMessages")
   notifications    Notification[]
-  transactions     Transaction[]
+  transactions     PaymentTransaction[]
   chatRooms        ChatRoom[]
   consultationMessages ConsultationMessage[]
 }
@@ -254,7 +254,7 @@ model ChatMessage {
   createdAt  DateTime    @default(now())
 }
 
-model Transaction {
+model PaymentTransaction {
   id            String          @id @default(cuid())
   userId        String
   user          User            @relation(fields: [userId], references: [id])

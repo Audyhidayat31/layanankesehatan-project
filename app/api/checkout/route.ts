@@ -9,12 +9,13 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, message: 'Missing required fields' }, { status: 400 });
     }
 
-    const transaction = await prisma.transaction.create({
+    // Pastikan amount adalah angka dan type adalah uppercase sesuai Enum Prisma
+    const transaction = await prisma.paymentTransaction.create({
       data: {
         userId,
-        type,
+        type: (type as string).toUpperCase() as any,
         referenceId: orderId,
-        amount,
+        amount: Number(amount),
         status: 'PENDING',
       }
     });
@@ -22,6 +23,8 @@ export async function POST(req: Request) {
     return NextResponse.json({ success: true, transactionId: transaction.id });
   } catch (error: any) {
     console.error('Checkout API error:', error);
-    return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+    // Berikan detail error yang lebih informatif jika ada
+    const errorMessage = error.message || 'Internal Server Error';
+    return NextResponse.json({ success: false, message: errorMessage }, { status: 500 });
   }
 }

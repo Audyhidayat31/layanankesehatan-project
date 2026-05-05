@@ -15,7 +15,7 @@ export async function POST(req: Request) {
     }
 
     // 1. Ambil data transaksi beserta user dari database
-    const dbTransaction = await prisma.transaction.findUnique({
+    const dbTransaction = await prisma.paymentTransaction.findUnique({
       where: { id: transactionId },
       include: {
         user: true,

@@ -45,7 +45,7 @@ export async function POST(req: Request) {
         }
 
         // 3. Cari Transaksi
-        const transaction = await prisma.transaction.findFirst({
+        const transaction = await prisma.paymentTransaction.findFirst({
             where: {
                 OR: [
                     { id: order_id },
@@ -59,7 +59,7 @@ export async function POST(req: Request) {
 
         if (transaction) {
             // Update status di tabel Transaction
-            await prisma.transaction.update({
+            await prisma.paymentTransaction.update({
                 where: { id: transaction.id },
                 data: {
                     status: dbStatus,

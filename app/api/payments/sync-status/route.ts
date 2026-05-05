@@ -50,7 +50,7 @@ export async function POST(req: Request) {
         }
 
         // 1. Coba perbarui di tabel Transaction (jika ada)
-        const transaction = await prisma.transaction.findFirst({
+        const transaction = await prisma.paymentTransaction.findFirst({
             where: {
                 OR: [
                     { id: orderId },
@@ -60,7 +60,7 @@ export async function POST(req: Request) {
         });
 
         if (transaction) {
-            await prisma.transaction.update({
+            await prisma.paymentTransaction.update({
                 where: { id: transaction.id },
                 data: {
                     status: dbStatus,

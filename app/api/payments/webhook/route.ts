@@ -45,7 +45,7 @@ export async function POST(req: Request) {
     }
 
     // 1. Try to find and update Transaction
-    const transaction = await prisma.transaction.findFirst({
+    const transaction = await prisma.paymentTransaction.findFirst({
       where: {
         OR: [
           { id: order_id },
@@ -55,7 +55,7 @@ export async function POST(req: Request) {
     });
 
     if (transaction) {
-      await prisma.transaction.update({
+      await prisma.paymentTransaction.update({
         where: { id: transaction.id },
         data: { 
           status: dbStatus,
