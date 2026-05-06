@@ -72,8 +72,21 @@ export async function POST(req: Request) {
             if (transaction.type === 'ORDER' && transaction.referenceId) {
                 await prisma.order.update({
                     where: { id: transaction.referenceId },
-                    data: { paymentStatus: dbStatus }
+                    data: { 
+                        paymentStatus: dbStatus,
+                        ...(dbStatus === 'PAID' ? { status: 'PROCESSING' } : {})
+                    }
                 }).catch(() => { }); // Abaikan error jika order tidak ditemukan
+            }
+
+            // Sinkronisasi tabel Appointment jika berkaitan
+            if (transaction.type === 'APPOINTMENT' && transaction.referenceId) {
+                await prisma.appointment.update({
+                    where: { id: transaction.referenceId },
+                    data: {
+                        ...(dbStatus === 'PAID' ? { status: 'CONFIRMED' } : {})
+                    }
+                }).catch(() => { });
             }
         } else {
             // 2. Fallback: Coba perbarui langsung di tabel Order
@@ -84,13 +97,30 @@ export async function POST(req: Request) {
             if (order) {
                 await prisma.order.update({
                     where: { id: orderId },
-                    data: { paymentStatus: dbStatus }
+                    data: { 
+                        paymentStatus: dbStatus,
+                        ...(dbStatus === 'PAID' ? { status: 'PROCESSING' } : {})
+                    }
                 });
             } else {
-                return NextResponse.json(
-                    { success: false, message: 'Transaction or Order not found in database' },
-                    { status: 404 }
-                );
+                // Fallback: Coba perbarui langsung di tabel Appointment
+                const appointment = await prisma.appointment.findUnique({
+                    where: { id: orderId }
+                });
+
+                if (appointment) {
+                    await prisma.appointment.update({
+                        where: { id: orderId },
+                        data: {
+                            ...(dbStatus === 'PAID' ? { status: 'CONFIRMED' } : {})
+                        }
+                    });
+                } else {
+                    return NextResponse.json(
+                        { success: false, message: 'Transaction, Order, or Appointment not found in database' },
+                        { status: 404 }
+                    );
+                }
             }
         }
 

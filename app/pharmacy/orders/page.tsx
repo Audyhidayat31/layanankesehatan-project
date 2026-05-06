@@ -88,7 +88,7 @@ export default function PharmacyOrdersPage() {
       case 'pending':
         return <Badge variant="outline" className="bg-yellow-50 text-yellow-600 border-yellow-200">Menunggu</Badge>
       case 'processing':
-        return <Badge variant="secondary" className="bg-blue-50 text-blue-600 border-blue-200">Diproses</Badge>
+        return <Badge variant="secondary" className="bg-blue-50 text-blue-600 border-blue-200">Sudah Terbayar</Badge>
       case 'shipped':
         return <Badge variant="secondary" className="bg-purple-50 text-purple-600 border-purple-200">Dikirim</Badge>
       case 'delivered':

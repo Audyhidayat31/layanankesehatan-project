@@ -82,7 +82,7 @@ export default function PatientDashboardPage() {
       confirmed: 'Dikonfirmasi',
       completed: 'Selesai',
       cancelled: 'Dibatalkan',
-      processing: 'Diproses',
+      processing: 'Sudah Terbayar',
       shipped: 'Dikirim',
       delivered: 'Diterima',
     }

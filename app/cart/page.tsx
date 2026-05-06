@@ -91,7 +91,7 @@ export default function CartPage() {
       // 3. Tampilkan popup Midtrans
       if ((window as any).snap) {
         ;(window as any).snap.pay(tokenData.token, {
-          onSuccess: function (result: any) {
+          onSuccess: async function (result: any) {
             // Setelah sukses bayar, simpan order
             createOrder({
               patientId: `pat-${user.id}`,
@@ -104,23 +104,51 @@ export default function CartPage() {
                 price: item.medicine.price * item.quantity,
               })),
               totalAmount: grandTotal,
-              status: 'pending',
+              status: 'processing',
               shippingAddress: address,
               paymentStatus: 'paid',
             })
+
+            try {
+              await fetch('/api/payments/sync-status', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ orderId: checkoutData.transactionId }),
+              })
+            } catch (e) {
+              console.error('Failed to sync status', e)
+            }
 
             clearCart()
             setCheckoutDialogOpen(false)
             setSuccessDialogOpen(true)
           },
-          onPending: function (result: any) {
+          onPending: async function (result: any) {
             console.log('Payment pending', result)
+            try {
+              await fetch('/api/payments/sync-status', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ orderId: checkoutData.transactionId }),
+              })
+            } catch (e) {
+              console.error('Failed to sync status', e)
+            }
             alert('Menunggu pembayaran Anda.')
             setCheckoutDialogOpen(false)
           },
-          onError: function (result: any) {
-            console.error('Payment error', result)
-            alert('Pembayaran gagal, silakan coba lagi.')
+          onError: async function (result: any) {
+            console.error('Payment error detail:', result)
+            try {
+              await fetch('/api/payments/sync-status', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ orderId: checkoutData.transactionId }),
+              })
+            } catch (e) {
+              console.error('Failed to sync status', e)
+            }
+            alert('Pembayaran gagal: ' + (result?.status_message || 'Silakan coba lagi.'))
           },
           onClose: function () {
             console.log('customer closed the popup without finishing the payment')

@@ -87,7 +87,7 @@ export default function PharmacyDashboardPage() {
   const getStatusLabel = (status: string) => {
     const labels: Record<string, string> = {
       pending: 'Menunggu',
-      processing: 'Diproses',
+      processing: 'Sudah Terbayar',
       shipped: 'Dikirim',
       delivered: 'Selesai',
     }

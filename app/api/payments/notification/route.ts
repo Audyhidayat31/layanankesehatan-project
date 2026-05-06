@@ -71,7 +71,20 @@ export async function POST(req: Request) {
             if (transaction.type === 'ORDER' && transaction.referenceId) {
                 await prisma.order.update({
                     where: { id: transaction.referenceId },
-                    data: { paymentStatus: dbStatus }
+                    data: { 
+                        paymentStatus: dbStatus,
+                        ...(dbStatus === 'PAID' ? { status: 'PROCESSING' } : {})
+                    }
+                }).catch(() => { });
+            }
+
+            // Sinkronisasi status jika berhubungan dengan Appointment
+            if (transaction.type === 'APPOINTMENT' && transaction.referenceId) {
+                await prisma.appointment.update({
+                    where: { id: transaction.referenceId },
+                    data: {
+                        ...(dbStatus === 'PAID' ? { status: 'CONFIRMED' } : {})
+                    }
                 }).catch(() => { });
             }
 
@@ -102,7 +115,10 @@ export async function POST(req: Request) {
             if (order) {
                 await prisma.order.update({
                     where: { id: order_id },
-                    data: { paymentStatus: dbStatus }
+                    data: { 
+                        paymentStatus: dbStatus,
+                        ...(dbStatus === 'PAID' ? { status: 'PROCESSING' } : {})
+                    }
                 });
 
                 // In-App Notification untuk Fallback Order

@@ -68,15 +68,44 @@ export default function PatientOrdersPage() {
       // 3. Show Snap popup
       if ((window as any).snap) {
         ;(window as any).snap.pay(tokenData.token, {
-          onSuccess: function () {
+          onSuccess: async function (result: any) {
             updateOrderStatus(id, 'processing')
+            try {
+              await fetch('/api/payments/sync-status', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ orderId: checkoutData.transactionId }),
+              })
+            } catch (e) {
+              console.error('Failed to sync status', e)
+            }
             alert('Pembayaran berhasil!')
+            window.location.reload()
           },
-          onPending: function () {
+          onPending: async function (result: any) {
+            try {
+              await fetch('/api/payments/sync-status', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ orderId: checkoutData.transactionId }),
+              })
+            } catch (e) {
+              console.error('Failed to sync status', e)
+            }
             alert('Menunggu pembayaran Anda.')
           },
-          onError: function () {
-            alert('Pembayaran gagal, silakan coba lagi.')
+          onError: async function (result: any) {
+            console.error('Payment error detail:', result)
+            try {
+              await fetch('/api/payments/sync-status', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ orderId: checkoutData.transactionId }),
+              })
+            } catch (e) {
+              console.error('Failed to sync status', e)
+            }
+            alert('Pembayaran gagal: ' + (result?.status_message || 'Silakan coba lagi.'))
           }
         })
       } else {
@@ -122,7 +151,7 @@ export default function PatientOrdersPage() {
   const getStatusLabel = (status: string) => {
     const labels: Record<string, string> = {
       pending: 'Menunggu Pembayaran',
-      processing: 'Diproses',
+      processing: 'Sudah Terbayar',
       shipped: 'Dikirim',
       delivered: 'Diterima',
       cancelled: 'Dibatalkan',
