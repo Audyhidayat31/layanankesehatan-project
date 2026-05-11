@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { DashboardSidebar } from '@/components/dashboard/sidebar'
 import { DashboardHeader } from '@/components/dashboard/dashboard-header'
 import { Card, CardContent } from '@/components/ui/card'
@@ -8,10 +8,34 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { CreditCard, Calendar, Package, ArrowRight, ArrowDownLeft } from 'lucide-react'
-import { mockTransactions } from '@/lib/mock-data'
+import { useAuthStore } from '@/lib/store'
 
 export default function PatientTransactionsPage() {
+  const { user } = useAuthStore()
   const [activeTab, setActiveTab] = useState('all')
+  const [transactions, setTransactions] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    if (user?.id) {
+      fetchTransactions()
+    }
+  }, [user?.id])
+
+  const fetchTransactions = async () => {
+    try {
+      setLoading(true)
+      const res = await fetch(`/api/transactions?userId=${user?.id}`)
+      const data = await res.json()
+      if (data.success) {
+        setTransactions(data.transactions)
+      }
+    } catch (error) {
+      console.error('Failed to fetch transactions:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('id-ID', {
@@ -22,27 +46,29 @@ export default function PatientTransactionsPage() {
   }
 
   const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'pending': return 'bg-yellow-100 text-yellow-700'
-      case 'paid': return 'bg-green-100 text-green-700'
-      case 'failed': return 'bg-red-100 text-red-700'
+    switch (status.toUpperCase()) {
+      case 'PENDING': return 'bg-yellow-100 text-yellow-700'
+      case 'PAID':
+      case 'SUCCESS': return 'bg-green-100 text-green-700'
+      case 'FAILED': return 'bg-red-100 text-red-700'
       default: return 'bg-gray-100 text-gray-700'
     }
   }
 
   const getStatusLabel = (status: string) => {
     const labels: Record<string, string> = {
-      pending: 'Menunggu',
-      paid: 'Berhasil',
-      failed: 'Gagal',
+      PENDING: 'Menunggu',
+      PAID: 'Berhasil',
+      SUCCESS: 'Berhasil',
+      FAILED: 'Gagal',
     }
-    return labels[status] || status
+    return labels[status.toUpperCase()] || status
   }
 
-  const filteredTransactions = mockTransactions.filter((trx) => {
+  const filteredTransactions = transactions.filter((trx) => {
     if (activeTab === 'all') return true
-    if (activeTab === 'appointments') return trx.type === 'appointment'
-    if (activeTab === 'orders') return trx.type === 'order'
+    if (activeTab === 'appointments') return trx.type === 'APPOINTMENT'
+    if (activeTab === 'orders') return trx.type === 'ORDER'
     return true
   })
 
@@ -68,13 +94,17 @@ export default function PatientTransactionsPage() {
             </TabsList>
 
             <TabsContent value={activeTab} className="space-y-4">
-              {filteredTransactions.length > 0 ? (
+              {loading ? (
+                <div className="flex flex-col items-center justify-center py-16">
+                  <p className="text-muted-foreground">Memuat data...</p>
+                </div>
+              ) : filteredTransactions.length > 0 ? (
                 filteredTransactions.map((trx) => (
                   <Card key={trx.id}>
                     <CardContent className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
                       <div className="flex items-start md:items-center gap-4">
                         <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary/10">
-                          {trx.type === 'appointment' ? (
+                          {trx.type === 'APPOINTMENT' ? (
                             <Calendar className="h-6 w-6 text-primary" />
                           ) : (
                             <Package className="h-6 w-6 text-primary" />
@@ -83,7 +113,7 @@ export default function PatientTransactionsPage() {
                         <div>
                           <div className="flex items-center gap-2 mb-1">
                             <p className="font-medium text-foreground">
-                              {trx.type === 'appointment' ? 'Konsultasi Dokter' : 'Pembelian Obat'}
+                              {trx.type === 'APPOINTMENT' ? 'Konsultasi Dokter' : 'Pembelian Obat'}
                             </p>
                             <Badge variant="secondary" className={getStatusColor(trx.status)}>
                               {getStatusLabel(trx.status)}
@@ -94,11 +124,15 @@ export default function PatientTransactionsPage() {
                               <span className="font-mono text-xs">#{trx.id}</span>
                             </span>
                             <span className="hidden sm:inline">•</span>
-                            <span>{trx.createdAt}</span>
+                            <span>{new Date(trx.createdAt).toLocaleDateString('id-ID', {
+                              day: 'numeric',
+                              month: 'short',
+                              year: 'numeric'
+                            })}</span>
                             <span className="hidden sm:inline">•</span>
                             <span className="flex items-center gap-1">
                               <CreditCard className="h-3 w-3" />
-                              {trx.paymentMethod}
+                              {trx.paymentMethod || '-'}
                             </span>
                           </div>
                         </div>
