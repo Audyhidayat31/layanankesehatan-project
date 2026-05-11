@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { DashboardSidebar } from '@/components/dashboard/sidebar'
 import { DashboardHeader } from '@/components/dashboard/dashboard-header'
 import { Card, CardContent } from '@/components/ui/card'
@@ -17,24 +17,33 @@ import {
 import { Button } from '@/components/ui/button'
 import {
   Search,
-  CreditCard,
-  ArrowUpRight,
-  ArrowDownRight,
   Filter,
   Download,
 } from 'lucide-react'
 
-const initialTransactions = [
-  { id: 'TRX-001', user: 'Budi Santoso', type: 'KONSULTASI', amount: 150000, date: '2024-04-23', status: 'success', method: 'Transfer Bank' },
-  { id: 'TRX-002', user: 'Siti Aminah', type: 'OBAT', amount: 85000, date: '2024-04-23', status: 'success', method: 'E-Wallet' },
-  { id: 'TRX-003', user: 'Andi Pratama', type: 'KONSULTASI', amount: 200000, date: '2024-04-22', status: 'pending', method: 'Credit Card' },
-  { id: 'TRX-004', user: 'Dewi Lestari', type: 'OBAT', amount: 120000, date: '2024-04-22', status: 'failed', method: 'Transfer Bank' },
-  { id: 'TRX-005', user: 'Ahmad Faisal', type: 'KONSULTASI', amount: 150000, date: '2024-04-21', status: 'success', method: 'E-Wallet' },
-]
-
 export default function AdminTransactionsPage() {
-  const [transactions, setTransactions] = useState(initialTransactions)
+  const [transactions, setTransactions] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
+
+  useEffect(() => {
+    fetchTransactions()
+  }, [])
+
+  const fetchTransactions = async () => {
+    try {
+      setLoading(true)
+      const res = await fetch('/api/admin/transactions')
+      const data = await res.json()
+      if (data.success) {
+        setTransactions(data.transactions)
+      }
+    } catch (error) {
+      console.error('Failed to fetch transactions:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('id-ID', {
@@ -45,12 +54,13 @@ export default function AdminTransactionsPage() {
   }
 
   const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'success':
+    switch (status.toUpperCase()) {
+      case 'PAID':
+      case 'SUCCESS':
         return <Badge className="bg-green-100 text-green-700 hover:bg-green-100">Berhasil</Badge>
-      case 'pending':
+      case 'PENDING':
         return <Badge variant="outline" className="text-yellow-600 border-yellow-200 bg-yellow-50">Pending</Badge>
-      case 'failed':
+      case 'FAILED':
         return <Badge variant="destructive">Gagal</Badge>
       default:
         return <Badge variant="secondary">{status}</Badge>
@@ -58,7 +68,7 @@ export default function AdminTransactionsPage() {
   }
 
   const filteredTransactions = transactions.filter(t => 
-    t.user.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    t.user?.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     t.id.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
@@ -114,23 +124,43 @@ export default function AdminTransactionsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredTransactions.map((trx) => (
-                  <TableRow key={trx.id}>
-                    <TableCell className="font-mono text-xs font-bold">{trx.id}</TableCell>
-                    <TableCell className="font-medium">{trx.user}</TableCell>
-                    <TableCell>
-                      <Badge variant="secondary" className="text-[10px] font-bold uppercase tracking-wider">
-                        {trx.type}
-                      </Badge>
+                {loading ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
+                      Memuat data...
                     </TableCell>
-                    <TableCell className="font-semibold text-primary">
-                      {formatPrice(trx.amount)}
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{trx.method}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{trx.date}</TableCell>
-                    <TableCell>{getStatusBadge(trx.status)}</TableCell>
                   </TableRow>
-                ))}
+                ) : filteredTransactions.length > 0 ? (
+                  filteredTransactions.map((trx) => (
+                    <TableRow key={trx.id}>
+                      <TableCell className="font-mono text-xs font-bold">{trx.id}</TableCell>
+                      <TableCell className="font-medium">{trx.user?.name || 'Unknown'}</TableCell>
+                      <TableCell>
+                        <Badge variant="secondary" className="text-[10px] font-bold uppercase tracking-wider">
+                          {trx.type}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="font-semibold text-primary">
+                        {formatPrice(trx.amount)}
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">{trx.paymentMethod || '-'}</TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {new Date(trx.createdAt).toLocaleDateString('id-ID', {
+                          day: 'numeric',
+                          month: 'short',
+                          year: 'numeric'
+                        })}
+                      </TableCell>
+                      <TableCell>{getStatusBadge(trx.status)}</TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
+                      Tidak ada transaksi ditemukan.
+                    </TableCell>
+                  </TableRow>
+                )}
               </TableBody>
             </Table>
           </Card>
