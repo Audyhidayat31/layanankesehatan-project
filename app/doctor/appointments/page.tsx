@@ -425,7 +425,7 @@ export default function DoctorAppointmentsPage() {
           DIALOG INPUT DIAGNOSA
       ════════════════════════════════════════════════════════════ */}
       <Dialog open={diagnosisDialogOpen} onOpenChange={setDiagnosisDialogOpen}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Input Diagnosa dan Resep</DialogTitle>
             <DialogDescription>
