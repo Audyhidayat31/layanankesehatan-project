@@ -107,7 +107,7 @@ export default function DoctorSchedulePage() {
                   Tambah Jadwal
                 </Button>
               </DialogTrigger>
-              <DialogContent>
+              <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle>Tambah Jadwal Baru</DialogTitle>
                   <DialogDescription>
