@@ -299,7 +299,7 @@ export default function DoctorDetailPage({ params }: { params: Promise<{ id: str
                         Pilih Jadwal
                       </Button>
                     </DialogTrigger>
-                    <DialogContent className="max-w-md">
+                    <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
                       <DialogHeader>
                         <DialogTitle>Pilih Jadwal Konsultasi</DialogTitle>
                         <DialogDescription>
