@@ -389,7 +389,9 @@ export const useAppStore = create<AppState>()(
       },
 
       getAppointmentsByPatient: (patientId) => {
-        return get().appointments.filter((apt) => apt.patientId === patientId)
+        return get().appointments.filter((apt) => 
+          apt.patientId === patientId || apt.patient?.userId === patientId.replace('pat-', '')
+        )
       },
 
       getAppointmentsByDoctor: (doctorId) => {
@@ -415,7 +417,9 @@ export const useAppStore = create<AppState>()(
       },
 
       getOrdersByPatient: (patientId) => {
-        return get().orders.filter((order) => order.patientId === patientId)
+        return get().orders.filter((order) => 
+          order.patientId === patientId || order.patient?.userId === patientId.replace('pat-', '')
+        )
       },
 
       getOrdersByPharmacy: (pharmacyId) => {
