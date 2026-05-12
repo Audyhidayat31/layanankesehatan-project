@@ -204,48 +204,53 @@ export default function CartPage() {
           <div className="grid gap-6 lg:grid-cols-3">
             <div className="lg:col-span-2 space-y-4">
               {items.map((item) => (
-                <Card key={item.medicine.id}>
-                  <CardContent className="flex items-center gap-4 p-4">
-                    <div className="flex h-20 w-20 items-center justify-center rounded-lg bg-muted">
-                      <ShoppingBag className="h-8 w-8 text-muted-foreground/50" />
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-foreground">{item.medicine.name}</h3>
-                      <p className="text-sm text-muted-foreground">{item.medicine.unit}</p>
-                      <p className="text-sm font-medium text-primary">
-                        {formatPrice(item.medicine.price)}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2">
+                <Card key={item.medicine.id} className="overflow-hidden">
+                  <CardContent className="p-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                      <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-lg bg-muted mx-auto sm:mx-0">
+                        <ShoppingBag className="h-8 w-8 text-muted-foreground/50" />
+                      </div>
+                      <div className="flex-1 text-center sm:text-left">
+                        <h3 className="font-semibold text-foreground line-clamp-1">{item.medicine.name}</h3>
+                        <p className="text-sm text-muted-foreground">{item.medicine.unit}</p>
+                        <p className="text-sm font-medium text-primary">
+                          {formatPrice(item.medicine.price)}
+                        </p>
+                      </div>
+                      <div className="flex items-center justify-center gap-3 py-2 sm:py-0">
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="h-8 w-8 rounded-full"
+                          onClick={() => updateQuantity(item.medicine.id, item.quantity - 1)}
+                        >
+                          <Minus className="h-4 w-4" />
+                        </Button>
+                        <span className="w-8 text-center font-semibold">{item.quantity}</span>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="h-8 w-8 rounded-full"
+                          onClick={() => updateQuantity(item.medicine.id, item.quantity + 1)}
+                        >
+                          <Plus className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      <div className="flex items-center justify-between sm:block sm:w-32 sm:text-right border-t sm:border-none pt-3 sm:pt-0">
+                        <span className="text-sm text-muted-foreground sm:hidden">Total:</span>
+                        <span className="font-bold text-foreground">
+                          {formatPrice(item.medicine.price * item.quantity)}
+                        </span>
+                      </div>
                       <Button
-                        variant="outline"
+                        variant="ghost"
                         size="icon"
-                        className="h-8 w-8"
-                        onClick={() => updateQuantity(item.medicine.id, item.quantity - 1)}
+                        className="absolute right-2 top-2 sm:static text-muted-foreground hover:text-destructive"
+                        onClick={() => removeItem(item.medicine.id)}
                       >
-                        <Minus className="h-4 w-4" />
-                      </Button>
-                      <span className="w-8 text-center font-medium">{item.quantity}</span>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() => updateQuantity(item.medicine.id, item.quantity + 1)}
-                      >
-                        <Plus className="h-4 w-4" />
+                        <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
-                    <div className="w-24 text-right font-semibold text-foreground">
-                      {formatPrice(item.medicine.price * item.quantity)}
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="text-destructive hover:text-destructive"
-                      onClick={() => removeItem(item.medicine.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
                   </CardContent>
                 </Card>
               ))}
@@ -295,7 +300,7 @@ export default function CartPage() {
       <Footer />
 
       <Dialog open={checkoutDialogOpen} onOpenChange={setCheckoutDialogOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Checkout</DialogTitle>
             <DialogDescription>
@@ -352,18 +357,18 @@ export default function CartPage() {
       </Dialog>
 
       <Dialog open={successDialogOpen} onOpenChange={setSuccessDialogOpen}>
-        <DialogContent>
-          <div className="flex flex-col items-center py-6 text-center">
+        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+          <DialogHeader className="items-center text-center">
             <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
               <CheckCircle className="h-8 w-8 text-green-600" />
             </div>
-            <DialogHeader className="items-center">
-              <DialogTitle className="text-xl font-bold text-foreground">Pesanan Berhasil!</DialogTitle>
-              <DialogDescription className="text-muted-foreground">
-                Pesanan Anda sedang diproses dan akan segera dikirim
-              </DialogDescription>
-            </DialogHeader>
-            <div className="mt-6 flex gap-3">
+            <DialogTitle className="text-xl font-bold text-foreground">Pesanan Berhasil!</DialogTitle>
+            <DialogDescription className="text-muted-foreground">
+              Pesanan Anda sedang diproses dan akan segera dikirim
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col items-center py-2">
+            <div className="mt-4 flex gap-3">
               <Button variant="outline" asChild>
                 <Link href="/pharmacy">Lanjut Belanja</Link>
               </Button>
