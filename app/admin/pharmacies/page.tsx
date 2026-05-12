@@ -128,7 +128,7 @@ export default function AdminPharmaciesPage() {
               setIsDialogOpen(open)
               if (!open) setEditingPharmacy(null)
             }}>
-              <DialogContent className="max-w-md">
+              <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle>Edit Data Apotek</DialogTitle>
                   <DialogDescription>
