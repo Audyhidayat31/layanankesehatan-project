@@ -24,6 +24,9 @@ export const metadata: Metadata = {
     description: 'Konsultasi dokter online, beli obat, dan layanan kesehatan lengkap',
     type: 'website',
   },
+  icons: {
+    icon: '/icon.svg',
+  },
 }
 
 export const viewport: Viewport = {
@@ -39,14 +42,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="id" className={`${geist.variable} ${geistMono.variable} bg-background`}>
-      <head>
+      <body className="font-sans antialiased min-h-screen">
         <Script
           src="https://app.sandbox.midtrans.com/snap/snap.js"
           data-client-key={process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY || 'Mid-client-RmaDWKX8jsf_1WQH'}
-          strategy="beforeInteractive"
+          strategy="afterInteractive"
         />
-      </head>
-      <body className="font-sans antialiased min-h-screen">
         {children}
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
