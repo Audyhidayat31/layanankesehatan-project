@@ -67,6 +67,7 @@ const navItems: Record<string, NavItem[]> = {
     { label: 'Verifikasi', href: '/admin/verification', icon: ShieldCheck },
     { label: 'Transaksi', href: '/admin/transactions', icon: CreditCard },
     { label: 'Laporan', href: '/admin/reports', icon: BarChart3 },
+    { label: 'Pengaturan', href: '/admin/settings', icon: Settings },
   ],
 }
 

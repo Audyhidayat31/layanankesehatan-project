@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
-import bcrypt from 'bcryptjs'
 
 // GET /api/users?ids=id1,id2,id3
 export async function GET(req: Request) {
@@ -49,16 +48,13 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Email sudah terdaftar' }, { status: 400 })
     }
 
-    // Default password 'password123'
-    const hashedPassword = await bcrypt.hash('password123', 10)
-
     const result = await prisma.$transaction(async (tx) => {
       const user = await tx.user.create({
         data: {
           name,
           email,
           role,
-          password: hashedPassword
+          password: 'password123'
         },
         select: { id: true, name: true, email: true, role: true, createdAt: true }
       })

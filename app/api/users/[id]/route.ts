@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
-import bcrypt from 'bcryptjs'
 
 // PUT /api/users/[id]
 export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -39,7 +38,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     }
 
     if (password) {
-      updateData.password = await bcrypt.hash(password, 10)
+      updateData.password = password
     }
 
     const result = await prisma.$transaction(async (tx) => {
