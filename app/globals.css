@@ -146,7 +146,8 @@
   }
 
   .text-gradient {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary via-accent to-secondary animate-gradient-x;
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary via-accent to-secondary;
+    animation: gradient-x 10s ease infinite;
   }
 
   .bg-gradient-modern {
