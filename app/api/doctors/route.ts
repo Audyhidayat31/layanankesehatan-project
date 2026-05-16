@@ -1,9 +1,16 @@
 import { NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET() {
   try {
     const doctors = await prisma.doctorProfile.findMany({
+      where: {
+        user: {
+          role: 'DOCTOR'
+        }
+      },
       include: {
         user: {
           select: {

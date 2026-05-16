@@ -137,10 +137,10 @@ export default function PharmacyPage() {
 
           <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
             {filteredMedicines.map((medicine) => (
-              <Card key={medicine.id} className="overflow-hidden transition-all hover:shadow-lg">
-                <div className="relative aspect-square bg-muted/50">
-                  <div className="flex h-full items-center justify-center">
-                    <Pill className="h-16 w-16 text-muted-foreground/30" />
+              <Card key={medicine.id} className="group overflow-hidden border-border/40 bg-card/60 backdrop-blur-sm transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl hover:border-primary/30">
+                <div className="relative aspect-square bg-muted/50 overflow-hidden">
+                  <div className="flex h-full items-center justify-center transition-transform duration-500 group-hover:scale-110">
+                    <Pill className="h-16 w-16 text-muted-foreground/30 transition-colors duration-300 group-hover:text-primary/40" />
                   </div>
                   {medicine.requiresPrescription && (
                     <Badge
@@ -153,10 +153,10 @@ export default function PharmacyPage() {
                 </div>
                 <CardContent className="p-4">
                   <div className="mb-2">
-                    <Badge variant="secondary" className="mb-2 text-xs">
+                    <Badge variant="secondary" className="mb-2 text-xs transition-colors duration-300 group-hover:bg-secondary/80">
                       {medicine.category}
                     </Badge>
-                    <h3 className="font-semibold text-foreground line-clamp-2">
+                    <h3 className="font-semibold text-foreground line-clamp-2 transition-colors duration-300 group-hover:text-primary">
                       {medicine.name}
                     </h3>
                     <p className="text-xs text-muted-foreground">{medicine.genericName}</p>
@@ -186,7 +186,7 @@ export default function PharmacyPage() {
                     </div>
                   ) : (
                     <Button
-                      className="mt-3 w-full"
+                      className="mt-3 w-full transition-all duration-300 hover:shadow-md group-hover:bg-primary/90"
                       variant={isInCart(medicine.id) ? 'secondary' : 'default'}
                       onClick={() => handleAddToCart(medicine)}
                       disabled={medicine.stock === 0}

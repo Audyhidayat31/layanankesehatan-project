@@ -71,19 +71,24 @@ export default function DoctorsPage() {
     }
 
     if (selectedSpecialization !== 'all') {
-      doctorList = doctorList.filter((doc) => doc.specialization === selectedSpecialization)
+      const selectedLow = selectedSpecialization.toLowerCase()
+      doctorList = doctorList.filter((doc) => {
+        const docSpec = (doc.specialization || '').toLowerCase()
+        if (!docSpec) return false
+        return docSpec.includes(selectedLow) || selectedLow.includes(docSpec)
+      })
     }
 
     if (priceRange !== 'all') {
       switch (priceRange) {
         case 'under-100k':
-          doctorList = doctorList.filter((doc) => doc.price < 100000)
+          doctorList = doctorList.filter((doc) => doc.price <= 100000)
           break
         case '100k-200k':
           doctorList = doctorList.filter((doc) => doc.price >= 100000 && doc.price <= 200000)
           break
         case 'over-200k':
-          doctorList = doctorList.filter((doc) => doc.price > 200000)
+          doctorList = doctorList.filter((doc) => doc.price >= 200000)
           break
       }
     }
@@ -178,11 +183,11 @@ export default function DoctorsPage() {
 
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {filteredDoctors.map((doctor) => (
-              <Card key={doctor.id} className="overflow-hidden transition-all hover:shadow-lg">
+              <Card key={doctor.id} className="group overflow-hidden border-border/40 bg-card/60 backdrop-blur-sm transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl hover:border-primary/30">
                 <CardContent className="p-6">
                   <div className="mb-4 flex items-start gap-4">
-                    <Avatar className="h-16 w-16 border-2 border-primary/20">
-                      <AvatarFallback className="bg-primary/10 text-lg font-semibold text-primary">
+                    <Avatar className="h-16 w-16 border-2 border-primary/20 transition-all duration-300 group-hover:border-primary/50 group-hover:shadow-md">
+                      <AvatarFallback className="bg-primary/10 text-lg font-semibold text-primary transition-colors duration-300 group-hover:bg-primary/20">
                         {getInitials(doctor.user.name)}
                       </AvatarFallback>
                     </Avatar>
@@ -227,7 +232,7 @@ export default function DoctorsPage() {
                     </span>
                   </div>
 
-                  <Button className="w-full" asChild>
+                  <Button className="w-full transition-all duration-300 hover:shadow-md group-hover:bg-primary/90" asChild>
                     <Link href={`/doctors/${doctor.id}`}>Lihat Profil</Link>
                   </Button>
                 </CardContent>
