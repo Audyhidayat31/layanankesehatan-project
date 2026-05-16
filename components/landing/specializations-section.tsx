@@ -96,14 +96,14 @@ export function SpecializationsSection() {
             <Link
               key={spec.slug}
               href={`/doctors?specialization=${spec.slug}`}
-              className="group flex flex-col items-center gap-4 rounded-xl border border-border bg-card p-6 text-center shadow-sm transition-all hover:border-primary/50 hover:shadow-md"
+              className="group flex flex-col items-center gap-4 rounded-xl border border-border/40 bg-card/50 backdrop-blur-sm p-6 text-center shadow-sm transition-all duration-300 hover:-translate-y-1.5 hover:border-primary/50 hover:shadow-lg hover:bg-card cursor-pointer"
             >
               <div
-                className={`flex h-16 w-16 items-center justify-center rounded-full ${spec.bgColor} transition-transform group-hover:scale-110`}
+                className={`flex h-16 w-16 items-center justify-center rounded-full ${spec.bgColor} transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3`}
               >
                 <spec.icon className={`h-8 w-8 ${spec.color}`} />
               </div>
-              <span className="font-medium text-foreground">{spec.name}</span>
+              <span className="font-medium text-foreground transition-colors duration-300 group-hover:text-primary">{spec.name}</span>
             </Link>
           ))}
         </div>

@@ -260,11 +260,15 @@ export const useAppStore = create<AppState>()(
           const res = await fetch('/api/doctors')
           if (res.ok) {
             const json = await res.json()
-            if (json.success && json.doctors.length > 0) {
-              // Merge: DB doctors override matching mock doctors by id,
-              // add new ones that don't exist in the current list
+            if (json.success) {
               const currentDoctors = get().doctors
-              const merged = [...currentDoctors]
+              
+              // Filter: retain mock doctors OR doctors present in DB response
+              const dbDoctorIds = new Set(json.doctors.map((d: any) => d.id))
+              const merged = currentDoctors.filter(d => 
+                (d.id.startsWith('doc-') && !dbDoctorIds.has(d.id)) || dbDoctorIds.has(d.id)
+              )
+
               json.doctors.forEach((dbDoc: any) => {
                 const idx = merged.findIndex(d => d.id === dbDoc.id)
                 // Normalize DB doctor to match frontend DoctorProfile shape

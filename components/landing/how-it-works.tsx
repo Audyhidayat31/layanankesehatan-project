@@ -45,17 +45,17 @@ export function HowItWorks() {
 
           <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
             {steps.map((item, index) => (
-              <div key={item.step} className="relative flex flex-col items-center text-center">
-                <div className="relative z-10 mb-6 flex h-20 w-20 items-center justify-center rounded-full border-4 border-background bg-primary shadow-lg">
-                  <item.icon className="h-8 w-8 text-primary-foreground" />
-                  <span className="absolute -right-1 -top-1 flex h-7 w-7 items-center justify-center rounded-full bg-accent text-sm font-bold text-accent-foreground">
+              <div key={item.step} className="group relative flex flex-col items-center text-center transition-all duration-300 hover:-translate-y-2 cursor-pointer">
+                <div className="relative z-10 mb-6 flex h-20 w-20 items-center justify-center rounded-full border-4 border-background bg-primary shadow-lg transition-transform duration-500 group-hover:scale-110 group-hover:rotate-6">
+                  <item.icon className="h-8 w-8 text-primary-foreground transition-transform duration-500 group-hover:-rotate-6" />
+                  <span className="absolute -right-1 -top-1 flex h-7 w-7 items-center justify-center rounded-full bg-accent text-sm font-bold text-accent-foreground transition-transform duration-300 group-hover:scale-110">
                     {item.step}
                   </span>
                 </div>
-                <h3 className="mb-2 text-lg font-semibold text-foreground">
+                <h3 className="mb-2 text-lg font-semibold text-foreground transition-colors duration-300 group-hover:text-primary">
                   {item.title}
                 </h3>
-                <p className="text-sm text-muted-foreground">{item.description}</p>
+                <p className="text-sm text-muted-foreground transition-colors duration-300 group-hover:text-foreground">{item.description}</p>
               </div>
             ))}
           </div>

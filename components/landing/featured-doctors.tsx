@@ -48,12 +48,12 @@ export function FeaturedDoctors() {
           {mockDoctors.map((doctor) => (
             <Card
               key={doctor.id}
-              className="group overflow-hidden transition-all hover:shadow-lg"
+              className="group overflow-hidden border-border/40 bg-card/60 backdrop-blur-sm transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl hover:border-primary/30"
             >
               <CardContent className="p-6">
                 <div className="mb-4 flex items-start justify-between">
-                  <Avatar className="h-16 w-16 border-2 border-primary/20">
-                    <AvatarFallback className="bg-primary/10 text-lg font-semibold text-primary">
+                  <Avatar className="h-16 w-16 border-2 border-primary/20 transition-all duration-300 group-hover:border-primary/50 group-hover:shadow-md">
+                    <AvatarFallback className="bg-primary/10 text-lg font-semibold text-primary transition-colors duration-300 group-hover:bg-primary/20">
                       {getInitials(doctor.user.name)}
                     </AvatarFallback>
                   </Avatar>
@@ -106,7 +106,7 @@ export function FeaturedDoctors() {
                   </span>
                 </div>
 
-                <Button className="w-full" asChild>
+                <Button className="w-full transition-all duration-300 hover:shadow-md group-hover:bg-primary/90" asChild>
                   <Link href={`/doctors/${doctor.id}`}>Buat Janji</Link>
                 </Button>
               </CardContent>
