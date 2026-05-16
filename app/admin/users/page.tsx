@@ -57,6 +57,10 @@ export default function AdminUsersPage() {
     name: '',
     email: '',
     role: 'PATIENT',
+    specialization: 'Umum',
+    hospital: 'Belum ditentukan',
+    experience: 0,
+    price: 50000,
   })
 
   useEffect(() => {
@@ -92,6 +96,10 @@ export default function AdminUsersPage() {
       name: user.name,
       email: user.email,
       role: user.role,
+      specialization: user.doctorProfile?.specialization || 'Umum',
+      hospital: user.doctorProfile?.hospital || 'Belum ditentukan',
+      experience: user.doctorProfile?.experience || 0,
+      price: user.doctorProfile?.price || 50000,
     })
     setIsDialogOpen(true)
   }
@@ -150,7 +158,7 @@ export default function AdminUsersPage() {
       }
       setIsDialogOpen(false)
       setEditingUser(null)
-      setFormData({ name: '', email: '', role: 'PATIENT' })
+      setFormData({ name: '', email: '', role: 'PATIENT', specialization: 'Umum', hospital: 'Belum ditentukan', experience: 0, price: 50000 })
     } catch (error) {
       console.error('Submit user error:', error)
       alert('Terjadi kesalahan')
@@ -197,7 +205,7 @@ export default function AdminUsersPage() {
               setIsDialogOpen(open)
               if (!open) {
                 setEditingUser(null)
-                setFormData({ name: '', email: '', role: 'PATIENT' })
+                setFormData({ name: '', email: '', role: 'PATIENT', specialization: 'Umum', hospital: 'Belum ditentukan', experience: 0, price: 50000 })
               }
             }}>
               <DialogTrigger asChild>
@@ -215,16 +223,18 @@ export default function AdminUsersPage() {
                 </DialogHeader>
                 <div className="space-y-4 py-4">
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">Nama Lengkap</label>
+                    <label className="text-sm font-medium text-foreground/80">Nama Lengkap</label>
                     <Input 
+                      className="transition-all duration-300 focus-visible:ring-primary/50 focus-visible:border-primary/50"
                       value={formData.name} 
                       onChange={(e) => setFormData({...formData, name: e.target.value})}
                       placeholder="Masukkan nama lengkap" 
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">Email</label>
+                    <label className="text-sm font-medium text-foreground/80">Email</label>
                     <Input 
+                      className="transition-all duration-300 focus-visible:ring-primary/50 focus-visible:border-primary/50"
                       type="email"
                       value={formData.email} 
                       onChange={(e) => setFormData({...formData, email: e.target.value})}
@@ -248,6 +258,58 @@ export default function AdminUsersPage() {
                       </SelectContent>
                     </Select>
                   </div>
+                  {formData.role === 'DOCTOR' && (
+                    <div className="space-y-4 p-4 mt-4 bg-primary/5 rounded-xl border border-primary/10 transition-all duration-500 animate-in fade-in slide-in-from-bottom-2">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="p-1.5 bg-primary/10 rounded-md">
+                          <Stethoscope className="w-4 h-4 text-primary" />
+                        </div>
+                        <p className="text-sm font-semibold text-primary">Detail Profil Dokter</p>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-foreground/80">Spesialisasi</label>
+                        <Input 
+                          className="bg-background transition-all duration-300 focus-visible:ring-primary/50 focus-visible:border-primary/50"
+                          value={formData.specialization} 
+                          onChange={(e) => setFormData({...formData, specialization: e.target.value})}
+                          placeholder="Misal: Spesialis Anak" 
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-foreground/80">Rumah Sakit / Lokasi Praktek</label>
+                        <Input 
+                          className="bg-background transition-all duration-300 focus-visible:ring-primary/50 focus-visible:border-primary/50"
+                          value={formData.hospital} 
+                          onChange={(e) => setFormData({...formData, hospital: e.target.value})}
+                          placeholder="Misal: RS Cipto Mangunkusumo" 
+                        />
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium text-foreground/80">Pengalaman (Tahun)</label>
+                          <Input 
+                            className="bg-background transition-all duration-300 focus-visible:ring-primary/50 focus-visible:border-primary/50"
+                            type="number"
+                            min="0"
+                            value={formData.experience} 
+                            onChange={(e) => setFormData({...formData, experience: parseInt(e.target.value) || 0})}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium text-foreground/80">Biaya Konsultasi (Rp)</label>
+                          <Input 
+                            className="bg-background transition-all duration-300 focus-visible:ring-primary/50 focus-visible:border-primary/50"
+                            type="number"
+                            min="0"
+                            step="5000"
+                            value={formData.price} 
+                            onChange={(e) => setFormData({...formData, price: parseInt(e.target.value) || 0})}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
                 <div className="flex justify-end gap-2">
                   <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Batal</Button>
