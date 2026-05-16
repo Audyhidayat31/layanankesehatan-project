@@ -82,18 +82,18 @@ export function DashboardSidebar({ role }: SidebarProps) {
   }, [])
 
   if (!mounted) {
-    return <aside className="fixed left-0 top-0 z-40 hidden h-screen w-64 border-r border-sidebar-border bg-sidebar lg:block" />
+    return <aside className="fixed left-0 top-0 z-40 hidden h-screen w-64 border-r border-sidebar-border/40 bg-sidebar/95 backdrop-blur-xl lg:block shadow-sm" />
   }
 
   return (
-    <aside className="fixed left-0 top-0 z-40 hidden h-screen w-64 border-r border-sidebar-border bg-sidebar lg:block">
+    <aside className="fixed left-0 top-0 z-40 hidden h-screen w-64 border-r border-sidebar-border/40 bg-sidebar/95 backdrop-blur-xl lg:block shadow-sm transition-all duration-300">
       <div className="flex h-full flex-col">
         <div className="flex h-16 items-center gap-2 border-b border-sidebar-border px-6">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-sidebar-primary">
-              <Stethoscope className="h-5 w-5 text-sidebar-primary-foreground" />
+          <Link href="/" className="group flex items-center gap-2 transition-all duration-300 hover:opacity-90">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-sidebar-primary/20 transition-all duration-300 group-hover:bg-sidebar-primary group-hover:shadow-md">
+              <Stethoscope className="h-5 w-5 text-sidebar-primary transition-colors duration-300 group-hover:text-sidebar-primary-foreground" />
             </div>
-            <span className="text-xl font-bold text-sidebar-foreground">HealthServices</span>
+            <span className="text-xl font-bold tracking-tight text-sidebar-foreground transition-colors duration-300 group-hover:text-sidebar-primary">HealthServices</span>
           </Link>
         </div>
 
@@ -106,13 +106,13 @@ export function DashboardSidebar({ role }: SidebarProps) {
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
+                    'group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-300 hover:translate-x-1',
                     isActive
-                      ? 'bg-sidebar-accent text-sidebar-accent-foreground'
+                      ? 'bg-sidebar-accent text-sidebar-accent-foreground shadow-sm'
                       : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'
                   )}
                 >
-                  <item.icon className="h-5 w-5" />
+                  <item.icon className={cn("h-5 w-5 transition-transform duration-300", isActive ? "scale-110" : "group-hover:scale-110")} />
                   {item.label}
                 </Link>
               )

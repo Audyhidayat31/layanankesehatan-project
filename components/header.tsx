@@ -60,32 +60,32 @@ export function Header() {
   }
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
+    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/60 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 shadow-sm transition-all duration-300">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <div className="flex items-center gap-8">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
-              <Stethoscope className="h-5 w-5 text-primary-foreground" />
+          <Link href="/" className="group flex items-center gap-2">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 transition-all duration-300 group-hover:bg-primary group-hover:shadow-md">
+              <Stethoscope className="h-5 w-5 text-primary transition-colors duration-300 group-hover:text-primary-foreground" />
             </div>
-            <span className="text-xl font-bold text-foreground">HealthServices</span>
+            <span className="text-xl font-bold tracking-tight text-foreground transition-colors duration-300 group-hover:text-primary">HealthServices</span>
           </Link>
 
           <nav className="hidden items-center gap-6 md:flex">
             <Link
               href="/doctors"
-              className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+              className="text-sm font-medium text-muted-foreground transition-all duration-300 hover:text-primary hover:-translate-y-0.5 relative after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-0 after:bg-primary after:transition-all after:duration-300 hover:after:w-full"
             >
               Cari Dokter
             </Link>
             <Link
               href="/pharmacy"
-              className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+              className="text-sm font-medium text-muted-foreground transition-all duration-300 hover:text-primary hover:-translate-y-0.5 relative after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-0 after:bg-primary after:transition-all after:duration-300 hover:after:w-full"
             >
               Apotek
             </Link>
             <Link
               href="/articles"
-              className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+              className="text-sm font-medium text-muted-foreground transition-all duration-300 hover:text-primary hover:-translate-y-0.5 relative after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-0 after:bg-primary after:transition-all after:duration-300 hover:after:w-full"
             >
               Artikel Kesehatan
             </Link>
@@ -170,11 +170,11 @@ export function Header() {
               </DropdownMenu>
             </>
           ) : (
-            <div className="hidden items-center gap-2 md:flex">
-              <Button variant="ghost" asChild>
+            <div className="hidden items-center gap-3 md:flex">
+              <Button variant="ghost" className="transition-all duration-300 hover:bg-primary/10 hover:text-primary" asChild>
                 <Link href="/login">Masuk</Link>
               </Button>
-              <Button asChild>
+              <Button className="transition-all duration-300 hover:shadow-md hover:-translate-y-0.5" asChild>
                 <Link href="/register">Daftar</Link>
               </Button>
             </div>

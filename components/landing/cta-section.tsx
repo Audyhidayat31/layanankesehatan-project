@@ -7,9 +7,9 @@ export function CTASection() {
     <section className="bg-primary py-16 md:py-24">
       <div className="container mx-auto px-4">
         <div className="grid gap-8 md:grid-cols-2">
-          <div className="rounded-2xl bg-primary-foreground/10 p-8 backdrop-blur-sm md:p-10">
-            <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-full bg-primary-foreground/20">
-              <Stethoscope className="h-7 w-7 text-primary-foreground" />
+          <div className="group rounded-2xl bg-primary-foreground/10 p-8 backdrop-blur-md md:p-10 transition-all duration-300 hover:-translate-y-2 hover:bg-primary-foreground/20 hover:shadow-2xl border border-primary-foreground/10 cursor-pointer">
+            <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-full bg-primary-foreground/20 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-12">
+              <Stethoscope className="h-7 w-7 text-primary-foreground transition-transform duration-500 group-hover:-rotate-12" />
             </div>
             <h3 className="mb-3 text-2xl font-bold text-primary-foreground">
               Bergabung sebagai Dokter
@@ -27,9 +27,9 @@ export function CTASection() {
             </Button>
           </div>
 
-          <div className="rounded-2xl bg-primary-foreground/10 p-8 backdrop-blur-sm md:p-10">
-            <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-full bg-primary-foreground/20">
-              <Store className="h-7 w-7 text-primary-foreground" />
+          <div className="group rounded-2xl bg-primary-foreground/10 p-8 backdrop-blur-md md:p-10 transition-all duration-300 hover:-translate-y-2 hover:bg-primary-foreground/20 hover:shadow-2xl border border-primary-foreground/10 cursor-pointer">
+            <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-full bg-primary-foreground/20 transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-12">
+              <Store className="h-7 w-7 text-primary-foreground transition-transform duration-500 group-hover:rotate-12" />
             </div>
             <h3 className="mb-3 text-2xl font-bold text-primary-foreground">
               Daftarkan Apotek Anda

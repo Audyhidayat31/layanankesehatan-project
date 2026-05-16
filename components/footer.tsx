@@ -7,26 +7,26 @@ export function Footer() {
       <div className="container mx-auto px-4 py-12">
         <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
           <div className="space-y-4">
-            <Link href="/" className="flex items-center gap-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
-                <Stethoscope className="h-5 w-5 text-primary-foreground" />
+            <Link href="/" className="group flex items-center gap-2">
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 transition-all duration-300 group-hover:bg-primary">
+                <Stethoscope className="h-5 w-5 text-primary transition-colors duration-300 group-hover:text-primary-foreground" />
               </div>
-              <span className="text-xl font-bold text-foreground">HealthServices</span>
+              <span className="text-xl font-bold tracking-tight text-foreground transition-colors duration-300 group-hover:text-primary">HealthServices</span>
             </Link>
             <p className="text-sm text-muted-foreground">
               Platform kesehatan digital terpercaya untuk konsultasi dokter online, pembelian obat, dan layanan kesehatan lainnya.
             </p>
             <div className="flex items-center gap-4">
-              <a href="#" className="text-muted-foreground hover:text-foreground">
+              <a href="#" className="text-muted-foreground transition-all duration-300 hover:-translate-y-1 hover:text-primary">
                 <Facebook className="h-5 w-5" />
               </a>
-              <a href="#" className="text-muted-foreground hover:text-foreground">
+              <a href="#" className="text-muted-foreground transition-all duration-300 hover:-translate-y-1 hover:text-primary">
                 <Twitter className="h-5 w-5" />
               </a>
-              <a href="#" className="text-muted-foreground hover:text-foreground">
+              <a href="#" className="text-muted-foreground transition-all duration-300 hover:-translate-y-1 hover:text-primary">
                 <Instagram className="h-5 w-5" />
               </a>
-              <a href="#" className="text-muted-foreground hover:text-foreground">
+              <a href="#" className="text-muted-foreground transition-all duration-300 hover:-translate-y-1 hover:text-primary">
                 <Youtube className="h-5 w-5" />
               </a>
             </div>
@@ -35,16 +35,16 @@ export function Footer() {
           <div className="space-y-4">
             <h3 className="font-semibold text-foreground">Layanan</h3>
             <nav className="flex flex-col gap-2">
-              <Link href="/doctors" className="text-sm text-muted-foreground hover:text-foreground">
+              <Link href="/doctors" className="text-sm text-muted-foreground hover:text-primary transition-colors duration-300 hover:translate-x-1">
                 Konsultasi Dokter
               </Link>
-              <Link href="/pharmacy" className="text-sm text-muted-foreground hover:text-foreground">
+              <Link href="/pharmacy" className="text-sm text-muted-foreground hover:text-primary transition-colors duration-300 hover:translate-x-1">
                 Apotek Online
               </Link>
-              <Link href="/articles" className="text-sm text-muted-foreground hover:text-foreground">
+              <Link href="/articles" className="text-sm text-muted-foreground hover:text-primary transition-colors duration-300 hover:translate-x-1">
                 Artikel Kesehatan
               </Link>
-              <Link href="#" className="text-sm text-muted-foreground hover:text-foreground">
+              <Link href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors duration-300 hover:translate-x-1">
                 Cek Gejala
               </Link>
             </nav>
@@ -53,16 +53,16 @@ export function Footer() {
           <div className="space-y-4">
             <h3 className="font-semibold text-foreground">Perusahaan</h3>
             <nav className="flex flex-col gap-2">
-              <Link href="#" className="text-sm text-muted-foreground hover:text-foreground">
+              <Link href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors duration-300 hover:translate-x-1">
                 Tentang Kami
               </Link>
-              <Link href="#" className="text-sm text-muted-foreground hover:text-foreground">
+              <Link href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors duration-300 hover:translate-x-1">
                 Karir
               </Link>
-              <Link href="#" className="text-sm text-muted-foreground hover:text-foreground">
+              <Link href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors duration-300 hover:translate-x-1">
                 Blog
               </Link>
-              <Link href="#" className="text-sm text-muted-foreground hover:text-foreground">
+              <Link href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors duration-300 hover:translate-x-1">
                 Hubungi Kami
               </Link>
             </nav>
@@ -71,16 +71,16 @@ export function Footer() {
           <div className="space-y-4">
             <h3 className="font-semibold text-foreground">Informasi</h3>
             <nav className="flex flex-col gap-2">
-              <Link href="#" className="text-sm text-muted-foreground hover:text-foreground">
+              <Link href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors duration-300 hover:translate-x-1">
                 Syarat & Ketentuan
               </Link>
-              <Link href="#" className="text-sm text-muted-foreground hover:text-foreground">
+              <Link href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors duration-300 hover:translate-x-1">
                 Kebijakan Privasi
               </Link>
-              <Link href="#" className="text-sm text-muted-foreground hover:text-foreground">
+              <Link href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors duration-300 hover:translate-x-1">
                 FAQ
               </Link>
-              <Link href="#" className="text-sm text-muted-foreground hover:text-foreground">
+              <Link href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors duration-300 hover:translate-x-1">
                 Bantuan
               </Link>
             </nav>
