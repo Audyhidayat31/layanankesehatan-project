@@ -1,14 +1,12 @@
-'use client'
-
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Star, MapPin, Clock, CheckCircle } from 'lucide-react'
-import { mockDoctors } from '@/lib/mock-data'
+import prisma from '@/lib/prisma'
 
-export function FeaturedDoctors() {
+export async function FeaturedDoctors() {
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('id-ID', {
       style: 'currency',
@@ -26,6 +24,17 @@ export function FeaturedDoctors() {
       .toUpperCase()
       .slice(0, 2)
   }
+
+  const popularDoctors = await prisma.doctorProfile.findMany({
+    include: {
+      user: true,
+    },
+    orderBy: [
+      { rating: 'desc' },
+      { user: { createdAt: 'desc' } }
+    ],
+    take: 4,
+  })
 
   return (
     <section className="bg-muted/50 py-16 md:py-24">
@@ -45,7 +54,7 @@ export function FeaturedDoctors() {
         </div>
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-          {mockDoctors.map((doctor) => (
+          {popularDoctors.map((doctor) => (
             <Card
               key={doctor.id}
               className="group overflow-hidden border-border/40 bg-card/60 backdrop-blur-sm transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl hover:border-primary/30"

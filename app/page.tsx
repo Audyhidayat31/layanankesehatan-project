@@ -6,6 +6,8 @@ import { FeaturedDoctors } from '@/components/landing/featured-doctors'
 import { HowItWorks } from '@/components/landing/how-it-works'
 import { CTASection } from '@/components/landing/cta-section'
 
+export const dynamic = 'force-dynamic'
+
 export default function HomePage() {
   return (
     <div className="flex min-h-screen flex-col">

@@ -119,28 +119,29 @@ export default function AdminSettingsPage() {
   }
 
   return (
-    <div className="flex min-h-screen bg-muted/30">
+    <div className="flex min-h-screen bg-gradient-modern">
       <DashboardSidebar role="admin" />
-      <div className="flex-1 lg:pl-64">
+      <div className="flex-1 lg:pl-64 transition-all duration-300">
         <DashboardHeader />
         <main className="p-4 sm:p-6 lg:p-8">
-          <div className="mb-6">
-            <h1 className="text-3xl font-bold tracking-tight text-foreground">Pengaturan</h1>
-            <p className="text-muted-foreground mt-1">Kelola preferensi dan pengaturan sistem administrator.</p>
+          <div className="mb-8 slide-up-fade">
+            <h1 className="text-4xl font-extrabold tracking-tight text-gradient mb-2">Pengaturan Sistem</h1>
+            <p className="text-muted-foreground text-lg">Kelola preferensi dan pengaturan sistem administrator Anda.</p>
           </div>
 
-          <Tabs defaultValue="profile" className="space-y-6">
-            <TabsList className="bg-background border shadow-sm">
+          <Tabs defaultValue="profile" className="space-y-8 slide-up-fade" style={{ animationDelay: '0.1s' }}>
+            <TabsList className="bg-background/80 backdrop-blur-md border shadow-md p-1 rounded-xl">
               <TabsTrigger value="profile" className="gap-2"><User className="h-4 w-4" /> Profil</TabsTrigger>
               <TabsTrigger value="security" className="gap-2"><Lock className="h-4 w-4" /> Keamanan</TabsTrigger>
               <TabsTrigger value="system" className="gap-2"><Globe className="h-4 w-4" /> Sistem</TabsTrigger>
               <TabsTrigger value="notifications" className="gap-2"><Bell className="h-4 w-4" /> Notifikasi</TabsTrigger>
             </TabsList>
 
-            <TabsContent value="profile">
-              <Card className="border-border/40 shadow-sm">
+            <TabsContent value="profile" className="mt-6 slide-up-fade" style={{ animationDelay: '0.2s' }}>
+              <Card className="glass-card border-border/40 overflow-hidden">
+                <div className="h-2 bg-gradient-to-r from-primary via-accent to-secondary"></div>
                 <CardHeader>
-                  <CardTitle>Profil Administrator</CardTitle>
+                  <CardTitle className="text-2xl">Profil Administrator</CardTitle>
                   <CardDescription>Perbarui informasi publik dan detail kontak Anda.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -172,10 +173,11 @@ export default function AdminSettingsPage() {
               </Card>
             </TabsContent>
 
-            <TabsContent value="security">
-              <Card className="border-border/40 shadow-sm">
+            <TabsContent value="security" className="mt-6 slide-up-fade" style={{ animationDelay: '0.2s' }}>
+              <Card className="glass-card border-border/40 overflow-hidden">
+                <div className="h-2 bg-gradient-to-r from-destructive via-red-500 to-orange-500"></div>
                 <CardHeader>
-                  <CardTitle>Keamanan Akun</CardTitle>
+                  <CardTitle className="text-2xl">Keamanan Akun</CardTitle>
                   <CardDescription>Perbarui kata sandi untuk mengamankan akun administrator Anda.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -218,10 +220,11 @@ export default function AdminSettingsPage() {
               </Card>
             </TabsContent>
 
-            <TabsContent value="system">
-              <Card className="border-border/40 shadow-sm">
+            <TabsContent value="system" className="mt-6 slide-up-fade" style={{ animationDelay: '0.2s' }}>
+              <Card className="glass-card border-border/40 overflow-hidden">
+                <div className="h-2 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500"></div>
                 <CardHeader>
-                  <CardTitle>Pengaturan Tampilan Sistem</CardTitle>
+                  <CardTitle className="text-2xl">Pengaturan Tampilan Sistem</CardTitle>
                   <CardDescription>Sesuaikan tampilan antarmuka dan tema panel administrasi.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
@@ -253,10 +256,11 @@ export default function AdminSettingsPage() {
               </Card>
             </TabsContent>
 
-            <TabsContent value="notifications">
-              <Card className="border-border/40 shadow-sm">
+            <TabsContent value="notifications" className="mt-6 slide-up-fade" style={{ animationDelay: '0.2s' }}>
+              <Card className="glass-card border-border/40 overflow-hidden">
+                <div className="h-2 bg-gradient-to-r from-green-400 via-emerald-500 to-teal-500"></div>
                 <CardHeader>
-                  <CardTitle>Preferensi Notifikasi</CardTitle>
+                  <CardTitle className="text-2xl">Preferensi Notifikasi</CardTitle>
                   <CardDescription>Pilih jenis peringatan yang ingin Anda terima.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">

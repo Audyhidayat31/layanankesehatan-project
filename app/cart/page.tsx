@@ -168,19 +168,26 @@ export default function CartPage() {
 
   if (items.length === 0 && !successDialogOpen) {
     return (
-      <div className="flex min-h-screen flex-col">
+      <div className="flex min-h-screen flex-col bg-gradient-modern">
         <Header />
-        <main className="flex flex-1 items-center justify-center bg-muted/30">
-          <div className="text-center">
-            <ShoppingBag className="mx-auto mb-4 h-16 w-16 text-muted-foreground/50" />
-            <h1 className="mb-2 text-2xl font-bold text-foreground">Keranjang Kosong</h1>
-            <p className="mb-6 text-muted-foreground">
-              Anda belum menambahkan produk ke keranjang
-            </p>
-            <Button asChild>
-              <Link href="/pharmacy">Mulai Belanja</Link>
-            </Button>
-          </div>
+        <main className="flex flex-1 items-center justify-center p-4">
+          <Card className="glass-card max-w-md w-full border-none slide-up-fade">
+            <CardContent className="pt-12 pb-10 text-center px-6">
+              <div className="relative mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-primary/10 animate-float">
+                <ShoppingBag className="h-12 w-12 text-primary" />
+                <div className="absolute -right-2 -top-2 flex h-8 w-8 animate-bounce items-center justify-center rounded-full bg-accent text-accent-foreground shadow-lg">
+                  <span className="text-xs font-bold">0</span>
+                </div>
+              </div>
+              <h1 className="mb-3 text-3xl font-extrabold tracking-tight text-gradient">Keranjang Kosong</h1>
+              <p className="mb-8 text-muted-foreground leading-relaxed">
+                Sepertinya Anda belum memilih produk kesehatan. Ayo jelajahi apotek kami dan temukan kebutuhan Anda sekarang!
+              </p>
+              <Button size="lg" className="w-full font-bold shadow-lg hover:shadow-primary/20 transition-all duration-300" asChild>
+                <Link href="/pharmacy">Mulai Belanja Sekarang</Link>
+              </Button>
+            </CardContent>
+          </Card>
         </main>
         <Footer />
       </div>
@@ -188,23 +195,25 @@ export default function CartPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex min-h-screen flex-col bg-gradient-modern">
       <Header />
-      <main className="flex-1 bg-muted/30">
-        <div className="container mx-auto px-4 py-8">
-          <Button variant="ghost" className="mb-6" asChild>
+      <main className="flex-1">
+        <div className="container mx-auto px-4 py-12">
+          <Button variant="ghost" className="mb-8 hover:bg-primary/10 transition-colors slide-up-fade" asChild>
             <Link href="/pharmacy">
               <ArrowLeft className="mr-2 h-4 w-4" />
               Lanjut Belanja
             </Link>
           </Button>
 
-          <h1 className="mb-6 text-2xl font-bold text-foreground">Keranjang Belanja</h1>
+          <h1 className="mb-10 text-4xl font-extrabold tracking-tight text-gradient slide-up-fade" style={{ animationDelay: '0.1s' }}>
+            Keranjang Belanja
+          </h1>
 
-          <div className="grid gap-6 lg:grid-cols-3">
-            <div className="lg:col-span-2 space-y-4">
-              {items.map((item) => (
-                <Card key={item.medicine.id} className="overflow-hidden">
+          <div className="grid gap-8 lg:grid-cols-3">
+            <div className="lg:col-span-2 space-y-6 slide-up-fade" style={{ animationDelay: '0.2s' }}>
+              {items.map((item, index) => (
+                <Card key={item.medicine.id} className="glass-card border-none overflow-hidden" style={{ animationDelay: `${0.2 + index * 0.1}s` }}>
                   <CardContent className="p-4">
                     <div className="flex flex-col sm:flex-row sm:items-center gap-4">
                       <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-lg bg-muted mx-auto sm:mx-0">
@@ -256,10 +265,11 @@ export default function CartPage() {
               ))}
             </div>
 
-            <div>
-              <Card className="sticky top-24">
+            <div className="slide-up-fade" style={{ animationDelay: '0.3s' }}>
+              <Card className="glass-card border-none sticky top-24 overflow-hidden">
+                <div className="h-2 bg-gradient-to-r from-primary to-accent"></div>
                 <CardHeader>
-                  <CardTitle>Ringkasan Pesanan</CardTitle>
+                  <CardTitle className="text-xl font-bold">Ringkasan Pesanan</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
