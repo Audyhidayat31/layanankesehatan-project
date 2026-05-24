@@ -30,11 +30,26 @@ export default function DoctorDashboardPage() {
   const { appointments, getDoctors, refreshData, chatMessages } = useAppStore()
   const [isOnline, setIsOnline] = useState(true)
   const [mounted, setMounted] = useState(false)
+  const [doctorProfile, setDoctorProfile] = useState<any>(null)
   
   useEffect(() => {
     setMounted(true)
     if (user?.id) {
       refreshData(user.id, 'doctor')
+      
+      const fromStore = getDoctors().find(d => d.userId === user.id)
+      if (fromStore) {
+        setDoctorProfile(fromStore)
+      } else {
+        fetch(`/api/doctor-profile?userId=${user.id}`)
+          .then(res => res.ok ? res.json() : null)
+          .then(json => {
+            if (json?.doctorProfile) {
+              setDoctorProfile(json.doctorProfile)
+            }
+          })
+          .catch(console.error)
+      }
       
       // Auto refresh data every 5 seconds for "real-time" experience
       const interval = setInterval(() => {
@@ -43,9 +58,29 @@ export default function DoctorDashboardPage() {
       
       return () => clearInterval(interval)
     }
-  }, [user?.id, refreshData])
+  }, [user?.id, refreshData, getDoctors])
 
-  const doctor = getDoctors().find((d) => d.user.email === user?.email) || getDoctors()[0]
+  const doctor = doctorProfile || getDoctors().find((d) => d.user.email === user?.email) || {
+    id: `doc-${user?.id}`,
+    userId: user?.id || '',
+    user: {
+      id: user?.id || '',
+      name: user?.name || 'Dokter',
+      email: user?.email || '',
+      role: 'doctor',
+    },
+    specialization: 'Dokter',
+    hospital: 'HealthServices',
+    experience: 0,
+    rating: 5.0,
+    reviewCount: 0,
+    price: 0,
+    bio: '',
+    education: [],
+    availableSlots: [],
+    isVerified: true,
+    isOnline: true,
+  }
   
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('id-ID', {

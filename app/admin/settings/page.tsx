@@ -122,7 +122,7 @@ export default function AdminSettingsPage() {
     <div className="flex min-h-screen bg-gradient-modern">
       <DashboardSidebar role="admin" />
       <div className="flex-1 lg:pl-64 transition-all duration-300">
-        <DashboardHeader />
+        <DashboardHeader role="admin" />
         <main className="p-4 sm:p-6 lg:p-8">
           <div className="mb-8 slide-up-fade">
             <h1 className="text-4xl font-extrabold tracking-tight text-gradient mb-2">Pengaturan Sistem</h1>
