@@ -24,11 +24,21 @@ import { useState, useEffect } from 'react'
 export default function PatientDashboardPage() {
   const [mounted, setMounted] = useState(false)
   const { user } = useAuthStore()
-  const { getAppointmentsByPatient, getOrdersByPatient, getUnreadCount } = useAppStore()
+  const { getAppointmentsByPatient, getOrdersByPatient, getUnreadCount, appointments: storeAppointments, orders: storeOrders, refreshData } = useAppStore()
   
   useEffect(() => {
     setMounted(true)
-  }, [])
+    if (user?.id) {
+      refreshData(user.id, 'patient')
+      
+      // Auto-refresh patient data every 5 seconds for a real-time experience
+      const interval = setInterval(() => {
+        refreshData(user.id, 'patient')
+      }, 5000)
+      
+      return () => clearInterval(interval)
+    }
+  }, [user?.id, refreshData])
 
   if (!mounted) {
     return null

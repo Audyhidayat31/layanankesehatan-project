@@ -23,7 +23,7 @@ import { useAppStore, useAuthStore } from '@/lib/store'
 export default function PatientOrdersPage() {
   const [mounted, setMounted] = useState(false)
   const { user } = useAuthStore()
-  const { getOrdersByPatient, updateOrderStatus } = useAppStore()
+  const { getOrdersByPatient, updateOrderStatus, orders: storeOrders } = useAppStore()
   const [activeTab, setActiveTab] = useState('all')
 
   useEffect(() => {

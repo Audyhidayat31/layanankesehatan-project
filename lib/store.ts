@@ -209,6 +209,7 @@ interface AppState {
   getDoctorById: (id: string) => DoctorProfile | undefined
   fetchDoctors: () => Promise<void>
   createDoctor: (doctorData: any) => Promise<any>
+  submitDoctorReview: (doctorId: string, rating: number) => Promise<void>
 
   // Appointment actions
   createAppointment: (appointment: Omit<Appointment, 'id' | 'createdAt'>) => Promise<Appointment>
@@ -318,6 +319,39 @@ export const useAppStore = create<AppState>()(
           console.error('Create doctor failed:', error)
           return { success: false, error: 'Terjadi kesalahan koneksi' }
         }
+      },
+
+      submitDoctorReview: async (doctorId, rating) => {
+        try {
+          const res = await fetch('/api/doctor-profile', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ doctorId, rating })
+          })
+          if (res.ok) {
+            const json = await res.json()
+            if (json.success && json.doctorProfile) {
+              const updatedDoctors = get().doctors.map((d) => 
+                d.id === doctorId ? { ...d, rating: json.doctorProfile.rating, reviewCount: json.doctorProfile.reviewCount } : d
+              )
+              set({ doctors: updatedDoctors })
+              return
+            }
+          }
+        } catch (error) {
+          console.error('Submit doctor review failed:', error)
+        }
+
+        // Fallback lokal jika database Neon mati
+        const updatedDoctors = get().doctors.map((d) => {
+          if (d.id === doctorId) {
+            const newCount = d.reviewCount + 1
+            const newRating = parseFloat(((d.rating * d.reviewCount + rating) / newCount).toFixed(1))
+            return { ...d, rating: newRating, reviewCount: newCount }
+          }
+          return d
+        })
+        set({ doctors: updatedDoctors })
       },
 
       createAppointment: async (appointment) => {
