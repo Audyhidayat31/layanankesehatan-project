@@ -29,3 +29,40 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: 'Gagal mengambil profil dokter' }, { status: 500 })
   }
 }
+
+// PATCH /api/doctor-profile
+export async function PATCH(req: Request) {
+  try {
+    const body = await req.json()
+    const { doctorId, rating } = body
+
+    if (!doctorId || !rating) {
+      return NextResponse.json({ error: 'Data tidak lengkap' }, { status: 400 })
+    }
+
+    const existing = await prisma.doctorProfile.findUnique({ where: { id: doctorId } })
+    if (!existing) {
+      return NextResponse.json({ error: 'Profil dokter tidak ditemukan' }, { status: 404 })
+    }
+
+    const newCount = existing.reviewCount + 1
+    const newRating = (existing.rating * existing.reviewCount + Number(rating)) / newCount
+
+    const updated = await prisma.doctorProfile.update({
+      where: { id: doctorId },
+      data: {
+        rating: Number(newRating.toFixed(1)),
+        reviewCount: newCount,
+      },
+      include: {
+        user: { select: { id: true, name: true, email: true, role: true, avatar: true, phone: true } },
+        availableSlots: true,
+      }
+    })
+
+    return NextResponse.json({ success: true, doctorProfile: updated })
+  } catch (error) {
+    console.error('Update doctor profile error:', error)
+    return NextResponse.json({ error: 'Gagal memperbarui profil dokter' }, { status: 500 })
+  }
+}

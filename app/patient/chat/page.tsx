@@ -23,11 +23,41 @@ export default function PatientChatPage() {
   
   const { sendMessage, getMessagesBetweenUsers, markMessagesAsRead, chatMessages, appointments, fetchMessages, knownUsers, refreshData } = useAppStore()
   
-  // Gabungkan registeredUsers + knownUsers dari API
+  // Gabungkan registeredUsers + knownUsers dari API + users dari appointments
   const allKnownUsers = [...registeredUsers]
   knownUsers.forEach(ku => {
     if (!allKnownUsers.some(u => u.id === ku.id)) {
       allKnownUsers.push(ku)
+    }
+  })
+  appointments.forEach(a => {
+    if (a.doctor?.user) {
+      const du = a.doctor.user
+      if (!allKnownUsers.some(u => u.id === du.id)) {
+        allKnownUsers.push({
+          id: du.id,
+          name: du.name,
+          email: du.email,
+          role: 'doctor',
+          avatar: du.avatar || undefined,
+          phone: du.phone || undefined,
+          createdAt: du.createdAt || new Date().toISOString()
+        })
+      }
+    }
+    if (a.patient?.user) {
+      const pu = a.patient.user
+      if (!allKnownUsers.some(u => u.id === pu.id)) {
+        allKnownUsers.push({
+          id: pu.id,
+          name: pu.name,
+          email: pu.email,
+          role: 'patient',
+          avatar: pu.avatar || undefined,
+          phone: pu.phone || undefined,
+          createdAt: pu.createdAt || new Date().toISOString()
+        })
+      }
     }
   })
 
@@ -36,8 +66,9 @@ export default function PatientChatPage() {
     .map(m => m.senderId === currentUserId ? m.receiverId : m.senderId)
     
   const doctorIdsFromAppointments = appointments
-    .filter(a => a.patientId === currentUserId || a.patient.userId === currentUserId)
-    .map(a => a.doctor.userId)
+    .filter(a => a.patientId === currentUserId || a.patient?.userId === currentUserId)
+    .map(a => a.doctor?.userId)
+    .filter(Boolean) as string[]
     
   const uniqueDoctorIds = Array.from(new Set([...doctorIdsFromMessages, ...doctorIdsFromAppointments]))
   
@@ -50,7 +81,7 @@ export default function PatientChatPage() {
     }
   }).filter(r => r.participants.length > 0)
 
-  const [selectedChat, setSelectedChat] = useState<string | null>(patientRooms.length > 0 ? patientRooms[0].id : null)
+  const [selectedChat, setSelectedChat] = useState<string | null>(null)
   const [newMessage, setNewMessage] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -59,6 +90,21 @@ export default function PatientChatPage() {
   useEffect(() => {
     setMounted(true)
   }, [])
+
+  useEffect(() => {
+    if (patientRooms.length > 0 && !selectedChat) {
+      const params = new URLSearchParams(window.location.search)
+      const chatWithDoctorId = params.get('doctorId') || params.get('chatWith')
+      if (chatWithDoctorId) {
+        const room = patientRooms.find(r => r.id === `room-${chatWithDoctorId}`)
+        if (room) {
+          setSelectedChat(room.id)
+          return
+        }
+      }
+      setSelectedChat(patientRooms[0].id)
+    }
+  }, [patientRooms, selectedChat])
 
 
   const getInitials = (name: string) => {
