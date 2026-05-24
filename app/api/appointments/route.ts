@@ -74,20 +74,52 @@ export async function POST(req: Request) {
     const body = await req.json()
     const { patientId, doctorId, date, time, type, complaint } = body
 
-    const newAppointment = await prisma.appointment.create({
-      data: {
-        patientId,
-        doctorId,
-        date: new Date(date),
-        time,
-        type: type.toUpperCase(),
-        complaint,
-        status: 'PENDING'
-      },
-      include: {
-        patient: { include: { user: true } },
-        doctor: { include: { user: true } }
+    // Gunakan Prisma $transaction untuk membuat janji temu dan transaksi pembayaran secara atomik
+    const newAppointment = await prisma.$transaction(async (tx) => {
+      // 1. Ambil tarif dokter
+      const doctorProfile = await tx.doctorProfile.findUnique({
+        where: { id: doctorId }
+      })
+      const amount = doctorProfile?.price || 0
+
+      // 2. Ambil userId pasien
+      const patientProfile = await tx.patientProfile.findUnique({
+        where: { id: patientId }
+      })
+      if (!patientProfile) {
+        throw new Error('Profil pasien tidak ditemukan')
       }
+
+      // 3. Buat appointment
+      const appointment = await tx.appointment.create({
+        data: {
+          patientId,
+          doctorId,
+          date: new Date(date),
+          time,
+          type: type.toUpperCase(),
+          complaint,
+          status: 'PENDING'
+        },
+        include: {
+          patient: { include: { user: true } },
+          doctor: { include: { user: true } }
+        }
+      })
+
+      // 4. Buat transaksi pembayaran (PaymentTransaction) dengan status PAID agar langsung masuk riwayat transaksi
+      await tx.paymentTransaction.create({
+        data: {
+          userId: patientProfile.userId,
+          type: 'APPOINTMENT',
+          referenceId: appointment.id,
+          amount: amount,
+          status: 'PAID',
+          paymentMethod: 'E-Wallet'
+        }
+      })
+
+      return appointment
     })
 
     const dateObj = new Date(newAppointment.date);
@@ -104,8 +136,8 @@ export async function POST(req: Request) {
         type: newAppointment.type.toLowerCase()
       }
     })
-  } catch (error) {
+  } catch (error: any) {
     console.error('Create appointment error:', error)
-    return NextResponse.json({ error: 'Gagal membuat janji temu' }, { status: 500 })
+    return NextResponse.json({ error: error.message || 'Gagal membuat janji temu' }, { status: 500 })
   }
 }
