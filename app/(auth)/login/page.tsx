@@ -153,50 +153,46 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={() => {
-                  const demoEmail = 'ahmad@gmail.com'
-                  setEmail(demoEmail)
-                  const u = registeredUsers.find(u => u.email === demoEmail)
-                  setPassword(u?.password || 'demo')
+                  setEmail('audyhidayat@gmail.com')
+                  setPassword('123456789')
                 }}
-                className="rounded border border-border p-2 hover:bg-muted"
+                className="rounded border border-border p-2 hover:bg-muted flex flex-col items-center justify-center gap-1"
               >
-                Pasien
+                <span>Audy Hidayat</span>
+                <span className="text-[10px] text-muted-foreground">123456789</span>
               </button>
               <button
                 type="button"
                 onClick={() => {
-                  const demoEmail = 'sarah@gmail.com'
-                  setEmail(demoEmail)
-                  const u = registeredUsers.find(u => u.email === demoEmail)
-                  setPassword(u?.password || 'demo')
+                  setEmail('sulbak@gmail.com')
+                  setPassword('demo123')
                 }}
-                className="rounded border border-border p-2 hover:bg-muted"
+                className="rounded border border-border p-2 hover:bg-muted flex flex-col items-center justify-center gap-1"
               >
-                Dokter
+                <span>Dr. Sulbak</span>
+                <span className="text-[10px] text-muted-foreground">demo123</span>
               </button>
               <button
                 type="button"
                 onClick={() => {
-                  const demoEmail = 'sehat@gmail.com'
-                  setEmail(demoEmail)
-                  const u = registeredUsers.find(u => u.email === demoEmail)
-                  setPassword(u?.password || 'demo')
+                  setEmail('apotek@gmail.com')
+                  setPassword('demo123')
                 }}
-                className="rounded border border-border p-2 hover:bg-muted"
+                className="rounded border border-border p-2 hover:bg-muted flex flex-col items-center justify-center gap-1"
               >
-                Apotek
+                <span>Apotek Sehat Selalu</span>
+                <span className="text-[10px] text-muted-foreground">demo123</span>
               </button>
               <button
                 type="button"
                 onClick={() => {
-                  const demoEmail = 'admin@gmail.com'
-                  setEmail(demoEmail)
-                  const u = registeredUsers.find(u => u.email === demoEmail)
-                  setPassword(u?.password || 'demo')
+                  setEmail('admin@gmail.com')
+                  setPassword('admin123')
                 }}
-                className="rounded border border-border p-2 hover:bg-muted"
+                className="rounded border border-border p-2 hover:bg-muted flex flex-col items-center justify-center gap-1"
               >
-                Admin
+                <span>Admin</span>
+                <span className="text-[10px] text-muted-foreground">admin123</span>
               </button>
             </div>
           </div>

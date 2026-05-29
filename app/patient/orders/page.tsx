@@ -18,13 +18,25 @@ import {
   ShoppingBag,
   ArrowRight,
 } from 'lucide-react'
-import { useAppStore, useAuthStore } from '@/lib/store'
+import { useAppStore, useAuthStore, useCartStore } from '@/lib/store'
+import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 
 export default function PatientOrdersPage() {
   const [mounted, setMounted] = useState(false)
+  const router = useRouter()
   const { user } = useAuthStore()
   const { getOrdersByPatient, updateOrderStatus, orders: storeOrders } = useAppStore()
+  const { addItem } = useCartStore()
   const [activeTab, setActiveTab] = useState('all')
+  const [selectedOrder, setSelectedOrder] = useState<any>(null)
 
   useEffect(() => {
     setMounted(true)
@@ -35,6 +47,14 @@ export default function PatientOrdersPage() {
   }
 
   const orders = user ? getOrdersByPatient(`pat-${user.id}`) : []
+
+  const handleBuyAgain = (orderItems: any[]) => {
+    orderItems.forEach((item) => {
+      addItem(item.medicine, item.quantity)
+    })
+    toast.success('Semua produk dari pesanan ini berhasil ditambahkan ke keranjang belanja!')
+    router.push('/cart')
+  }
 
   const handlePay = async (id: string) => {
     try {
@@ -273,7 +293,7 @@ export default function PatientOrdersPage() {
                             </Button>
                           )}
                           {order.status === 'delivered' && (
-                            <Button variant="outline">
+                            <Button variant="outline" onClick={() => handleBuyAgain(order.items)}>
                               Beli Lagi
                             </Button>
                           )}
@@ -283,7 +303,7 @@ export default function PatientOrdersPage() {
                               <Button onClick={() => handlePay(order.id)}>Bayar Sekarang</Button>
                             </>
                           )}
-                          <Button variant="ghost" size="icon">
+                          <Button variant="ghost" size="icon" onClick={() => setSelectedOrder(order)}>
                             <ArrowRight className="h-4 w-4" />
                           </Button>
                         </div>
@@ -309,6 +329,106 @@ export default function PatientOrdersPage() {
           </Tabs>
         </div>
       </main>
+
+      {/* ════════════════════════════════════════════════════════════
+          DIALOG DETAIL TRANSAKSI PESANAN
+      ════════════════════════════════════════════════════════════ */}
+      <Dialog open={!!selectedOrder} onOpenChange={(open) => !open && setSelectedOrder(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold flex items-center gap-2">
+              <ShoppingBag className="h-5 w-5 text-primary" />
+              Detail Transaksi Pesanan
+            </DialogTitle>
+            <DialogDescription>
+              Struk rincian pembelian obat Anda.
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedOrder && (() => {
+            const subtotal = selectedOrder.items.reduce((sum: number, item: any) => sum + item.price, 0)
+            const shippingCost = selectedOrder.totalAmount - subtotal
+            return (
+              <div className="space-y-4 mt-2">
+                {/* Order ID & Status */}
+                <div className="flex justify-between items-center pb-2 border-b">
+                  <div>
+                    <p className="text-xs text-muted-foreground">ID Pesanan</p>
+                    <p className="font-mono text-sm font-bold text-foreground">#{selectedOrder.id}</p>
+                  </div>
+                  <Badge className={getStatusColor(selectedOrder.status)}>
+                    {getStatusIcon(selectedOrder.status)}
+                    <span className="ml-1">{getStatusLabel(selectedOrder.status)}</span>
+                  </Badge>
+                </div>
+
+                {/* Date */}
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Tanggal Pembelian</span>
+                  <span className="font-medium">{selectedOrder.createdAt}</span>
+                </div>
+
+                {/* Items List */}
+                <div className="space-y-2 border-t pt-3">
+                  <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Item Obat</p>
+                  <div className="space-y-3 max-h-[180px] overflow-y-auto pr-1">
+                    {selectedOrder.items.map((item: any) => (
+                      <div key={item.medicineId} className="flex justify-between text-sm">
+                        <div className="flex-1 pr-4">
+                          <p className="font-semibold text-foreground">{item.medicine.name}</p>
+                          <p className="text-xs text-muted-foreground">{item.quantity}x {formatPrice(item.medicine.price)}</p>
+                        </div>
+                        <span className="font-bold text-foreground">{formatPrice(item.price)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Shipping Address */}
+                <div className="border-t pt-3 space-y-1">
+                  <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Alamat Pengiriman</p>
+                  <p className="text-sm text-foreground leading-relaxed">{selectedOrder.shippingAddress}</p>
+                </div>
+
+                {/* Payment Summary */}
+                <div className="border-t pt-3 space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Subtotal</span>
+                    <span>{formatPrice(subtotal)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Biaya Pengiriman</span>
+                    {shippingCost > 0 ? (
+                      <span className="font-semibold text-foreground">{formatPrice(shippingCost)}</span>
+                    ) : (
+                      <span className="text-green-600 font-semibold">Gratis</span>
+                    )}
+                  </div>
+                  <div className="flex justify-between items-center pt-2 border-t border-dashed">
+                    <span className="font-bold text-foreground">Total Pembayaran</span>
+                    <span className="text-lg font-extrabold text-primary">{formatPrice(selectedOrder.totalAmount)}</span>
+                  </div>
+                </div>
+
+                {/* Actions in Dialog */}
+                <div className="flex gap-2 pt-2">
+                  <Button variant="outline" className="flex-1" onClick={() => setSelectedOrder(null)}>
+                    Tutup
+                  </Button>
+                  {selectedOrder.status === 'delivered' && (
+                    <Button className="flex-1" onClick={() => {
+                      handleBuyAgain(selectedOrder.items)
+                      setSelectedOrder(null)
+                    }}>
+                      Beli Lagi
+                    </Button>
+                  )}
+                </div>
+              </div>
+            )
+          })()}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
