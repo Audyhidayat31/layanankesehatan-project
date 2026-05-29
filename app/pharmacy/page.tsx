@@ -15,14 +15,15 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Search, ShoppingCart, Filter, Pill, AlertCircle } from 'lucide-react'
-import { mockMedicines, medicineCategories } from '@/lib/mock-data'
-import { useCartStore, useAuthStore } from '@/lib/store'
+import { medicineCategories } from '@/lib/mock-data'
+import { useCartStore, useAuthStore, useAppStore } from '@/lib/store'
 import { useRouter } from 'next/navigation'
 
 export default function PharmacyPage() {
   const router = useRouter()
   const { user, isAuthenticated } = useAuthStore()
   const { addItem, items } = useCartStore()
+  const { medicines } = useAppStore()
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [sortBy, setSortBy] = useState('name')
@@ -36,11 +37,11 @@ export default function PharmacyPage() {
   }
 
   const filteredMedicines = useMemo(() => {
-    let medicines = [...mockMedicines]
+    let currentMedicines = [...medicines]
 
     if (searchQuery) {
       const query = searchQuery.toLowerCase()
-      medicines = medicines.filter(
+      currentMedicines = currentMedicines.filter(
         (med) =>
           med.name.toLowerCase().includes(query) ||
           med.genericName.toLowerCase().includes(query) ||
@@ -49,25 +50,25 @@ export default function PharmacyPage() {
     }
 
     if (selectedCategory !== 'all') {
-      medicines = medicines.filter((med) => med.category === selectedCategory)
+      currentMedicines = currentMedicines.filter((med) => med.category === selectedCategory)
     }
 
     switch (sortBy) {
       case 'name':
-        medicines.sort((a, b) => a.name.localeCompare(b.name))
+        currentMedicines.sort((a, b) => a.name.localeCompare(b.name))
         break
       case 'price-low':
-        medicines.sort((a, b) => a.price - b.price)
+        currentMedicines.sort((a, b) => a.price - b.price)
         break
       case 'price-high':
-        medicines.sort((a, b) => b.price - a.price)
+        currentMedicines.sort((a, b) => b.price - a.price)
         break
     }
 
-    return medicines
-  }, [searchQuery, selectedCategory, sortBy])
+    return currentMedicines
+  }, [searchQuery, selectedCategory, sortBy, medicines])
 
-  const handleAddToCart = (medicine: typeof mockMedicines[0]) => {
+  const handleAddToCart = (medicine: typeof medicines[0]) => {
     if (!isAuthenticated) {
       router.push('/login')
       return

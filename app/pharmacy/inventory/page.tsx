@@ -23,10 +23,11 @@ import {
   ClipboardList,
   RefreshCw,
 } from 'lucide-react'
-import { mockMedicines } from '@/lib/mock-data'
+
+import { useAppStore } from '@/lib/store'
 
 export default function PharmacyInventoryPage() {
-  const [medicines, setMedicines] = useState(mockMedicines)
+  const { medicines, updateMedicineStock } = useAppStore()
   const [searchQuery, setSearchQuery] = useState('')
 
   const lowStockItems = medicines.filter(m => m.stock < 20)
@@ -37,9 +38,10 @@ export default function PharmacyInventoryPage() {
   )
 
   const handleUpdateStock = (id: string, amount: number) => {
-    setMedicines(medicines.map(m => 
-      m.id === id ? { ...m, stock: Math.max(0, m.stock + amount) } : m
-    ))
+    const med = medicines.find(m => m.id === id)
+    if (med) {
+      updateMedicineStock(id, Math.max(0, med.stock + amount))
+    }
   }
 
   return (

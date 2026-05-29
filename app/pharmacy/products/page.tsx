@@ -42,15 +42,29 @@ import {
   Package,
   Filter,
 } from 'lucide-react'
-import { mockMedicines, medicineCategories } from '@/lib/mock-data'
+import { medicineCategories } from '@/lib/mock-data'
 import type { Medicine } from '@/lib/types'
+import { useAppStore } from '@/lib/store'
+import { toast } from 'sonner'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 
 export default function PharmacyProductsPage() {
-  const [products, setProducts] = useState<Medicine[]>(mockMedicines)
+  const { medicines: products, addMedicine, updateMedicine, deleteMedicine } = useAppStore()
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [addDialogOpen, setAddDialogOpen] = useState(false)
   const [editingProduct, setEditingProduct] = useState<Medicine | null>(null)
+  const [productToDelete, setProductToDelete] = useState<Medicine | null>(null)
+  const [isConfirmingSubmit, setIsConfirmingSubmit] = useState(false)
 
   const [formData, setFormData] = useState({
     name: '',
@@ -110,23 +124,26 @@ export default function PharmacyProductsPage() {
   }
 
   const handleDelete = (id: string) => {
-    setProducts(products.filter((p) => p.id !== id))
+    deleteMedicine(id)
+    toast.success('Produk berhasil dihapus!')
+  }
+
+  const handleConfirmSubmit = () => {
+    if (!formData.name || !formData.price || !formData.stock) {
+      toast.error('Mohon lengkapi data produk yang wajib diisi!')
+      return
+    }
+    setIsConfirmingSubmit(true)
   }
 
   const handleSubmit = () => {
     if (editingProduct) {
-      setProducts(
-        products.map((p) =>
-          p.id === editingProduct.id
-            ? {
-                ...p,
-                ...formData,
-                price: Number(formData.price),
-                stock: Number(formData.stock),
-              }
-            : p
-        )
-      )
+      updateMedicine(editingProduct.id, {
+        ...formData,
+        price: Number(formData.price),
+        stock: Number(formData.stock),
+      })
+      toast.success('Produk berhasil diperbarui!')
     } else {
       const newProduct: Medicine = {
         id: `med-${Date.now()}`,
@@ -135,9 +152,11 @@ export default function PharmacyProductsPage() {
         stock: Number(formData.stock),
         pharmacyId: 'pharm-1',
       }
-      setProducts([...products, newProduct])
+      addMedicine(newProduct)
+      toast.success('Produk baru berhasil ditambahkan!')
     }
     setAddDialogOpen(false)
+    setIsConfirmingSubmit(false)
     resetForm()
   }
 
@@ -295,7 +314,7 @@ export default function PharmacyProductsPage() {
                   >
                     Batal
                   </Button>
-                  <Button onClick={handleSubmit}>
+                  <Button onClick={handleConfirmSubmit}>
                     {editingProduct ? 'Simpan Perubahan' : 'Tambah Produk'}
                   </Button>
                 </div>
@@ -398,7 +417,7 @@ export default function PharmacyProductsPage() {
                           variant="ghost"
                           size="icon"
                           className="text-destructive hover:text-destructive"
-                          onClick={() => handleDelete(product.id)}
+                          onClick={() => setProductToDelete(product)}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -411,6 +430,52 @@ export default function PharmacyProductsPage() {
           </Card>
         </div>
       </main>
+
+      {/* AlertDialog Konfirmasi Hapus */}
+      <AlertDialog open={!!productToDelete} onOpenChange={(open) => !open && setProductToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Konfirmasi Penghapusan</AlertDialogTitle>
+            <AlertDialogDescription>
+              Apakah Anda yakin ingin menghapus produk <strong>{productToDelete?.name}</strong>? Tindakan ini tidak dapat dibatalkan dan produk tidak akan lagi terlihat oleh pasien.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Batal</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={() => {
+                if (productToDelete) {
+                  handleDelete(productToDelete.id)
+                  setProductToDelete(null)
+                }
+              }}
+              className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+            >
+              Ya, Hapus
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* AlertDialog Konfirmasi Tambah/Edit */}
+      <AlertDialog open={isConfirmingSubmit} onOpenChange={setIsConfirmingSubmit}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Konfirmasi Penyimpanan</AlertDialogTitle>
+            <AlertDialogDescription>
+              {editingProduct 
+                ? 'Apakah Anda yakin ingin menyimpan perubahan pada produk ini? Informasi produk yang diperbarui akan langsung terlihat oleh pasien.'
+                : 'Apakah Anda yakin ingin menambahkan produk baru ini? Produk ini akan langsung terbit di etalase dan dapat dipesan oleh pasien.'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setIsConfirmingSubmit(false)}>Batal</AlertDialogCancel>
+            <AlertDialogAction onClick={handleSubmit}>
+              Ya, Konfirmasi
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
