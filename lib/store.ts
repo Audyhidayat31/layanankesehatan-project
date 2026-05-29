@@ -265,36 +265,19 @@ export const useAppStore = create<AppState>()(
           if (res.ok) {
             const json = await res.json()
             if (json.success) {
-              const currentDoctors = get().doctors
-              
-              // Filter: retain mock doctors OR doctors present in DB response
-              const dbDoctorIds = new Set(json.doctors.map((d: any) => d.id))
-              const merged = currentDoctors.filter(d => 
-                (d.id.startsWith('doc-') && !dbDoctorIds.has(d.id)) || dbDoctorIds.has(d.id)
-              )
-
-              json.doctors.forEach((dbDoc: any) => {
-                const idx = merged.findIndex(d => d.id === dbDoc.id)
-                // Normalize DB doctor to match frontend DoctorProfile shape
-                const normalized = {
-                  ...dbDoc,
-                  userId: dbDoc.userId || dbDoc.user?.id,
-                  user: dbDoc.user || {},
-                  rating: dbDoc.rating ?? 0,
-                  reviewCount: dbDoc.reviewCount ?? 0,
-                  isVerified: dbDoc.isVerified ?? false,
-                  isOnline: dbDoc.isOnline ?? false,
-                  availableSlots: dbDoc.availableSlots ?? [],
-                  bio: dbDoc.bio ?? '',
-                  education: dbDoc.education ?? [],
-                }
-                if (idx >= 0) {
-                  merged[idx] = normalized
-                } else {
-                  merged.push(normalized)
-                }
-              })
-              set({ doctors: merged })
+              const normalized = json.doctors.map((dbDoc: any) => ({
+                ...dbDoc,
+                userId: dbDoc.userId || dbDoc.user?.id,
+                user: dbDoc.user || {},
+                rating: dbDoc.rating ?? 0,
+                reviewCount: dbDoc.reviewCount ?? 0,
+                isVerified: dbDoc.isVerified ?? false,
+                isOnline: dbDoc.isOnline ?? false,
+                availableSlots: dbDoc.availableSlots ?? [],
+                bio: dbDoc.bio ?? '',
+                education: dbDoc.education ?? [],
+              }))
+              set({ doctors: normalized })
             }
           }
         } catch (error) {
