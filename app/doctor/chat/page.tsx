@@ -1,6 +1,9 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import EmojiPicker from 'emoji-picker-react'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { DashboardSidebar } from '@/components/dashboard/sidebar'
 import { DashboardHeader } from '@/components/dashboard/dashboard-header'
 import { Card } from '@/components/ui/card'
@@ -11,12 +14,13 @@ import { Badge } from '@/components/ui/badge'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { 
   Send, Search, Phone, Video, MoreVertical, 
-  Paperclip, ImageIcon, CheckCheck, Smile, Mic 
+  Paperclip, ImageIcon, CheckCheck, Smile, Mic, User
 } from 'lucide-react'
 import { mockChatRooms, mockUsers } from '@/lib/mock-data'
 import { useAuthStore, useAppStore } from '@/lib/store'
 
 export default function DoctorChatPage() {
+  const router = useRouter()
   const { user, registeredUsers } = useAuthStore()
   // Default to 'user-2' (Dr. Sarah) if not logged in
   const currentUserId = user?.id || 'user-2'
@@ -58,10 +62,14 @@ export default function DoctorChatPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const scrollRef = useRef<HTMLDivElement>(null)
   const [mounted, setMounted] = useState(false)
+  const [isAnimating, setIsAnimating] = useState(false)
 
   useEffect(() => {
     setMounted(true)
-  }, [])
+    if (!user) {
+      router.replace('/')
+    }
+  }, [user, router])
 
 
   const getInitials = (name: string) => {
@@ -123,6 +131,9 @@ export default function DoctorChatPage() {
 
   const handleSendMessage = () => {
     if (!newMessage.trim() || !otherParticipant) return
+    
+    setIsAnimating(true)
+    setTimeout(() => setIsAnimating(false), 300)
     
     sendMessage({
       senderId: currentUserId,
@@ -253,18 +264,18 @@ export default function DoctorChatPage() {
                       </div>
                     </div>
                     <div className="flex items-center gap-1">
-                      <Button variant="ghost" size="icon" className="text-muted-foreground rounded-full hover:bg-muted">
-                        <Video className="h-5 w-5" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="text-muted-foreground rounded-full hover:bg-muted">
-                        <Phone className="h-5 w-5" />
-                      </Button>
-                      <div className="w-px h-6 bg-border mx-1"></div>
-                      <Button variant="ghost" size="icon" className="text-muted-foreground rounded-full hover:bg-muted">
-                        <Search className="h-5 w-5" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="text-muted-foreground rounded-full hover:bg-muted">
-                        <MoreVertical className="h-5 w-5" />
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        title="Lihat Profil" 
+                        className="text-muted-foreground rounded-full hover:bg-muted"
+                        onClick={() => {
+                          if (otherParticipant) {
+                            router.push(`/doctor/patients/${otherParticipant.id}`)
+                          }
+                        }}
+                      >
+                        <User className="h-5 w-5" />
                       </Button>
                     </div>
                   </div>
@@ -322,12 +333,21 @@ export default function DoctorChatPage() {
 
                   {/* Chat Input */}
                   <div className="bg-card p-3 flex items-center gap-2 border-t border-border z-10 relative">
-                    <Button type="button" variant="ghost" size="icon" className="text-muted-foreground rounded-full hover:bg-muted shrink-0">
-                      <Smile className="h-6 w-6" />
-                    </Button>
-                    <Button type="button" variant="ghost" size="icon" className="text-muted-foreground rounded-full hover:bg-muted shrink-0">
-                      <Paperclip className="h-5 w-5" />
-                    </Button>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button type="button" variant="ghost" size="icon" className="text-muted-foreground rounded-full hover:bg-muted shrink-0 transition-transform active:scale-95">
+                          <Smile className="h-6 w-6" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent side="top" align="start" className="w-auto p-0 border-none bg-transparent shadow-none mb-2">
+                        <EmojiPicker 
+                          onEmojiClick={(emojiData) => setNewMessage(prev => prev + emojiData.emoji)} 
+                          autoFocusSearch={false}
+                          theme="auto"
+                        />
+                      </PopoverContent>
+                    </Popover>
+
                     
                     <form
                       onSubmit={(e) => {
@@ -340,19 +360,24 @@ export default function DoctorChatPage() {
                         placeholder="Ketik pesan untuk pasien..."
                         value={newMessage}
                         onChange={(e) => setNewMessage(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && !e.shiftKey) {
+                            e.preventDefault()
+                            handleSendMessage()
+                          }
+                        }}
                         className="flex-1 rounded-lg border-0 bg-muted/50 px-4 py-6 focus-visible:ring-0 focus-visible:ring-offset-0"
                       />
                     </form>
 
-                    {newMessage.trim() ? (
-                      <Button onClick={handleSendMessage} size="icon" className="rounded-full bg-emerald-500 hover:bg-emerald-600 text-white shrink-0 ml-1 h-10 w-10">
-                        <Send className="h-4 w-4 ml-1" />
-                      </Button>
-                    ) : (
-                      <Button type="button" variant="ghost" size="icon" className="text-muted-foreground rounded-full hover:bg-muted shrink-0 ml-1 h-10 w-10">
-                        <Mic className="h-5 w-5" />
-                      </Button>
-                    )}
+                    <Button 
+                      onClick={handleSendMessage} 
+                      disabled={!newMessage.trim()}
+                      size="icon" 
+                      className={`rounded-full bg-emerald-500 hover:bg-emerald-600 text-white disabled:bg-muted disabled:text-muted-foreground disabled:opacity-50 shrink-0 ml-1 h-10 w-10 transition-all duration-300 ${isAnimating ? 'scale-125 bg-emerald-400' : 'hover:scale-110 active:scale-95'}`}
+                    >
+                      <Send className={`h-4 w-4 ml-1 transition-transform duration-300 ${isAnimating ? 'translate-x-4 opacity-0' : ''}`} />
+                    </Button>
                   </div>
                 </>
               ) : (

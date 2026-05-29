@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { DashboardSidebar } from '@/components/dashboard/sidebar'
 import { DashboardHeader } from '@/components/dashboard/dashboard-header'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -26,6 +27,7 @@ import { useAuthStore, useAppStore } from '@/lib/store'
 import { useState, useEffect } from 'react'
 
 export default function DoctorDashboardPage() {
+  const router = useRouter()
   const { user } = useAuthStore()
   const { appointments, getDoctors, refreshData, chatMessages } = useAppStore()
   const [isOnline, setIsOnline] = useState(true)
@@ -34,6 +36,12 @@ export default function DoctorDashboardPage() {
   
   useEffect(() => {
     setMounted(true)
+
+    if (!user) {
+      router.replace('/')
+      return
+    }
+
     if (user?.id) {
       refreshData(user.id, 'doctor')
       
@@ -58,7 +66,7 @@ export default function DoctorDashboardPage() {
       
       return () => clearInterval(interval)
     }
-  }, [user?.id, refreshData, getDoctors])
+  }, [user, router, refreshData, getDoctors])
 
   const doctor = doctorProfile || getDoctors().find((d) => d.user.email === user?.email) || {
     id: `doc-${user?.id}`,

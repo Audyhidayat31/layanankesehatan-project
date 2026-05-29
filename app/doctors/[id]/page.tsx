@@ -38,10 +38,13 @@ import { useEffect } from 'react'
 export default function DoctorDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params)
   const router = useRouter()
+  const [from, setFrom] = useState<string | null>(null)
   const { user, isAuthenticated } = useAuthStore()
   const { createAppointment, doctors, fetchDoctors } = useAppStore()
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    setFrom(params.get('from'))
     fetchDoctors()
   }, [fetchDoctors])
   
@@ -173,12 +176,19 @@ export default function DoctorDetailPage({ params }: { params: Promise<{ id: str
       <Header />
       <main className="flex-1 bg-muted/30">
         <div className="container mx-auto px-4 py-8">
-          <Button variant="ghost" className="mb-6" asChild>
-            <Link href="/doctors">
+          {from === 'chat' ? (
+            <Button variant="ghost" className="mb-6" onClick={() => router.back()}>
               <ArrowLeft className="mr-2 h-4 w-4" />
-              Kembali ke Daftar Dokter
-            </Link>
-          </Button>
+              Kembali ke Halaman Chat
+            </Button>
+          ) : (
+            <Button variant="ghost" className="mb-6" asChild>
+              <Link href="/doctors">
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Kembali ke Daftar Dokter
+              </Link>
+            </Button>
+          )}
 
           <div className="grid gap-6 lg:grid-cols-3">
             <div className="lg:col-span-2 space-y-6">
