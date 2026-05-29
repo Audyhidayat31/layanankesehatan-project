@@ -227,6 +227,9 @@ interface AppState {
   getMedicines: () => Medicine[]
   getMedicineById: (id: string) => Medicine | undefined
   updateMedicineStock: (id: string, stock: number) => void
+  addMedicine: (medicine: Medicine) => void
+  updateMedicine: (id: string, updates: Partial<Medicine>) => void
+  deleteMedicine: (id: string) => void
 
   // Chat actions
   sendMessage: (message: Omit<ChatMessage, 'id' | 'createdAt' | 'isRead'>) => Promise<ChatMessage>
@@ -472,6 +475,24 @@ export const useAppStore = create<AppState>()(
           medicines: get().medicines.map((med) =>
             med.id === id ? { ...med, stock } : med
           ),
+        })
+      },
+
+      addMedicine: (medicine) => {
+        set({ medicines: [...get().medicines, medicine] })
+      },
+
+      updateMedicine: (id, updates) => {
+        set({
+          medicines: get().medicines.map((med) =>
+            med.id === id ? { ...med, ...updates } : med
+          ),
+        })
+      },
+
+      deleteMedicine: (id) => {
+        set({
+          medicines: get().medicines.filter((med) => med.id !== id),
         })
       },
 
