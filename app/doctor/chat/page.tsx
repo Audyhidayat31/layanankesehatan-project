@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import EmojiPicker from 'emoji-picker-react'
+import EmojiPicker, { Theme } from 'emoji-picker-react'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { DashboardSidebar } from '@/components/dashboard/sidebar'
 import { DashboardHeader } from '@/components/dashboard/dashboard-header'
@@ -343,7 +343,7 @@ export default function DoctorChatPage() {
                         <EmojiPicker 
                           onEmojiClick={(emojiData) => setNewMessage(prev => prev + emojiData.emoji)} 
                           autoFocusSearch={false}
-                          theme="auto"
+                          theme={Theme.AUTO}
                         />
                       </PopoverContent>
                     </Popover>

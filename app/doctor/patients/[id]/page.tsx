@@ -15,8 +15,8 @@ import { useEffect, useState } from 'react'
 export default function PatientDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params)
   const router = useRouter()
-  const { user } = useAuthStore()
-  const { registeredUsers, appointments, refreshData } = useAppStore()
+  const { user, registeredUsers } = useAuthStore()
+  const { appointments, refreshData } = useAppStore()
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {

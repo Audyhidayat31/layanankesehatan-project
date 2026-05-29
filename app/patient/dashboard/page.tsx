@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { DashboardSidebar } from '@/components/dashboard/sidebar'
 import { DashboardHeader } from '@/components/dashboard/dashboard-header'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -22,12 +23,19 @@ import { useAuthStore, useAppStore } from '@/lib/store'
 import { useState, useEffect } from 'react'
 
 export default function PatientDashboardPage() {
+  const router = useRouter()
   const [mounted, setMounted] = useState(false)
   const { user } = useAuthStore()
   const { getAppointmentsByPatient, getOrdersByPatient, getUnreadCount, appointments: storeAppointments, orders: storeOrders, refreshData } = useAppStore()
   
   useEffect(() => {
     setMounted(true)
+    
+    if (!user) {
+      router.replace('/')
+      return
+    }
+
     if (user?.id) {
       refreshData(user.id, 'patient')
       
@@ -38,7 +46,7 @@ export default function PatientDashboardPage() {
       
       return () => clearInterval(interval)
     }
-  }, [user?.id, refreshData])
+  }, [user, router, refreshData])
 
   if (!mounted) {
     return null

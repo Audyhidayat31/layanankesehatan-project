@@ -127,7 +127,7 @@ export const mockDoctors: DoctorProfile[] = [
       { id: 'slot-5', date: '2024-12-21', startTime: '14:30', endTime: '15:00', isBooked: false },
     ],
     isVerified: true,
-    isOnline: false,
+    isOnline: true,
   },
   {
     id: 'doc-3',
