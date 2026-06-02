@@ -64,7 +64,6 @@ export default function PharmacyProductsPage() {
   const [addDialogOpen, setAddDialogOpen] = useState(false)
   const [editingProduct, setEditingProduct] = useState<Medicine | null>(null)
   const [productToDelete, setProductToDelete] = useState<Medicine | null>(null)
-  const [isConfirmingSubmit, setIsConfirmingSubmit] = useState(false)
 
   const [formData, setFormData] = useState({
     name: '',
@@ -128,15 +127,12 @@ export default function PharmacyProductsPage() {
     toast.success('Produk berhasil dihapus!')
   }
 
-  const handleConfirmSubmit = () => {
+  const handleSubmit = () => {
     if (!formData.name || !formData.price || !formData.stock) {
       toast.error('Mohon lengkapi data produk yang wajib diisi!')
       return
     }
-    setIsConfirmingSubmit(true)
-  }
 
-  const handleSubmit = () => {
     if (editingProduct) {
       updateMedicine(editingProduct.id, {
         ...formData,
@@ -156,7 +152,6 @@ export default function PharmacyProductsPage() {
       toast.success('Produk baru berhasil ditambahkan!')
     }
     setAddDialogOpen(false)
-    setIsConfirmingSubmit(false)
     resetForm()
   }
 
@@ -198,7 +193,7 @@ export default function PharmacyProductsPage() {
                 <div className="max-h-[60vh] overflow-y-auto space-y-4 py-4">
                   <FieldGroup>
                     <Field>
-                      <FieldLabel htmlFor="name">Nama Produk</FieldLabel>
+                      <FieldLabel htmlFor="name">Nama Produk <span className="text-destructive">*</span></FieldLabel>
                       <Input
                         id="name"
                         value={formData.name}
@@ -253,7 +248,7 @@ export default function PharmacyProductsPage() {
                     </Field>
                     <div className="grid grid-cols-2 gap-4">
                       <Field>
-                        <FieldLabel htmlFor="price">Harga (Rp)</FieldLabel>
+                        <FieldLabel htmlFor="price">Harga (Rp) <span className="text-destructive">*</span></FieldLabel>
                         <Input
                           id="price"
                           type="number"
@@ -265,7 +260,7 @@ export default function PharmacyProductsPage() {
                         />
                       </Field>
                       <Field>
-                        <FieldLabel htmlFor="stock">Stok</FieldLabel>
+                        <FieldLabel htmlFor="stock">Stok <span className="text-destructive">*</span></FieldLabel>
                         <Input
                           id="stock"
                           type="number"
@@ -314,7 +309,7 @@ export default function PharmacyProductsPage() {
                   >
                     Batal
                   </Button>
-                  <Button onClick={handleConfirmSubmit}>
+                  <Button onClick={handleSubmit}>
                     {editingProduct ? 'Simpan Perubahan' : 'Tambah Produk'}
                   </Button>
                 </div>
@@ -457,25 +452,6 @@ export default function PharmacyProductsPage() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* AlertDialog Konfirmasi Tambah/Edit */}
-      <AlertDialog open={isConfirmingSubmit} onOpenChange={setIsConfirmingSubmit}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Konfirmasi Penyimpanan</AlertDialogTitle>
-            <AlertDialogDescription>
-              {editingProduct 
-                ? 'Apakah Anda yakin ingin menyimpan perubahan pada produk ini? Informasi produk yang diperbarui akan langsung terlihat oleh pasien.'
-                : 'Apakah Anda yakin ingin menambahkan produk baru ini? Produk ini akan langsung terbit di etalase dan dapat dipesan oleh pasien.'}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setIsConfirmingSubmit(false)}>Batal</AlertDialogCancel>
-            <AlertDialogAction onClick={handleSubmit}>
-              Ya, Konfirmasi
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   )
 }
