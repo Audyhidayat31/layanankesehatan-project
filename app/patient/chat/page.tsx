@@ -242,9 +242,23 @@ export default function PatientChatPage() {
                         selectedChat === room.id ? 'bg-muted' : ''
                       }`}
                     >
-                      <Avatar className="h-12 w-12 shrink-0">
+                      <Avatar 
+                        className="h-12 w-12 shrink-0 hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer border border-muted"
+                        title="Lihat Profil"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          if (participant?.id) {
+                            const doc = getDoctors().find(d => d.userId === participant.id)
+                            if (doc) {
+                              router.push(`/doctors/${doc.id}?from=chat`)
+                            } else {
+                              alert("Profil dokter tidak ditemukan")
+                            }
+                          }
+                        }}
+                      >
                         <AvatarImage src={participant?.avatar} />
-                        <AvatarFallback className="bg-primary/10 text-primary">
+                        <AvatarFallback className="bg-primary/10 text-primary font-medium">
                           {participant ? getInitials(participant.name) : '?'}
                         </AvatarFallback>
                       </Avatar>
@@ -286,7 +300,18 @@ export default function PatientChatPage() {
                 <>
                   {/* Chat Header */}
                   <div className="flex items-center justify-between bg-card p-3 border-b border-border h-16 z-10 relative">
-                    <div className="flex items-center gap-3 cursor-pointer">
+                    <div 
+                      className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
+                      title="Lihat Profil"
+                      onClick={() => {
+                        const doc = getDoctors().find(d => d.userId === otherParticipant?.id)
+                        if (doc) {
+                          router.push(`/doctors/${doc.id}?from=chat`)
+                        } else {
+                          alert("Profil dokter tidak ditemukan")
+                        }
+                      }}
+                    >
                       <Avatar className="h-10 w-10">
                         <AvatarImage src={otherParticipant.avatar} />
                         <AvatarFallback className="bg-primary/10 text-primary">
@@ -299,24 +324,6 @@ export default function PatientChatPage() {
                         </h3>
                         <p className="text-xs text-muted-foreground">Online</p>
                       </div>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        title="Lihat Profil" 
-                        className="text-muted-foreground rounded-full hover:bg-muted"
-                        onClick={() => {
-                          const doc = getDoctors().find(d => d.userId === otherParticipant?.id)
-                          if (doc) {
-                            router.push(`/doctors/${doc.id}?from=chat`)
-                          } else {
-                            alert("Profil dokter tidak ditemukan")
-                          }
-                        }}
-                      >
-                        <User className="h-5 w-5" />
-                      </Button>
                     </div>
                   </div>
 

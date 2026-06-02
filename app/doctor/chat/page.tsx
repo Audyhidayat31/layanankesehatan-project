@@ -206,7 +206,16 @@ export default function DoctorChatPage() {
                         selectedChat === room.id ? 'bg-muted' : ''
                       }`}
                     >
-                      <Avatar className="h-12 w-12 shrink-0">
+                      <Avatar 
+                        className="h-12 w-12 shrink-0 hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer border border-muted"
+                        title="Lihat Profil"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          if (participant?.id) {
+                            router.push(`/doctor/patients/${participant.id}`)
+                          }
+                        }}
+                      >
                         <AvatarImage src={participant?.avatar} />
                         <AvatarFallback className="bg-primary/10 text-primary font-medium">
                           {participant ? getInitials(participant.name) : '?'}
@@ -249,7 +258,15 @@ export default function DoctorChatPage() {
                 <>
                   {/* Chat Header */}
                   <div className="flex items-center justify-between bg-card p-3 border-b border-border h-16 z-10 relative">
-                    <div className="flex items-center gap-3 cursor-pointer">
+                    <div 
+                      className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
+                      title="Lihat Profil"
+                      onClick={() => {
+                        if (otherParticipant) {
+                          router.push(`/doctor/patients/${otherParticipant.id}`)
+                        }
+                      }}
+                    >
                       <Avatar className="h-10 w-10">
                         <AvatarImage src={otherParticipant.avatar} />
                         <AvatarFallback className="bg-primary/10 text-primary">
@@ -262,21 +279,6 @@ export default function DoctorChatPage() {
                         </h3>
                         <p className="text-xs text-muted-foreground">Online</p>
                       </div>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        title="Lihat Profil" 
-                        className="text-muted-foreground rounded-full hover:bg-muted"
-                        onClick={() => {
-                          if (otherParticipant) {
-                            router.push(`/doctor/patients/${otherParticipant.id}`)
-                          }
-                        }}
-                      >
-                        <User className="h-5 w-5" />
-                      </Button>
                     </div>
                   </div>
 
