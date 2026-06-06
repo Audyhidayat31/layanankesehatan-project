@@ -236,10 +236,12 @@ export default function PatientDashboardPage() {
                           </span>
                         </div>
                       </div>
-                      {apt.status === 'confirmed' && apt.type === 'online' && (
-                        <Button size="sm">
-                          <Video className="mr-1 h-4 w-4" />
-                          Mulai
+                      {apt.status === 'confirmed' && (
+                        <Button size="sm" asChild>
+                          <Link href={`/patient/chat?doctorId=${apt.doctor.userId}`}>
+                            <MessageSquare className="mr-1 h-4 w-4" />
+                            Mulai
+                          </Link>
                         </Button>
                       )}
                     </div>

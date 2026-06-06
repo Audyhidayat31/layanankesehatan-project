@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, use } from 'react'
+import { useState, use, useMemo } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Header } from '@/components/header'
@@ -31,7 +31,6 @@ import {
   Video,
   Building,
   ArrowLeft,
-  MessageSquare,
 } from 'lucide-react'
 import { useAuthStore, useAppStore } from '@/lib/store'
 import { useEffect } from 'react'
@@ -41,7 +40,7 @@ export default function DoctorDetailPage({ params }: { params: Promise<{ id: str
   const router = useRouter()
   const [from, setFrom] = useState<string | null>(null)
   const { user, isAuthenticated } = useAuthStore()
-  const { createAppointment, doctors, fetchDoctors } = useAppStore()
+  const { createAppointment, doctors, fetchDoctors, appointments } = useAppStore()
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
@@ -56,7 +55,7 @@ export default function DoctorDetailPage({ params }: { params: Promise<{ id: str
   const [practiceAddress, setPracticeAddress] = useState('')
   const [isBooking, setIsBooking] = useState(false)
   const [bookingDialogOpen, setBookingDialogOpen] = useState(false)
-  const [bookedSlots, setBookedSlots] = useState<string[]>([])
+  const [dbBookedSlots, setDbBookedSlots] = useState<string[]>([])
   const [isLoadingSlots, setIsLoadingSlots] = useState(false)
 
   const doctor = doctors.find((d) => d.id === resolvedParams.id)
@@ -74,19 +73,40 @@ export default function DoctorDetailPage({ params }: { params: Promise<{ id: str
         .then((res) => res.json())
         .then((data) => {
           if (data.success) {
-            setBookedSlots(data.bookedSlots)
-            // Reset selected time if it's now booked
-            if (data.bookedSlots.includes(selectedTime)) {
-              setSelectedTime('')
-            }
+            setDbBookedSlots(data.bookedSlots)
           }
         })
         .catch((err) => console.error('Failed to fetch booked slots', err))
         .finally(() => setIsLoadingSlots(false))
     } else {
-      setBookedSlots([])
+      setDbBookedSlots([])
     }
-  }, [selectedDate, doctor, selectedTime])
+  }, [selectedDate, doctor?.id])
+
+  const bookedSlots = useMemo(() => {
+    if (!doctor) return []
+    // Get any non-cancelled local appointments for this doctor and date
+    const localBooked = appointments
+      .filter((apt) => {
+        const aptDate = typeof apt.date === 'string'
+          ? apt.date
+          : new Date(apt.date).toISOString().split('T')[0]
+        return (
+          apt.doctorId === doctor.id &&
+          aptDate === selectedDate &&
+          apt.status !== 'cancelled'
+        )
+      })
+      .map((apt) => apt.time)
+
+    return Array.from(new Set([...dbBookedSlots, ...localBooked]))
+  }, [dbBookedSlots, appointments, doctor, selectedDate])
+
+  useEffect(() => {
+    if (selectedTime && bookedSlots.includes(selectedTime)) {
+      setSelectedTime('')
+    }
+  }, [selectedTime, bookedSlots])
 
   if (!doctor) {
     return (
@@ -442,11 +462,6 @@ export default function DoctorDetailPage({ params }: { params: Promise<{ id: str
                       </div>
                     </DialogContent>
                   </Dialog>
-
-                  <Button variant="outline" className="w-full">
-                    <MessageSquare className="mr-2 h-4 w-4" />
-                    Chat Dokter
-                  </Button>
                 </CardContent>
               </Card>
             </div>

@@ -347,26 +347,23 @@ export const useAppStore = create<AppState>()(
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(appointment)
           })
-          if (res.ok && res.headers.get('content-type')?.includes('application/json')) {
-            const json = await res.json()
-            if (json.success) {
-              set({ appointments: [...get().appointments, json.appointment] })
-              return json.appointment
-            }
-          } else {
-            console.warn('Backend unavailable, using local fallback. Status:', res.status)
+          
+          let json: any = null
+          if (res.headers.get('content-type')?.includes('application/json')) {
+            json = await res.json()
           }
-        } catch (err) {
-          console.warn('Backend unavailable, using local fallback:', err)
+
+          if (res.ok && json?.success) {
+            set({ appointments: [...get().appointments, json.appointment] })
+            return json.appointment
+          } else {
+            const errorMsg = json?.error || 'Gagal membuat janji temu di server'
+            throw new Error(errorMsg)
+          }
+        } catch (err: any) {
+          console.error('Failed to create appointment on database:', err)
+          throw err
         }
-        // Fallback
-        const newAppointment: Appointment = {
-          ...appointment,
-          id: `apt-${Date.now()}`,
-          createdAt: new Date().toISOString(),
-        } as Appointment
-        set({ appointments: [...get().appointments, newAppointment] })
-        return newAppointment
       },
 
       updateAppointmentStatus: async (id, status, diagnosis, notes) => {

@@ -257,19 +257,11 @@ export default function PatientAppointmentsPage() {
                             {formatPrice(apt.doctor.price)}
                           </p>
                           <div className="flex gap-2">
-                            {apt.status === 'confirmed' && apt.type === 'online' && (
+                            {apt.status === 'confirmed' && (
                               <Button size="sm" asChild>
                                 <Link href={`/patient/chat?doctorId=${apt.doctor.userId}`}>
-                                  <Video className="mr-1 h-4 w-4" />
-                                  Mulai Konsultasi
-                                </Link>
-                              </Button>
-                            )}
-                            {apt.status === 'confirmed' && (
-                              <Button variant="outline" size="sm" asChild>
-                                <Link href={`/patient/chat?doctorId=${apt.doctor.userId}`}>
                                   <MessageSquare className="mr-1 h-4 w-4" />
-                                  Chat
+                                  Mulai Konsultasi
                                 </Link>
                               </Button>
                             )}

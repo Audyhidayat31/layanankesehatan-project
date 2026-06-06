@@ -11,10 +11,17 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: 'doctorId dan date diperlukan' }, { status: 400 })
     }
 
+    const [year, month, day] = date.split('-').map(Number)
+    const startOfDay = new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0))
+    const endOfDay = new Date(Date.UTC(year, month - 1, day, 23, 59, 59, 999))
+
     const appointments = await prisma.appointment.findMany({
       where: {
         doctorId,
-        date: new Date(date),
+        date: {
+          gte: startOfDay,
+          lte: endOfDay
+        },
         status: {
           not: 'CANCELLED'
         }
