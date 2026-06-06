@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import EmojiPicker, { Theme } from 'emoji-picker-react'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
@@ -19,7 +19,7 @@ import {
 import { mockChatRooms, mockUsers } from '@/lib/mock-data'
 import { useAuthStore, useAppStore } from '@/lib/store'
 
-export default function DoctorChatPage() {
+function DoctorChat() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { user, registeredUsers } = useAuthStore()
@@ -424,5 +424,19 @@ export default function DoctorChatPage() {
         </div>
       </main>
     </div>
+  )
+}
+
+export default function DoctorChatPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-screen items-center justify-center bg-muted/30">
+        <div className="text-center">
+          <p className="text-muted-foreground">Memuat Chat...</p>
+        </div>
+      </div>
+    }>
+      <DoctorChat />
+    </Suspense>
   )
 }
