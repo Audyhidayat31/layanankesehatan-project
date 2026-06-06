@@ -212,7 +212,7 @@ export function DashboardHeader({ role }: DashboardHeaderProps) {
                       )}
                       onClick={() => {
                         markNotificationRead(notif.id)
-                        if (notif.type === 'CHAT' || notif.title === 'Pesan Baru') {
+                        if (notif.type === 'chat' || notif.title === 'Pesan Baru') {
                           const latestMsg = chatMessages
                             .filter(m => m.receiverId === user.id && (!m.isRead || m.createdAt === notif.createdAt))
                             .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0]
@@ -220,7 +220,7 @@ export function DashboardHeader({ role }: DashboardHeaderProps) {
                           if (role === 'doctor' || role === 'patient') {
                             router.push(`/${role}/chat${targetId ? `?userId=${targetId}` : ''}`)
                           }
-                        } else if (notif.type === 'APPOINTMENT') {
+                        } else if (notif.type === 'appointment') {
                           if (role === 'doctor' || role === 'patient') {
                             router.push(`/${role}/appointments`)
                           }

@@ -25,7 +25,7 @@ export default function PharmacyPage() {
   const { addItem, items } = useCartStore()
   const { medicines } = useAppStore()
   const [searchQuery, setSearchQuery] = useState('')
-  const [selectedCategory, setSelectedCategory] = useState('all')
+  const [selectedCategory, setSelectedCategory] = useState('Semua Kategori')
   const [sortBy, setSortBy] = useState('name')
 
   const formatPrice = (price: number) => {
@@ -49,7 +49,7 @@ export default function PharmacyPage() {
       )
     }
 
-    if (selectedCategory !== 'all') {
+    if (selectedCategory !== 'Semua Kategori') {
       currentMedicines = currentMedicines.filter((med) => med.category === selectedCategory)
     }
 
@@ -110,7 +110,6 @@ export default function PharmacyPage() {
                   <SelectValue placeholder="Kategori" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Semua Kategori</SelectItem>
                   {medicineCategories.map((cat) => (
                     <SelectItem key={cat} value={cat}>
                       {cat}
@@ -141,7 +140,11 @@ export default function PharmacyPage() {
               <Card key={medicine.id} className="group overflow-hidden border-border/40 bg-card/60 backdrop-blur-sm transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl hover:border-primary/30">
                 <div className="relative aspect-square bg-muted/50 overflow-hidden">
                   <div className="flex h-full items-center justify-center transition-transform duration-500 group-hover:scale-110">
-                    <Pill className="h-16 w-16 text-muted-foreground/30 transition-colors duration-300 group-hover:text-primary/40" />
+                    {medicine.image ? (
+                      <img src={medicine.image} alt={medicine.name} className="h-full w-full object-cover" />
+                    ) : (
+                      <Pill className="h-16 w-16 text-muted-foreground/30 transition-colors duration-300 group-hover:text-primary/40" />
+                    )}
                   </div>
                   {medicine.requiresPrescription && (
                     <Badge

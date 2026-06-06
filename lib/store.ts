@@ -697,7 +697,19 @@ export const useAppStore = create<AppState>()(
         }
       },
     }),
-    { name: 'app-storage' }
+    {
+      name: 'app-storage',
+      version: 3,
+      migrate: (persistedState: any, version: number) => {
+        if (version < 3) {
+          return {
+            ...persistedState,
+            medicines: mockMedicines,
+          };
+        }
+        return persistedState;
+      },
+    }
   )
 )
 
