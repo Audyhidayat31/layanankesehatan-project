@@ -34,10 +34,10 @@ export async function GET(req: Request) {
 export async function PATCH(req: Request) {
   try {
     const body = await req.json()
-    const { doctorId, rating } = body
+    const { doctorId, rating, specialization, hospital, experience, price, bio, education, practiceAddress } = body
 
-    if (!doctorId || !rating) {
-      return NextResponse.json({ error: 'Data tidak lengkap' }, { status: 400 })
+    if (!doctorId) {
+      return NextResponse.json({ error: 'doctorId diperlukan' }, { status: 400 })
     }
 
     const existing = await prisma.doctorProfile.findUnique({ where: { id: doctorId } })
@@ -45,15 +45,26 @@ export async function PATCH(req: Request) {
       return NextResponse.json({ error: 'Profil dokter tidak ditemukan' }, { status: 404 })
     }
 
-    const newCount = existing.reviewCount + 1
-    const newRating = (existing.rating * existing.reviewCount + Number(rating)) / newCount
+    const updateData: any = {}
+    
+    if (rating !== undefined && rating !== null) {
+      const newCount = existing.reviewCount + 1
+      const newRating = (existing.rating * existing.reviewCount + Number(rating)) / newCount
+      updateData.rating = Number(newRating.toFixed(1))
+      updateData.reviewCount = newCount
+    }
+
+    if (specialization !== undefined) updateData.specialization = specialization
+    if (hospital !== undefined) updateData.hospital = hospital
+    if (experience !== undefined) updateData.experience = Number(experience)
+    if (price !== undefined) updateData.price = Number(price)
+    if (bio !== undefined) updateData.bio = bio
+    if (education !== undefined) updateData.education = education
+    if (practiceAddress !== undefined) updateData.practiceAddress = practiceAddress
 
     const updated = await prisma.doctorProfile.update({
       where: { id: doctorId },
-      data: {
-        rating: Number(newRating.toFixed(1)),
-        reviewCount: newCount,
-      },
+      data: updateData,
       include: {
         user: { select: { id: true, name: true, email: true, role: true, avatar: true, phone: true } },
         availableSlots: true,

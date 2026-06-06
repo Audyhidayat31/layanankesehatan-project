@@ -14,6 +14,7 @@ import {
   Clock,
   Video,
   Building,
+  MapPin,
   MessageSquare,
   FileText,
   Star,
@@ -218,17 +219,26 @@ export default function PatientAppointmentsPage() {
                               <span className="flex items-center gap-1">
                                 {apt.type === 'online' ? (
                                   <>
-                                    <Video className="h-4 w-4" />
+                                    <Video className="h-4 w-4 text-primary" />
                                     Online
                                   </>
                                 ) : (
                                   <>
-                                    <Building className="h-4 w-4" />
-                                    {apt.doctor.hospital}
+                                    <MapPin className="h-4 w-4 text-accent" />
+                                    Offline
                                   </>
                                 )}
                               </span>
                             </div>
+                            {apt.type === 'offline' && (apt.practiceAddress || apt.doctor.hospital) && (
+                              <p className="mt-2 text-sm text-muted-foreground flex items-start gap-1.5">
+                                <Building className="h-4 w-4 shrink-0 text-muted-foreground mt-0.5" />
+                                <span>
+                                  <span className="font-medium text-foreground">Alamat Praktek:</span>{' '}
+                                  {apt.practiceAddress || apt.doctor.hospital}
+                                </span>
+                              </p>
+                            )}
                             {apt.complaint && (
                               <p className="mt-2 text-sm text-muted-foreground">
                                 <span className="font-medium">Keluhan:</span> {apt.complaint}

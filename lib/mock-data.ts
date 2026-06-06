@@ -109,6 +109,7 @@ export const mockDoctors: DoctorProfile[] = [
     ],
     isVerified: true,
     isOnline: true,
+    practiceAddress: 'Klinik Keluarga Sehat, Jl. Sudirman No. 12, Jakarta',
   },
   {
     id: 'doc-2',
@@ -128,6 +129,7 @@ export const mockDoctors: DoctorProfile[] = [
     ],
     isVerified: true,
     isOnline: true,
+    practiceAddress: 'Praktek Jantung Harapan, Jl. Gatot Subroto No. 45, Jakarta',
   },
   {
     id: 'doc-3',
@@ -146,6 +148,7 @@ export const mockDoctors: DoctorProfile[] = [
     ],
     isVerified: true,
     isOnline: true,
+    practiceAddress: 'Klinik Kulit Cantik, Jl. Pondok Indah No. 8, Jakarta',
   },
   {
     id: 'doc-4',
@@ -165,6 +168,7 @@ export const mockDoctors: DoctorProfile[] = [
     ],
     isVerified: true,
     isOnline: true,
+    practiceAddress: 'Klinik Anak Ceria, Jl. Kemang Raya No. 15, Jakarta',
   },
 ]
 
@@ -322,6 +326,7 @@ export const mockAppointments: Appointment[] = [
     complaint: 'Kontrol rutin jantung',
     diagnosis: 'Kondisi jantung stabil, lanjutkan pengobatan',
     notes: 'Pasien dalam kondisi baik, disarankan olahraga ringan',
+    practiceAddress: 'Praktek Jantung Harapan, Jl. Gatot Subroto No. 45, Jakarta',
     createdAt: '2024-12-10',
   },
   {

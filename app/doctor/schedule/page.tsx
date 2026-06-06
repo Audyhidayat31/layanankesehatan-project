@@ -90,7 +90,7 @@ export default function DoctorSchedulePage() {
     <div className="min-h-screen bg-muted/30">
       <DashboardSidebar role="doctor" />
       <DashboardHeader role="doctor" />
-      
+
       <main className="lg:pl-64">
         <div className="container mx-auto px-4 py-8">
           <div className="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
@@ -191,18 +191,16 @@ export default function DoctorSchedulePage() {
                       daySchedule.map((slot) => (
                         <div
                           key={slot.id}
-                          className={`flex items-center justify-between rounded-lg border p-3 ${
-                            slot.isActive
+                          className={`flex items-center justify-between rounded-lg border p-3 ${slot.isActive
                               ? 'border-primary/20 bg-primary/5'
                               : 'border-border bg-muted/50'
-                          }`}
+                            }`}
                         >
                           <div className="flex items-center gap-2">
                             <Clock className="h-4 w-4 text-muted-foreground" />
                             <span
-                              className={`text-sm font-medium ${
-                                slot.isActive ? 'text-foreground' : 'text-muted-foreground line-through'
-                              }`}
+                              className={`text-sm font-medium ${slot.isActive ? 'text-foreground' : 'text-muted-foreground line-through'
+                                }`}
                             >
                               {slot.startTime} - {slot.endTime}
                             </span>
@@ -243,7 +241,7 @@ export default function DoctorSchedulePage() {
                 <div>
                   <h4 className="font-medium text-foreground">Konsultasi Online</h4>
                   <p className="text-sm text-muted-foreground">
-                    Izinkan pasien untuk konsultasi via video call
+                    Izinkan pasien untuk konsultasi via chat
                   </p>
                 </div>
                 <Switch defaultChecked />

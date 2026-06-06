@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import EmojiPicker, { Theme } from 'emoji-picker-react'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { DashboardSidebar } from '@/components/dashboard/sidebar'
@@ -21,6 +21,7 @@ import { useAuthStore, useAppStore } from '@/lib/store'
 
 export default function PatientChatPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { user, registeredUsers } = useAuthStore()
   // Default to 'user-1' (patient) if not logged in
   const currentUserId = user?.id || 'user-1'
@@ -99,20 +100,30 @@ export default function PatientChatPage() {
     }
   }, [user, router])
 
+  const userIdParam = searchParams.get('userId') || searchParams.get('doctorId') || searchParams.get('chatWith')
+  const lastAppliedUserId = useRef<string | null>(null)
+
   useEffect(() => {
-    if (patientRooms.length > 0 && !selectedChat) {
-      const params = new URLSearchParams(window.location.search)
-      const chatWithDoctorId = params.get('doctorId') || params.get('chatWith')
-      if (chatWithDoctorId) {
-        const room = patientRooms.find(r => r.id === `room-${chatWithDoctorId}`)
+    if (patientRooms.length > 0) {
+      let shouldDefault = false;
+
+      if (userIdParam && lastAppliedUserId.current !== userIdParam) {
+        const room = patientRooms.find(r => r.id === `room-${userIdParam}`)
         if (room) {
           setSelectedChat(room.id)
-          return
+          lastAppliedUserId.current = userIdParam
+        } else {
+          shouldDefault = true;
         }
+      } else if (!selectedChat && !userIdParam) {
+        shouldDefault = true;
       }
-      setSelectedChat(patientRooms[0].id)
+
+      if (shouldDefault && !selectedChat) {
+        setSelectedChat(patientRooms[0].id)
+      }
     }
-  }, [patientRooms, selectedChat])
+  }, [patientRooms, userIdParam, selectedChat])
 
 
   const getInitials = (name: string) => {

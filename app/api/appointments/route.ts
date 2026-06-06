@@ -72,7 +72,7 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     const body = await req.json()
-    const { patientId, doctorId, date, time, type, complaint } = body
+    const { patientId, doctorId, date, time, type, complaint, practiceAddress } = body
 
     // Gunakan Prisma $transaction untuk membuat janji temu dan transaksi pembayaran secara atomik
     const newAppointment = await prisma.$transaction(async (tx) => {
@@ -90,6 +90,22 @@ export async function POST(req: Request) {
         throw new Error('Profil pasien tidak ditemukan')
       }
 
+      // 2.5 Cek apakah jadwal sudah dibooking
+      const existingAppointment = await tx.appointment.findFirst({
+        where: {
+          doctorId,
+          date: new Date(date),
+          time,
+          status: {
+            not: 'CANCELLED'
+          }
+        }
+      })
+
+      if (existingAppointment) {
+        throw new Error('Jadwal sudah dibooking pada waktu tersebut. Silakan pilih waktu lain.')
+      }
+
       // 3. Buat appointment
       const appointment = await tx.appointment.create({
         data: {
@@ -99,6 +115,7 @@ export async function POST(req: Request) {
           time,
           type: type.toUpperCase(),
           complaint,
+          practiceAddress,
           status: 'PENDING'
         },
         include: {

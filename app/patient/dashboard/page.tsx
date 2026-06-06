@@ -224,13 +224,13 @@ export default function PatientDashboardPage() {
                           <span className="flex items-center gap-1">
                             {apt.type === 'online' ? (
                               <>
-                                <Video className="h-3 w-3" />
+                                <Video className="h-3 w-3 text-primary" />
                                 Online
                               </>
                             ) : (
                               <>
-                                <Building className="h-3 w-3" />
-                                Offline
+                                <Building className="h-3 w-3 text-accent" />
+                                Offline ({apt.practiceAddress || apt.doctor.hospital})
                               </>
                             )}
                           </span>

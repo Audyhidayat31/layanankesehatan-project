@@ -88,7 +88,7 @@ export function DashboardHeader({ role }: DashboardHeaderProps) {
   const pathname = usePathname()
   const router = useRouter()
   const { user, logout } = useAuthStore()
-  const { getUnreadCount, notifications, markNotificationRead } = useAppStore()
+  const { getUnreadCount, notifications, markNotificationRead, chatMessages } = useAppStore()
   const [sheetOpen, setSheetOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
   const items = navItems[role] || []
@@ -210,7 +210,22 @@ export function DashboardHeader({ role }: DashboardHeaderProps) {
                         "flex flex-col items-start gap-1 p-4 cursor-pointer",
                         !notif.isRead && "bg-primary/5"
                       )}
-                      onClick={() => markNotificationRead(notif.id)}
+                      onClick={() => {
+                        markNotificationRead(notif.id)
+                        if (notif.type === 'CHAT' || notif.title === 'Pesan Baru') {
+                          const latestMsg = chatMessages
+                            .filter(m => m.receiverId === user.id && (!m.isRead || m.createdAt === notif.createdAt))
+                            .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0]
+                          const targetId = latestMsg ? latestMsg.senderId : ''
+                          if (role === 'doctor' || role === 'patient') {
+                            router.push(`/${role}/chat${targetId ? `?userId=${targetId}` : ''}`)
+                          }
+                        } else if (notif.type === 'APPOINTMENT') {
+                          if (role === 'doctor' || role === 'patient') {
+                            router.push(`/${role}/appointments`)
+                          }
+                        }
+                      }}
                     >
                       <div className="flex w-full items-center justify-between">
                         <span className="font-medium text-xs">{notif.title}</span>

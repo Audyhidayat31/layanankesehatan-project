@@ -26,6 +26,7 @@ export interface DoctorProfile {
   availableSlots: TimeSlot[]
   isVerified: boolean
   isOnline: boolean
+  practiceAddress?: string
 }
 
 export interface PharmacyProfile {
@@ -77,6 +78,7 @@ export interface Appointment {
   diagnosis?: string
   prescription?: Prescription
   notes?: string
+  practiceAddress?: string
   createdAt: string
 }
 

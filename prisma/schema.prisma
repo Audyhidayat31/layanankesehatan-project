@@ -110,6 +110,7 @@ model DoctorProfile {
   education      String[]
   isVerified     Boolean  @default(false)
   isOnline       Boolean  @default(false)
+  practiceAddress String?
 
   availableSlots TimeSlot[]
   appointments   Appointment[]
@@ -156,6 +157,7 @@ model Appointment {
   complaint      String?
   diagnosis      String?
   notes          String?
+  practiceAddress String?
   createdAt      DateTime          @default(now())
 
   prescription   Prescription?

@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Textarea } from '@/components/ui/textarea'
+import { Input } from '@/components/ui/input'
 import { FieldGroup, Field, FieldLabel } from '@/components/ui/field'
 import { Spinner } from '@/components/ui/spinner'
 import {
@@ -52,10 +53,40 @@ export default function DoctorDetailPage({ params }: { params: Promise<{ id: str
   const [selectedTime, setSelectedTime] = useState('')
   const [appointmentType, setAppointmentType] = useState<'online' | 'offline'>('online')
   const [complaint, setComplaint] = useState('')
+  const [practiceAddress, setPracticeAddress] = useState('')
   const [isBooking, setIsBooking] = useState(false)
   const [bookingDialogOpen, setBookingDialogOpen] = useState(false)
+  const [bookedSlots, setBookedSlots] = useState<string[]>([])
+  const [isLoadingSlots, setIsLoadingSlots] = useState(false)
 
   const doctor = doctors.find((d) => d.id === resolvedParams.id)
+
+  useEffect(() => {
+    if (doctor) {
+      setPracticeAddress(doctor.practiceAddress || doctor.hospital || '')
+    }
+  }, [doctor])
+
+  useEffect(() => {
+    if (selectedDate && doctor) {
+      setIsLoadingSlots(true)
+      fetch(`/api/appointments/booked?doctorId=${doctor.id}&date=${selectedDate}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success) {
+            setBookedSlots(data.bookedSlots)
+            // Reset selected time if it's now booked
+            if (data.bookedSlots.includes(selectedTime)) {
+              setSelectedTime('')
+            }
+          }
+        })
+        .catch((err) => console.error('Failed to fetch booked slots', err))
+        .finally(() => setIsLoadingSlots(false))
+    } else {
+      setBookedSlots([])
+    }
+  }, [selectedDate, doctor, selectedTime])
 
   if (!doctor) {
     return (
@@ -126,6 +157,11 @@ export default function DoctorDetailPage({ params }: { params: Promise<{ id: str
       return
     }
 
+    if (appointmentType === 'offline' && !practiceAddress.trim()) {
+      alert('Alamat praktek dokter harus diisi untuk konsultasi offline')
+      return
+    }
+
     setIsBooking(true)
     try {
       // Dapatkan patientProfile ID yang sesungguhnya dari database
@@ -157,6 +193,7 @@ export default function DoctorDetailPage({ params }: { params: Promise<{ id: str
         type: appointmentType,
         status: 'pending',
         complaint: complaint,
+        practiceAddress: appointmentType === 'offline' ? practiceAddress : undefined,
       })
 
       setBookingDialogOpen(false)
@@ -337,21 +374,30 @@ export default function DoctorDetailPage({ params }: { params: Promise<{ id: str
                         </div>
 
                         <div>
-                          <FieldLabel className="mb-2 block">Pilih Waktu</FieldLabel>
+                          <FieldLabel className="mb-2 flex items-center gap-2">
+                            Pilih Waktu
+                            {isLoadingSlots && <Spinner className="h-3 w-3" />}
+                          </FieldLabel>
                           <div className="grid grid-cols-4 gap-2">
-                            {timeSlots.map((time) => (
-                              <button
-                                key={time}
-                                onClick={() => setSelectedTime(time)}
-                                className={`rounded-lg border p-2 text-center text-sm transition-colors ${
-                                  selectedTime === time
-                                    ? 'border-primary bg-primary/10 text-primary'
-                                    : 'border-border hover:border-primary/50'
-                                }`}
-                              >
-                                {time}
-                              </button>
-                            ))}
+                            {timeSlots.map((time) => {
+                              const isBooked = bookedSlots.includes(time)
+                              return (
+                                <button
+                                  key={time}
+                                  onClick={() => setSelectedTime(time)}
+                                  disabled={isBooked || isLoadingSlots}
+                                  className={`rounded-lg border p-2 text-center text-sm transition-colors ${
+                                    isBooked
+                                      ? 'border-border bg-muted text-muted-foreground opacity-50 cursor-not-allowed'
+                                      : selectedTime === time
+                                        ? 'border-primary bg-primary/10 text-primary'
+                                        : 'border-border hover:border-primary/50'
+                                  }`}
+                                >
+                                  {time}
+                                </button>
+                              )
+                            })}
                           </div>
                         </div>
 
@@ -365,6 +411,19 @@ export default function DoctorDetailPage({ params }: { params: Promise<{ id: str
                             rows={3}
                           />
                         </Field>
+
+                        {appointmentType === 'offline' && (
+                          <Field>
+                            <FieldLabel htmlFor="practiceAddress">Alamat Praktek Dokter (Pertemuan Offline)</FieldLabel>
+                            <Input
+                              id="practiceAddress"
+                              placeholder="Masukkan alamat lengkap praktek dokter..."
+                              value={practiceAddress}
+                              onChange={(e) => setPracticeAddress(e.target.value)}
+                              required
+                            />
+                          </Field>
+                        )}
 
                         <Button
                           className="w-full"
