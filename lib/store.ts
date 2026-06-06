@@ -699,9 +699,9 @@ export const useAppStore = create<AppState>()(
     }),
     {
       name: 'app-storage',
-      version: 3,
+      version: 4,
       migrate: (persistedState: any, version: number) => {
-        if (version < 3) {
+        if (version < 4) {
           return {
             ...persistedState,
             medicines: mockMedicines,

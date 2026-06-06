@@ -267,7 +267,7 @@ export const mockMedicines: Medicine[] = [
     stock: 80,
     unit: 'Botol (7.5 ml)',
     requiresPrescription: false,
-    image: 'https://images.unsplash.com/photo-1580281657527-47f249e8f4df?w=500&q=80',
+    image: '/insto.png',
     pharmacyId: 'pharm-1',
   },
   {
@@ -280,7 +280,7 @@ export const mockMedicines: Medicine[] = [
     stock: 120,
     unit: 'Strip (10 tablet)',
     requiresPrescription: false,
-    image: 'https://images.unsplash.com/photo-1628771065518-0d82f1938462?w=500&q=80',
+    image: '/neurobion.png',
     pharmacyId: 'pharm-1',
   },
   {
@@ -319,7 +319,7 @@ export const mockMedicines: Medicine[] = [
     stock: 40,
     unit: 'Botol Spray (10 ml)',
     requiresPrescription: true,
-    image: 'https://images.unsplash.com/photo-1584017911766-d451b3d0e843?w=500&q=80',
+    image: '/iliadin.png',
     pharmacyId: 'pharm-1',
   },
 ]
