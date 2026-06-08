@@ -101,7 +101,7 @@ export async function POST(req: Request) {
       await prisma.notification.create({
         data: {
           userId: receiverId,
-          title: 'Pesan Baru',
+          title: `Pesan Baru|${senderId}`,
           message: `${senderExists.name} mengirim pesan: ${content.substring(0, 50)}${content.length > 50 ? '...' : ''}`,
           type: 'CHAT',
         },

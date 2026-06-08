@@ -212,15 +212,50 @@ export function DashboardHeader({ role }: DashboardHeaderProps) {
                       )}
                       onClick={() => {
                         markNotificationRead(notif.id)
-                        if (notif.type === 'chat' || notif.title === 'Pesan Baru') {
-                          const latestMsg = chatMessages
-                            .filter(m => m.receiverId === user.id && (!m.isRead || m.createdAt === notif.createdAt))
-                            .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0]
-                          const targetId = latestMsg ? latestMsg.senderId : ''
+                        if (notif.type === 'chat' || notif.type === 'CHAT' || notif.title.startsWith('Pesan Baru')) {
+                          const parts = notif.title.split('|')
+                          let targetId = parts[1] || ''
+                          if (!targetId) {
+                            // Try to match sender name from message, e.g. "Dr. Diana mengirim pesan: ..."
+                            const match = notif.message.match(/^(.*?)\smengirim\spesan:/)
+                            if (match && match[1]) {
+                              const senderName = match[1].trim()
+                              
+                              // Check registered users from auth store
+                              const regUsers = useAuthStore.getState().registeredUsers || []
+                              const foundRegUser = regUsers.find(u => u.name === senderName)
+                              if (foundRegUser) {
+                                targetId = foundRegUser.id
+                              } else {
+                                // Check known users in app store
+                                const known = useAppStore.getState().knownUsers || []
+                                const foundKnown = known.find(u => u.name === senderName)
+                                if (foundKnown) {
+                                  targetId = foundKnown.id
+                                } else {
+                                  // Check doctors in app store
+                                  const docs = useAppStore.getState().doctors || []
+                                  const foundDoc = docs.find(d => d.user?.name === senderName)
+                                  if (foundDoc) {
+                                    targetId = foundDoc.userId
+                                  }
+                                }
+                              }
+                            }
+                          }
+                          
+                          if (!targetId) {
+                            // Ultimate fallback
+                            const latestMsg = chatMessages
+                              .filter(m => m.receiverId === user.id && (!m.isRead || m.createdAt === notif.createdAt))
+                              .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0]
+                            targetId = latestMsg ? latestMsg.senderId : ''
+                          }
+                          
                           if (role === 'doctor' || role === 'patient') {
                             router.push(`/${role}/chat${targetId ? `?userId=${targetId}` : ''}`)
                           }
-                        } else if (notif.type === 'appointment') {
+                        } else if (notif.type === 'appointment' || notif.type === 'APPOINTMENT') {
                           if (role === 'doctor' || role === 'patient') {
                             router.push(`/${role}/appointments`)
                           }
@@ -228,7 +263,7 @@ export function DashboardHeader({ role }: DashboardHeaderProps) {
                       }}
                     >
                       <div className="flex w-full items-center justify-between">
-                        <span className="font-medium text-xs">{notif.title}</span>
+                        <span className="font-medium text-xs">{notif.title.split('|')[0]}</span>
                         <span className="text-[10px] text-muted-foreground">
                           {new Date(notif.createdAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
                         </span>

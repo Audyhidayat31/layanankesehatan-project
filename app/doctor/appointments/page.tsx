@@ -387,12 +387,6 @@ export default function DoctorAppointmentsPage() {
                               })()}
                             </Button>
 
-                            {apt.type === 'online' && (
-                              <Button variant="outline">
-                                <Video className="mr-1 h-4 w-4" />
-                                Video Call
-                              </Button>
-                            )}
                             <Button onClick={() => handleComplete(apt)}>
                               <FileText className="mr-1 h-4 w-4" />
                               Input Diagnosa

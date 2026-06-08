@@ -248,7 +248,14 @@ function PatientChat() {
                   return (
                     <button
                       key={room.id}
-                      onClick={() => setSelectedChat(room.id)}
+                      onClick={() => {
+                        setSelectedChat(room.id)
+                        const participant = room.participants.find((p) => p.id !== currentUserId)
+                        if (participant) {
+                          lastAppliedUserId.current = participant.id
+                          router.replace(`/patient/chat?userId=${participant.id}`, { scroll: false })
+                        }
+                      }}
                       className={`flex w-full items-center gap-3 p-3 text-left transition-colors hover:bg-muted/50 ${
                         selectedChat === room.id ? 'bg-muted' : ''
                       }`}
