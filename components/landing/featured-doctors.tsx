@@ -25,16 +25,26 @@ export async function FeaturedDoctors() {
       .slice(0, 2)
   }
 
-  const popularDoctors = await prisma.doctorProfile.findMany({
+  const popularDoctorsData = await prisma.doctorProfile.findMany({
     include: {
       user: true,
     },
-    orderBy: [
-      { rating: 'desc' },
-      { user: { createdAt: 'desc' } }
-    ],
-    take: 4,
+    orderBy: {
+      rating: 'desc',
+    },
+    take: 10,
   })
+
+  const popularDoctors = [...popularDoctorsData]
+    .sort((a, b) => {
+      if (b.rating !== a.rating) {
+        return b.rating - a.rating
+      }
+      const aTime = a.user?.createdAt ? new Date(a.user.createdAt).getTime() : 0
+      const bTime = b.user?.createdAt ? new Date(b.user.createdAt).getTime() : 0
+      return bTime - aTime
+    })
+    .slice(0, 4)
 
   return (
     <section className="bg-muted/50 py-16 md:py-24">

@@ -1,11 +1,15 @@
 import { PrismaClient } from '@prisma/client'
-import { PrismaPg } from '@prisma/adapter-pg'
-import { Pool } from 'pg'
+import { neonConfig, Pool } from '@neondatabase/serverless'
+import { PrismaNeon } from '@prisma/adapter-neon'
+import ws from 'ws'
+
+// Set the WebSocket constructor for the Neon driver to bypass raw TCP port 5432 blocks
+neonConfig.webSocketConstructor = ws
 
 const connectionString = process.env.DATABASE_URL!
 
-const pool = new Pool({ connectionString })
-const adapter = new PrismaPg(pool)
+const poolConfig = { connectionString }
+const adapter = new PrismaNeon(poolConfig)
 
 const prismaClientSingleton = () => {
   return new PrismaClient({ adapter })
