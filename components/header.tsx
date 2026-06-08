@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuthStore, useCartStore } from '@/lib/store'
 import { Button } from '@/components/ui/button'
 import {
@@ -29,10 +29,19 @@ import {
 
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [scrolled, setScrolled] = useState(false)
   const { user, isAuthenticated, logout } = useAuthStore()
   const { items } = useCartStore()
 
   const cartItemCount = items.reduce((acc, item) => acc + item.quantity, 0)
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20)
+    }
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
 
   const getDashboardLink = () => {
     if (!user) return '/login'
@@ -60,45 +69,53 @@ export function Header() {
   }
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/60 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 shadow-sm transition-all duration-300">
-      <div className="container mx-auto flex h-16 items-center justify-between px-4">
-        <div className="flex items-center gap-8">
-          <Link href="/" className="group flex items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 transition-all duration-300 group-hover:bg-primary group-hover:shadow-md">
-              <Stethoscope className="h-5 w-5 text-primary transition-colors duration-300 group-hover:text-primary-foreground" />
+    <header 
+      className={`sticky top-0 z-50 w-full transition-all duration-500 border-b ${
+        scrolled 
+          ? 'bg-background/70 backdrop-blur-2xl border-border/50 shadow-sm py-2' 
+          : 'bg-background/40 backdrop-blur-md border-transparent py-4'
+      }`}
+    >
+      <div className="container mx-auto flex items-center justify-between px-4">
+        <div className="flex items-center gap-10">
+          <Link href="/" className="group flex items-center gap-2.5">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-accent shadow-md transition-transform duration-500 group-hover:scale-105 group-hover:rotate-6">
+              <Stethoscope className="h-6 w-6 text-white" />
             </div>
-            <span className="text-xl font-bold tracking-tight text-foreground transition-colors duration-300 group-hover:text-primary">HealthServices</span>
+            <span className="text-2xl font-black tracking-tight text-foreground">
+              Health<span className="text-primary">Services</span>
+            </span>
           </Link>
 
-          <nav className="hidden items-center gap-6 md:flex">
+          <nav className="hidden items-center gap-8 md:flex">
             <Link
               href="/doctors"
-              className="text-sm font-medium text-muted-foreground transition-all duration-300 hover:text-primary hover:-translate-y-0.5 relative after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-0 after:bg-primary after:transition-all after:duration-300 hover:after:w-full"
+              className="text-sm font-semibold text-muted-foreground transition-colors hover:text-primary relative after:absolute after:-bottom-1.5 after:left-0 after:h-[2px] after:w-0 after:bg-primary after:transition-all hover:after:w-full"
             >
               Cari Dokter
             </Link>
             <Link
               href="/pharmacy"
-              className="text-sm font-medium text-muted-foreground transition-all duration-300 hover:text-primary hover:-translate-y-0.5 relative after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-0 after:bg-primary after:transition-all after:duration-300 hover:after:w-full"
+              className="text-sm font-semibold text-muted-foreground transition-colors hover:text-primary relative after:absolute after:-bottom-1.5 after:left-0 after:h-[2px] after:w-0 after:bg-primary after:transition-all hover:after:w-full"
             >
               Apotek
             </Link>
             <Link
               href="/articles"
-              className="text-sm font-medium text-muted-foreground transition-all duration-300 hover:text-primary hover:-translate-y-0.5 relative after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-0 after:bg-primary after:transition-all after:duration-300 hover:after:w-full"
+              className="text-sm font-semibold text-muted-foreground transition-colors hover:text-primary relative after:absolute after:-bottom-1.5 after:left-0 after:h-[2px] after:w-0 after:bg-primary after:transition-all hover:after:w-full"
             >
               Artikel Kesehatan
             </Link>
           </nav>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-4">
           {isAuthenticated && user?.role === 'patient' && (
             <Link href="/cart" className="relative">
-              <Button variant="ghost" size="icon" className="relative">
+              <Button variant="ghost" size="icon" className="relative hover:bg-primary/10 hover:text-primary rounded-full transition-colors">
                 <ShoppingCart className="h-5 w-5" />
                 {cartItemCount > 0 && (
-                  <Badge className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full p-0 text-xs">
+                  <Badge className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full p-0 text-xs bg-primary shadow-sm border-2 border-background">
                     {cartItemCount}
                   </Badge>
                 )}
@@ -108,60 +125,59 @@ export function Header() {
 
           {isAuthenticated ? (
             <>
-              <Button variant="ghost" size="icon" className="relative hidden md:flex">
+              <Button variant="ghost" size="icon" className="relative hidden md:flex hover:bg-primary/10 hover:text-primary rounded-full transition-colors">
                 <Bell className="h-5 w-5" />
-                <span className="absolute -right-1 -top-1 flex h-2 w-2 rounded-full bg-destructive" />
+                <span className="absolute right-2 top-2 flex h-2 w-2 rounded-full bg-destructive" />
               </Button>
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="flex items-center gap-2 px-2">
-                    <Avatar className="h-8 w-8">
-                      <AvatarFallback className="bg-primary text-primary-foreground text-xs">
+                  <Button variant="ghost" className="flex items-center gap-2 pl-2 pr-3 rounded-full hover:bg-muted/50 border border-transparent hover:border-border/50 transition-all">
+                    <Avatar className="h-8 w-8 border border-border shadow-sm">
+                      <AvatarFallback className="bg-gradient-to-br from-primary to-accent text-white text-xs font-bold">
                         {user ? getInitials(user.name) : 'U'}
                       </AvatarFallback>
                     </Avatar>
-                    <span className="hidden text-sm font-medium md:block">{user?.name}</span>
+                    <span className="hidden text-sm font-semibold md:block">{user?.name}</span>
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <div className="px-2 py-1.5">
-                    <p className="text-sm font-medium">{user?.name}</p>
-                    <p className="text-xs text-muted-foreground">{user?.email}</p>
+                <DropdownMenuContent align="end" className="w-60 rounded-2xl p-2">
+                  <div className="px-3 py-2.5 bg-muted/50 rounded-xl mb-2">
+                    <p className="text-sm font-bold">{user?.name}</p>
+                    <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
                   </div>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <Link href={getDashboardLink()} className="flex items-center gap-2">
-                      <LayoutDashboard className="h-4 w-4" />
+                  <DropdownMenuItem asChild className="rounded-lg cursor-pointer">
+                    <Link href={getDashboardLink()} className="flex items-center gap-2 py-2">
+                      <LayoutDashboard className="h-4 w-4 text-muted-foreground" />
                       Dashboard
                     </Link>
                   </DropdownMenuItem>
                   {user?.role === 'patient' && (
                     <>
-                      <DropdownMenuItem asChild>
-                        <Link href="/patient/appointments" className="flex items-center gap-2">
-                          <Calendar className="h-4 w-4" />
+                      <DropdownMenuItem asChild className="rounded-lg cursor-pointer">
+                        <Link href="/patient/appointments" className="flex items-center gap-2 py-2">
+                          <Calendar className="h-4 w-4 text-muted-foreground" />
                           Konsultasi Saya
                         </Link>
                       </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                        <Link href="/patient/orders" className="flex items-center gap-2">
-                          <Pill className="h-4 w-4" />
+                      <DropdownMenuItem asChild className="rounded-lg cursor-pointer">
+                        <Link href="/patient/orders" className="flex items-center gap-2 py-2">
+                          <Pill className="h-4 w-4 text-muted-foreground" />
                           Pesanan Obat
                         </Link>
                       </DropdownMenuItem>
                     </>
                   )}
-                  <DropdownMenuItem asChild>
-                    <Link href="/settings" className="flex items-center gap-2">
-                      <Settings className="h-4 w-4" />
+                  <DropdownMenuItem asChild className="rounded-lg cursor-pointer">
+                    <Link href="/settings" className="flex items-center gap-2 py-2">
+                      <Settings className="h-4 w-4 text-muted-foreground" />
                       Pengaturan
                     </Link>
                   </DropdownMenuItem>
-                  <DropdownMenuSeparator />
+                  <DropdownMenuSeparator className="my-1" />
                   <DropdownMenuItem
                     onClick={() => logout()}
-                    className="flex items-center gap-2 text-destructive focus:text-destructive"
+                    className="flex items-center gap-2 py-2 text-destructive focus:text-destructive focus:bg-destructive/10 rounded-lg cursor-pointer font-medium"
                   >
                     <LogOut className="h-4 w-4" />
                     Keluar
@@ -171,11 +187,11 @@ export function Header() {
             </>
           ) : (
             <div className="hidden items-center gap-3 md:flex">
-              <Button variant="ghost" className="transition-all duration-300 hover:bg-primary/10 hover:text-primary" asChild>
+              <Button variant="ghost" className="font-semibold rounded-full hover:bg-primary/10 hover:text-primary transition-colors" asChild>
                 <Link href="/login">Masuk</Link>
               </Button>
-              <Button className="transition-all duration-300 hover:shadow-md hover:-translate-y-0.5" asChild>
-                <Link href="/register">Daftar</Link>
+              <Button className="font-semibold rounded-full shadow-md hover:shadow-lg transition-all hover:-translate-y-0.5" asChild>
+                <Link href="/register">Daftar Sekarang</Link>
               </Button>
             </div>
           )}
@@ -183,7 +199,7 @@ export function Header() {
           <Button
             variant="ghost"
             size="icon"
-            className="md:hidden"
+            className="md:hidden rounded-full"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           >
             {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -191,52 +207,54 @@ export function Header() {
         </div>
       </div>
 
-      {mobileMenuOpen && (
-        <div className="border-t border-border bg-card md:hidden">
-          <nav className="container mx-auto flex flex-col gap-2 px-4 py-4">
-            <Link
-              href="/doctors"
-              className="rounded-md px-3 py-2 text-sm font-medium text-foreground hover:bg-muted"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              Cari Dokter
-            </Link>
-            <Link
-              href="/pharmacy"
-              className="rounded-md px-3 py-2 text-sm font-medium text-foreground hover:bg-muted"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              Apotek
-            </Link>
-            <Link
-              href="/articles"
-              className="rounded-md px-3 py-2 text-sm font-medium text-foreground hover:bg-muted"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              Artikel Kesehatan
-            </Link>
-            {!isAuthenticated && (
-              <>
-                <hr className="my-2 border-border" />
-                <Link
-                  href="/login"
-                  className="rounded-md px-3 py-2 text-sm font-medium text-foreground hover:bg-muted"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  Masuk
-                </Link>
-                <Link
-                  href="/register"
-                  className="rounded-md bg-primary px-3 py-2 text-center text-sm font-medium text-primary-foreground"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  Daftar
-                </Link>
-              </>
-            )}
-          </nav>
-        </div>
-      )}
+      {/* Mobile Menu */}
+      <div 
+        className={`md:hidden absolute top-full left-0 w-full bg-background/95 backdrop-blur-xl border-b border-border shadow-lg transition-all duration-300 overflow-hidden ${
+          mobileMenuOpen ? 'max-h-[400px] opacity-100' : 'max-h-0 opacity-0'
+        }`}
+      >
+        <nav className="container mx-auto flex flex-col gap-1 px-4 py-4">
+          <Link
+            href="/doctors"
+            className="rounded-xl px-4 py-3 text-sm font-semibold text-foreground hover:bg-muted/50 transition-colors"
+            onClick={() => setMobileMenuOpen(false)}
+          >
+            Cari Dokter
+          </Link>
+          <Link
+            href="/pharmacy"
+            className="rounded-xl px-4 py-3 text-sm font-semibold text-foreground hover:bg-muted/50 transition-colors"
+            onClick={() => setMobileMenuOpen(false)}
+          >
+            Apotek
+          </Link>
+          <Link
+            href="/articles"
+            className="rounded-xl px-4 py-3 text-sm font-semibold text-foreground hover:bg-muted/50 transition-colors"
+            onClick={() => setMobileMenuOpen(false)}
+          >
+            Artikel Kesehatan
+          </Link>
+          {!isAuthenticated && (
+            <div className="mt-4 pt-4 border-t border-border flex flex-col gap-2">
+              <Link
+                href="/login"
+                className="rounded-xl px-4 py-3 text-sm font-semibold text-foreground hover:bg-muted/50 transition-colors text-center border border-border"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Masuk
+              </Link>
+              <Link
+                href="/register"
+                className="rounded-xl bg-primary px-4 py-3 text-center text-sm font-semibold text-primary-foreground shadow-md"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Daftar Sekarang
+              </Link>
+            </div>
+          )}
+        </nav>
+      </div>
     </header>
   )
 }

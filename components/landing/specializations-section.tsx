@@ -80,41 +80,52 @@ const specializations: Specialization[] = [
 
 export function SpecializationsSection() {
   return (
-    <section className="py-16 md:py-24">
-      <div className="container mx-auto px-4">
-        <div className="mb-12 text-center">
-          <h2 className="mb-4 text-3xl font-bold tracking-tight text-foreground md:text-4xl">
-            Temukan Dokter Spesialis
+    <section className="py-24 relative overflow-hidden bg-background">
+      {/* Decorative gradients */}
+      <div className="absolute top-0 right-0 w-1/2 h-1/2 bg-primary/5 rounded-full blur-[100px] pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-1/2 h-1/2 bg-accent/5 rounded-full blur-[100px] pointer-events-none" />
+
+      <div className="container mx-auto px-4 relative z-10">
+        <div className="mb-16 text-center max-w-3xl mx-auto slide-up-fade">
+          <span className="text-primary font-semibold tracking-wider uppercase text-sm mb-4 block">Layanan Spesialis</span>
+          <h2 className="mb-6 text-4xl font-extrabold tracking-tight text-foreground md:text-5xl">
+            Temukan Dokter <span className="text-gradient">Spesialis</span>
           </h2>
-          <p className="mx-auto max-w-2xl text-muted-foreground">
-            Pilih spesialisasi sesuai kebutuhan kesehatan Anda dan temukan dokter terbaik
+          <p className="text-lg text-muted-foreground leading-relaxed">
+            Pilih spesialisasi sesuai kebutuhan kesehatan Anda dan temukan dokter terbaik yang siap melayani dengan sepenuh hati.
           </p>
         </div>
 
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-4 lg:gap-6">
-          {specializations.map((spec) => (
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-4 lg:gap-6 slide-up-fade stagger-1">
+          {specializations.map((spec, index) => (
             <Link
               key={spec.slug}
               href={`/doctors?specialization=${spec.slug}`}
-              className="group flex flex-col items-center gap-4 rounded-xl border border-border/40 bg-card/50 backdrop-blur-sm p-6 text-center shadow-sm transition-all duration-300 hover:-translate-y-1.5 hover:border-primary/50 hover:shadow-lg hover:bg-card cursor-pointer"
+              className="group flex flex-col items-center gap-5 glass-card rounded-3xl p-8 text-center cursor-pointer relative overflow-hidden"
             >
+              {/* Hover background glow */}
+              <div className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br from-white/5 to-transparent ${spec.bgColor.replace('10', '5')}`} />
+              
               <div
-                className={`flex h-16 w-16 items-center justify-center rounded-full ${spec.bgColor} transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3`}
+                className={`relative flex h-20 w-20 items-center justify-center rounded-2xl ${spec.bgColor} transition-all duration-500 group-hover:scale-110 group-hover:-translate-y-1 shadow-sm`}
               >
-                <spec.icon className={`h-8 w-8 ${spec.color}`} />
+                <spec.icon className={`h-10 w-10 ${spec.color} transition-transform duration-500 group-hover:rotate-12`} />
               </div>
-              <span className="font-medium text-foreground transition-colors duration-300 group-hover:text-primary">{spec.name}</span>
+              
+              <span className="font-semibold text-lg text-foreground transition-colors duration-300 group-hover:text-primary relative z-10">
+                {spec.name}
+              </span>
             </Link>
           ))}
         </div>
 
-        <div className="mt-8 text-center">
+        <div className="mt-16 text-center slide-up-fade stagger-2">
           <Link
             href="/doctors"
-            className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-primary/10 text-primary font-medium hover:bg-primary hover:text-primary-foreground transition-all duration-300 group"
           >
             Lihat semua spesialisasi
-            <span aria-hidden="true">&#8594;</span>
+            <span aria-hidden="true" className="transition-transform group-hover:translate-x-1">&#8594;</span>
           </Link>
         </div>
       </div>

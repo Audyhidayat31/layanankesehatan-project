@@ -47,85 +47,92 @@ export async function FeaturedDoctors() {
     .slice(0, 4)
 
   return (
-    <section className="bg-muted/50 py-16 md:py-24">
-      <div className="container mx-auto px-4">
-        <div className="mb-12 flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
-          <div>
-            <h2 className="mb-2 text-3xl font-bold tracking-tight text-foreground md:text-4xl">
-              Dokter Terpopuler
+    <section className="bg-muted/30 py-24 relative overflow-hidden">
+      {/* Decorative gradient overlay */}
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/50 to-background pointer-events-none" />
+
+      <div className="container mx-auto px-4 relative z-10">
+        <div className="mb-16 flex flex-col items-start justify-between gap-6 md:flex-row md:items-end slide-up-fade">
+          <div className="max-w-2xl">
+            <span className="text-primary font-semibold tracking-wider uppercase text-sm mb-4 block">Top Rating</span>
+            <h2 className="mb-4 text-4xl font-extrabold tracking-tight text-foreground md:text-5xl">
+              Dokter <span className="text-gradient">Terpopuler</span>
             </h2>
-            <p className="text-muted-foreground">
-              Dokter dengan rating tertinggi dan pengalaman terbaik
+            <p className="text-lg text-muted-foreground leading-relaxed">
+              Konsultasi dengan dokter pilihan yang memiliki rating tertinggi dan pengalaman terbaik dari ribuan pasien.
             </p>
           </div>
-          <Button variant="outline" asChild>
+          <Button variant="outline" size="lg" className="rounded-full shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5 border-primary/20 hover:bg-primary/5 hover:text-primary" asChild>
             <Link href="/doctors">Lihat Semua Dokter</Link>
           </Button>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4 slide-up-fade stagger-1">
           {popularDoctors.map((doctor) => (
             <Card
               key={doctor.id}
-              className="group overflow-hidden border-border/40 bg-card/60 backdrop-blur-sm transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl hover:border-primary/30"
+              className="group relative overflow-hidden glass-card rounded-3xl border-0 bg-card/60"
             >
-              <CardContent className="p-6">
-                <div className="mb-4 flex items-start justify-between">
-                  <Avatar className="h-16 w-16 border-2 border-primary/20 transition-all duration-300 group-hover:border-primary/50 group-hover:shadow-md">
-                    <AvatarFallback className="bg-primary/10 text-lg font-semibold text-primary transition-colors duration-300 group-hover:bg-primary/20">
-                      {getInitials(doctor.user.name)}
-                    </AvatarFallback>
-                  </Avatar>
-                  {doctor.isOnline && (
+              {/* Gradient border effect on hover */}
+              <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-accent/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+              
+              <CardContent className="p-8 relative z-10">
+                <div className="mb-6 flex items-start justify-between">
+                  <div className="relative">
+                    <Avatar className="h-20 w-20 border-4 border-background shadow-xl transition-transform duration-500 group-hover:scale-105 group-hover:-translate-y-1">
+                      <AvatarFallback className="bg-gradient-to-br from-primary/20 to-accent/20 text-xl font-bold text-primary">
+                        {getInitials(doctor.user.name)}
+                      </AvatarFallback>
+                    </Avatar>
+                    {doctor.isOnline && (
+                      <div className="absolute bottom-1 right-1 h-4 w-4 rounded-full border-2 border-background bg-green-500 shadow-sm" />
+                    )}
+                  </div>
+                  {doctor.isVerified && (
                     <Badge
                       variant="secondary"
-                      className="bg-green-100 text-green-700"
+                      className="bg-primary/10 text-primary border-0 shadow-sm"
                     >
-                      <span className="mr-1 h-2 w-2 rounded-full bg-green-500" />
-                      Online
+                      <CheckCircle className="mr-1 h-3 w-3" />
+                      Terverifikasi
                     </Badge>
                   )}
                 </div>
 
-                <div className="mb-4 space-y-1">
-                  <div className="flex items-center gap-1">
-                    <h3 className="font-semibold text-foreground">
-                      {doctor.user.name}
-                    </h3>
-                    {doctor.isVerified && (
-                      <CheckCircle className="h-4 w-4 text-primary" />
-                    )}
-                  </div>
-                  <p className="text-sm text-primary">{doctor.specialization}</p>
+                <div className="mb-6 space-y-1.5">
+                  <h3 className="font-bold text-xl text-foreground line-clamp-1 group-hover:text-primary transition-colors">
+                    {doctor.user.name}
+                  </h3>
+                  <p className="font-medium text-primary/80">{doctor.specialization}</p>
                 </div>
 
-                <div className="mb-4 space-y-2 text-sm text-muted-foreground">
-                  <div className="flex items-center gap-2">
-                    <MapPin className="h-4 w-4" />
+                <div className="mb-6 space-y-3 text-sm text-muted-foreground bg-background/50 rounded-2xl p-4 shadow-inner">
+                  <div className="flex items-center gap-3">
+                    <MapPin className="h-4 w-4 text-primary" />
                     <span className="truncate">{doctor.hospital}</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4" />
+                  <div className="flex items-center gap-3">
+                    <Clock className="h-4 w-4 text-primary" />
                     <span>{doctor.experience} tahun pengalaman</span>
                   </div>
                 </div>
 
-                <div className="mb-4 flex items-center justify-between">
-                  <div className="flex items-center gap-1">
-                    <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                    <span className="font-medium text-foreground">
+                <div className="mb-6 flex items-center justify-between">
+                  <div className="flex items-center gap-1.5 bg-yellow-400/10 px-2.5 py-1 rounded-full">
+                    <Star className="h-4 w-4 fill-yellow-400 text-yellow-500" />
+                    <span className="font-bold text-foreground">
                       {doctor.rating}
                     </span>
-                    <span className="text-sm text-muted-foreground">
+                    <span className="text-sm text-muted-foreground font-medium">
                       ({doctor.reviewCount})
                     </span>
                   </div>
-                  <span className="font-semibold text-primary">
+                  <span className="font-bold text-lg text-primary">
                     {formatPrice(doctor.price)}
                   </span>
                 </div>
 
-                <Button className="w-full transition-all duration-300 hover:shadow-md group-hover:bg-primary/90" asChild>
+                <Button className="w-full rounded-xl h-12 shadow-md transition-all duration-300 hover:shadow-lg group-hover:bg-primary group-hover:text-primary-foreground" asChild>
                   <Link href={`/doctors/${doctor.id}`}>Buat Janji</Link>
                 </Button>
               </CardContent>

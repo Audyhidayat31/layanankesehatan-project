@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, Suspense } from 'react'
+import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Header } from '@/components/header'
 import { Footer } from '@/components/footer'
@@ -28,8 +29,74 @@ import {
 import { specializations } from '@/lib/mock-data'
 import { useAppStore } from '@/lib/store'
 
-export default function DoctorsPage() {
+const symptomToSpecializationMap: Record<string, string[]> = {
+  demam: ['Dokter Umum', 'Spesialis Anak'],
+  batuk: ['Dokter Umum', 'Spesialis Anak', 'Spesialis THT', 'Spesialis Paru'],
+  pilek: ['Dokter Umum', 'Spesialis Anak', 'Spesialis THT'],
+  flu: ['Dokter Umum', 'Spesialis Anak', 'Spesialis THT'],
+  pusing: ['Dokter Umum', 'Spesialis Saraf'],
+  'sakit kepala': ['Dokter Umum', 'Spesialis Saraf', 'Psikiater'],
+  lemas: ['Dokter Umum'],
+  jantung: ['Spesialis Jantung'],
+  'dada sakit': ['Spesialis Jantung', 'Spesialis Paru'],
+  'sesak napas': ['Spesialis Jantung', 'Spesialis Paru'],
+  debar: ['Spesialis Jantung'],
+  hipertensi: ['Spesialis Jantung', 'Dokter Umum'],
+  'tekanan darah': ['Spesialis Jantung', 'Dokter Umum'],
+  kulit: ['Spesialis Kulit'],
+  gatal: ['Spesialis Kulit'],
+  ruam: ['Spesialis Kulit', 'Spesialis Anak'],
+  jerawat: ['Spesialis Kulit'],
+  'alergi kulit': ['Spesialis Kulit', 'Spesialis Anak'],
+  anak: ['Spesialis Anak'],
+  bayi: ['Spesialis Anak'],
+  imunisasi: ['Spesialis Anak'],
+  tumbuh: ['Spesialis Anak'],
+  kembang: ['Spesialis Anak'],
+  mata: ['Spesialis Mata'],
+  perih: ['Spesialis Mata'],
+  'mata merah': ['Spesialis Mata'],
+  kabur: ['Spesialis Mata'],
+  minus: ['Spesialis Mata'],
+  telinga: ['Spesialis THT'],
+  hidung: ['Spesialis THT'],
+  tenggorokan: ['Spesialis THT'],
+  amandel: ['Spesialis THT'],
+  sinus: ['Spesialis THT'],
+  saraf: ['Spesialis Saraf'],
+  kebas: ['Spesialis Saraf'],
+  kesemutan: ['Spesialis Saraf'],
+  stroke: ['Spesialis Saraf'],
+  migrain: ['Spesialis Saraf'],
+  'saraf terjepit': ['Spesialis Saraf'],
+  asma: ['Spesialis Paru', 'Spesialis Anak', 'Dokter Umum'],
+  'paru-paru': ['Spesialis Paru'],
+  tbc: ['Spesialis Paru'],
+  flek: ['Spesialis Paru', 'Spesialis Anak'],
+  operasi: ['Spesialis Bedah'],
+  'luka dalam': ['Spesialis Bedah'],
+  bedah: ['Spesialis Bedah'],
+  benjolan: ['Spesialis Bedah', 'Dokter Umum'],
+  stres: ['Psikiater'],
+  depresi: ['Psikiater'],
+  cemas: ['Psikiater'],
+  mental: ['Psikiater'],
+  tidur: ['Psikiater'],
+  insomnia: ['Psikiater'],
+  jiwa: ['Psikiater'],
+  gigi: ['Dokter Gigi'],
+  gusi: ['Dokter Gigi'],
+  'gigi berlubang': ['Dokter Gigi'],
+  'karang gigi': ['Dokter Gigi'],
+  'sakit gigi': ['Dokter Gigi'],
+}
+
+function DoctorsPageContent() {
   const { doctors, fetchDoctors } = useAppStore()
+  const searchParams = useSearchParams()
+  const searchParamQuery = searchParams.get('search') || ''
+  const searchParamSpecialization = searchParams.get('specialization') || 'all'
+
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedSpecialization, setSelectedSpecialization] = useState('all')
   const [sortBy, setSortBy] = useState('rating')
@@ -38,6 +105,24 @@ export default function DoctorsPage() {
   useEffect(() => {
     fetchDoctors()
   }, [fetchDoctors])
+
+  useEffect(() => {
+    if (searchParamQuery) {
+      setSearchQuery(searchParamQuery)
+    }
+    if (searchParamSpecialization && searchParamSpecialization !== 'all') {
+      const matched = specializations.find(
+        (spec) =>
+          spec.toLowerCase().replace(/ /g, '-') === searchParamSpecialization.toLowerCase() ||
+          spec.toLowerCase() === searchParamSpecialization.toLowerCase()
+      )
+      if (matched) {
+        setSelectedSpecialization(matched)
+      } else {
+        setSelectedSpecialization(searchParamSpecialization)
+      }
+    }
+  }, [searchParamQuery, searchParamSpecialization])
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('id-ID', {
@@ -61,19 +146,33 @@ export default function DoctorsPage() {
     let doctorList = [...doctors]
 
     if (searchQuery) {
-      const query = searchQuery.toLowerCase()
+      const query = searchQuery.toLowerCase().trim()
+      
+      // Find specializations that match based on symptoms
+      const matchedSpecsFromSymptoms: string[] = []
+      Object.entries(symptomToSpecializationMap).forEach(([symptomKey, specs]) => {
+        if (query.includes(symptomKey) || symptomKey.includes(query)) {
+          matchedSpecsFromSymptoms.push(...specs)
+        }
+      })
+
       doctorList = doctorList.filter(
         (doc) =>
           doc.user?.name?.toLowerCase().includes(query) ||
           doc.specialization?.toLowerCase().includes(query) ||
-          doc.hospital?.toLowerCase().includes(query)
+          doc.hospital?.toLowerCase().includes(query) ||
+          (doc.bio && doc.bio.toLowerCase().includes(query)) ||
+          (doc.education && doc.education.some(edu => edu.toLowerCase().includes(query))) ||
+          matchedSpecsFromSymptoms.some(spec => 
+            doc.specialization?.toLowerCase().includes(spec.toLowerCase())
+          )
       )
     }
 
     if (selectedSpecialization !== 'all') {
-      const selectedLow = selectedSpecialization.toLowerCase()
+      const selectedLow = selectedSpecialization.toLowerCase().replace(/-/g, ' ')
       doctorList = doctorList.filter((doc) => {
-        const docSpec = (doc.specialization || '').toLowerCase()
+        const docSpec = (doc.specialization || '').toLowerCase().replace(/-/g, ' ')
         if (!docSpec) return false
         return docSpec.includes(selectedLow) || selectedLow.includes(docSpec)
       })
@@ -253,5 +352,24 @@ export default function DoctorsPage() {
       </main>
       <Footer />
     </div>
+  )
+}
+
+export default function DoctorsPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-screen flex-col">
+        <Header />
+        <main className="flex-1 bg-muted/30 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Memuat data dokter...</p>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    }>
+      <DoctorsPageContent />
+    </Suspense>
   )
 }

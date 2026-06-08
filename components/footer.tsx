@@ -3,101 +3,106 @@ import { Stethoscope, Facebook, Twitter, Instagram, Youtube } from 'lucide-react
 
 export function Footer() {
   return (
-    <footer className="border-t border-border bg-card">
-      <div className="container mx-auto px-4 py-12">
-        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
-          <div className="space-y-4">
-            <Link href="/" className="group flex items-center gap-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 transition-all duration-300 group-hover:bg-primary">
-                <Stethoscope className="h-5 w-5 text-primary transition-colors duration-300 group-hover:text-primary-foreground" />
+    <footer className="bg-muted/30 border-t border-border/50 relative overflow-hidden">
+      {/* Subtle background glow */}
+      <div className="absolute top-0 right-1/4 w-96 h-96 bg-primary/5 rounded-full blur-[120px] pointer-events-none" />
+      
+      <div className="container mx-auto px-4 py-16 md:py-24 relative z-10">
+        <div className="grid gap-12 md:grid-cols-2 lg:grid-cols-4">
+          <div className="space-y-6">
+            <Link href="/" className="group flex items-center gap-2.5">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-accent shadow-md transition-transform duration-500 group-hover:scale-105 group-hover:rotate-6">
+                <Stethoscope className="h-6 w-6 text-white" />
               </div>
-              <span className="text-xl font-bold tracking-tight text-foreground transition-colors duration-300 group-hover:text-primary">HealthServices</span>
+              <span className="text-2xl font-black tracking-tight text-foreground">
+                Health<span className="text-primary">Services</span>
+              </span>
             </Link>
-            <p className="text-sm text-muted-foreground">
-              Platform kesehatan digital terpercaya untuk konsultasi dokter online, pembelian obat, dan layanan kesehatan lainnya.
+            <p className="text-muted-foreground leading-relaxed">
+              Platform kesehatan digital terpercaya untuk konsultasi dokter online, pembelian obat, dan layanan kesehatan lainnya. Cepat, aman, dan mudah.
             </p>
-            <div className="flex items-center gap-4">
-              <a href="#" className="text-muted-foreground transition-all duration-300 hover:-translate-y-1 hover:text-primary">
-                <Facebook className="h-5 w-5" />
+            <div className="flex items-center gap-4 pt-2">
+              <a href="#" className="flex h-10 w-10 items-center justify-center rounded-full bg-background border border-border text-muted-foreground transition-all duration-300 hover:-translate-y-1 hover:border-primary hover:text-primary hover:shadow-md">
+                <Facebook className="h-4 w-4" />
               </a>
-              <a href="#" className="text-muted-foreground transition-all duration-300 hover:-translate-y-1 hover:text-primary">
-                <Twitter className="h-5 w-5" />
+              <a href="#" className="flex h-10 w-10 items-center justify-center rounded-full bg-background border border-border text-muted-foreground transition-all duration-300 hover:-translate-y-1 hover:border-primary hover:text-primary hover:shadow-md">
+                <Twitter className="h-4 w-4" />
               </a>
-              <a href="#" className="text-muted-foreground transition-all duration-300 hover:-translate-y-1 hover:text-primary">
-                <Instagram className="h-5 w-5" />
+              <a href="#" className="flex h-10 w-10 items-center justify-center rounded-full bg-background border border-border text-muted-foreground transition-all duration-300 hover:-translate-y-1 hover:border-primary hover:text-primary hover:shadow-md">
+                <Instagram className="h-4 w-4" />
               </a>
-              <a href="#" className="text-muted-foreground transition-all duration-300 hover:-translate-y-1 hover:text-primary">
-                <Youtube className="h-5 w-5" />
+              <a href="#" className="flex h-10 w-10 items-center justify-center rounded-full bg-background border border-border text-muted-foreground transition-all duration-300 hover:-translate-y-1 hover:border-primary hover:text-primary hover:shadow-md">
+                <Youtube className="h-4 w-4" />
               </a>
             </div>
           </div>
 
-          <div className="space-y-4">
-            <h3 className="font-semibold text-foreground">Layanan</h3>
-            <nav className="flex flex-col gap-2">
-              <Link href="/doctors" className="text-sm text-muted-foreground hover:text-primary transition-colors duration-300 hover:translate-x-1">
+          <div className="space-y-6">
+            <h3 className="font-bold text-lg text-foreground">Layanan</h3>
+            <nav className="flex flex-col gap-4">
+              <Link href="/doctors" className="text-muted-foreground hover:text-primary transition-colors duration-300 hover:translate-x-1 font-medium inline-block w-fit">
                 Konsultasi Dokter
               </Link>
-              <Link href="/pharmacy" className="text-sm text-muted-foreground hover:text-primary transition-colors duration-300 hover:translate-x-1">
+              <Link href="/pharmacy" className="text-muted-foreground hover:text-primary transition-colors duration-300 hover:translate-x-1 font-medium inline-block w-fit">
                 Apotek Online
               </Link>
-              <Link href="/articles" className="text-sm text-muted-foreground hover:text-primary transition-colors duration-300 hover:translate-x-1">
+              <Link href="/articles" className="text-muted-foreground hover:text-primary transition-colors duration-300 hover:translate-x-1 font-medium inline-block w-fit">
                 Artikel Kesehatan
               </Link>
-              <Link href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors duration-300 hover:translate-x-1">
+              <Link href="#" className="text-muted-foreground hover:text-primary transition-colors duration-300 hover:translate-x-1 font-medium inline-block w-fit">
                 Cek Gejala
               </Link>
             </nav>
           </div>
 
-          <div className="space-y-4">
-            <h3 className="font-semibold text-foreground">Perusahaan</h3>
-            <nav className="flex flex-col gap-2">
-              <Link href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors duration-300 hover:translate-x-1">
+          <div className="space-y-6">
+            <h3 className="font-bold text-lg text-foreground">Perusahaan</h3>
+            <nav className="flex flex-col gap-4">
+              <Link href="#" className="text-muted-foreground hover:text-primary transition-colors duration-300 hover:translate-x-1 font-medium inline-block w-fit">
                 Tentang Kami
               </Link>
-              <Link href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors duration-300 hover:translate-x-1">
+              <Link href="#" className="text-muted-foreground hover:text-primary transition-colors duration-300 hover:translate-x-1 font-medium inline-block w-fit">
                 Karir
               </Link>
-              <Link href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors duration-300 hover:translate-x-1">
+              <Link href="#" className="text-muted-foreground hover:text-primary transition-colors duration-300 hover:translate-x-1 font-medium inline-block w-fit">
                 Blog
               </Link>
-              <Link href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors duration-300 hover:translate-x-1">
+              <Link href="#" className="text-muted-foreground hover:text-primary transition-colors duration-300 hover:translate-x-1 font-medium inline-block w-fit">
                 Hubungi Kami
               </Link>
             </nav>
           </div>
 
-          <div className="space-y-4">
-            <h3 className="font-semibold text-foreground">Informasi</h3>
-            <nav className="flex flex-col gap-2">
-              <Link href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors duration-300 hover:translate-x-1">
+          <div className="space-y-6">
+            <h3 className="font-bold text-lg text-foreground">Informasi</h3>
+            <nav className="flex flex-col gap-4">
+              <Link href="#" className="text-muted-foreground hover:text-primary transition-colors duration-300 hover:translate-x-1 font-medium inline-block w-fit">
                 Syarat & Ketentuan
               </Link>
-              <Link href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors duration-300 hover:translate-x-1">
+              <Link href="#" className="text-muted-foreground hover:text-primary transition-colors duration-300 hover:translate-x-1 font-medium inline-block w-fit">
                 Kebijakan Privasi
               </Link>
-              <Link href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors duration-300 hover:translate-x-1">
+              <Link href="#" className="text-muted-foreground hover:text-primary transition-colors duration-300 hover:translate-x-1 font-medium inline-block w-fit">
                 FAQ
               </Link>
-              <Link href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors duration-300 hover:translate-x-1">
+              <Link href="#" className="text-muted-foreground hover:text-primary transition-colors duration-300 hover:translate-x-1 font-medium inline-block w-fit">
                 Bantuan
               </Link>
             </nav>
           </div>
         </div>
 
-        <div className="mt-8 border-t border-border pt-8">
-          <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
-            <p className="text-sm text-muted-foreground">
-              2024 HealthServices. Semua hak dilindungi.
-            </p>
-            <div className="flex items-center gap-4">
-              <span className="text-xs text-muted-foreground">Terdaftar di:</span>
-              <span className="rounded bg-muted px-2 py-1 text-xs font-medium text-muted-foreground">
+        <div className="mt-16 pt-8 border-t border-border/50 flex flex-col items-center justify-between gap-6 md:flex-row">
+          <p className="text-sm text-muted-foreground font-medium">
+            &copy; {new Date().getFullYear()} HealthServices. Semua hak dilindungi.
+          </p>
+          <div className="flex items-center gap-4">
+            <span className="text-xs text-muted-foreground font-medium">Terdaftar di:</span>
+            <div className="flex gap-2">
+              <span className="rounded-md bg-background border border-border px-3 py-1.5 text-xs font-bold text-muted-foreground shadow-sm">
                 BPOM RI
               </span>
-              <span className="rounded bg-muted px-2 py-1 text-xs font-medium text-muted-foreground">
+              <span className="rounded-md bg-background border border-border px-3 py-1.5 text-xs font-bold text-muted-foreground shadow-sm">
                 Kemenkes RI
               </span>
             </div>
