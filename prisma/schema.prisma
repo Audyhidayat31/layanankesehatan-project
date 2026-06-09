@@ -141,6 +141,7 @@ model TimeSlot {
   date           DateTime
   startTime      String
   endTime        String
+  isActive       Boolean       @default(true)
   isBooked       Boolean       @default(false)
 }
 

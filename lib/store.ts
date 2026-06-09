@@ -242,6 +242,13 @@ interface AppState {
   markNotificationRead: (id: string) => void
   getUnreadCount: (userId: string) => number
   refreshData: (userId: string, role: string) => Promise<void>
+
+  // TimeSlot actions
+  timeSlots: TimeSlot[]
+  fetchDoctorTimeSlots: (doctorId: string) => Promise<void>
+  addTimeSlot: (timeSlot: Omit<TimeSlot, 'id'>) => Promise<void>
+  updateTimeSlotStatus: (id: string, isActive: boolean) => Promise<void>
+  deleteTimeSlot: (id: string) => Promise<void>
 }
 
 export const useAppStore = create<AppState>()(
@@ -254,6 +261,72 @@ export const useAppStore = create<AppState>()(
       chatMessages: mockChatMessages,
       notifications: mockNotifications,
       knownUsers: [],
+      timeSlots: [],
+
+      fetchDoctorTimeSlots: async (doctorId) => {
+        try {
+          const res = await fetch(`/api/doctor/timeslots?doctorId=${doctorId}`)
+          if (res.ok && res.headers.get('content-type')?.includes('application/json')) {
+            const json = await res.json()
+            if (json.success) {
+              const currentSlots = get().timeSlots.filter(t => t.doctorId !== doctorId)
+              set({ timeSlots: [...currentSlots, ...json.timeslots] })
+            }
+          }
+        } catch (err) {
+          // Silent catch for local fallback
+        }
+      },
+
+      addTimeSlot: async (timeSlot) => {
+        const newLocalSlot = { ...timeSlot, id: `local-${Date.now()}` }
+        set({ timeSlots: [...get().timeSlots, newLocalSlot as TimeSlot] })
+        try {
+          const res = await fetch('/api/doctor/timeslots', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(timeSlot)
+          })
+          if (res.ok && res.headers.get('content-type')?.includes('application/json')) {
+            const json = await res.json()
+            if (json.success) {
+              set({
+                timeSlots: get().timeSlots.map(t => t.id === newLocalSlot.id ? json.timeslot : t)
+              })
+            }
+          }
+        } catch (err) {
+          console.error('Failed to create timeslot on backend, keeping local:', err)
+        }
+      },
+
+      updateTimeSlotStatus: async (id, isActive) => {
+        set({
+          timeSlots: get().timeSlots.map(t => t.id === id ? { ...t, isActive } : t)
+        })
+        try {
+          await fetch('/api/doctor/timeslots', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id, isActive })
+          })
+        } catch (err) {
+          console.error('Failed to update timeslot on backend, keeping local:', err)
+        }
+      },
+
+      deleteTimeSlot: async (id) => {
+        set({
+          timeSlots: get().timeSlots.filter(t => t.id !== id)
+        })
+        try {
+          await fetch(`/api/doctor/timeslots?id=${id}`, {
+            method: 'DELETE'
+          })
+        } catch (err) {
+          console.error('Failed to delete timeslot on backend, keeping local:', err)
+        }
+      },
 
       getDoctors: () => get().doctors,
       getDoctorById: (id) => get().doctors.find((d) => d.id === id),

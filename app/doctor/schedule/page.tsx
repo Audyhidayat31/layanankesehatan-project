@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { DashboardSidebar } from '@/components/dashboard/sidebar'
 import { DashboardHeader } from '@/components/dashboard/dashboard-header'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -24,66 +24,96 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Calendar, Clock, Plus, Trash2, Edit, Save } from 'lucide-react'
+import { Calendar, Clock, Plus, Trash2 } from 'lucide-react'
+import { useAuthStore, useAppStore } from '@/lib/store'
+import { Spinner } from '@/components/ui/spinner'
 
 interface TimeSlot {
   id: string
-  day: string
+  date: string
   startTime: string
   endTime: string
   isActive: boolean
 }
 
-const daysOfWeek = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu']
-
-const initialSchedule: TimeSlot[] = [
-  { id: '1', day: 'Senin', startTime: '08:00', endTime: '12:00', isActive: true },
-  { id: '2', day: 'Senin', startTime: '14:00', endTime: '17:00', isActive: true },
-  { id: '3', day: 'Selasa', startTime: '08:00', endTime: '12:00', isActive: true },
-  { id: '4', day: 'Rabu', startTime: '09:00', endTime: '15:00', isActive: true },
-  { id: '5', day: 'Kamis', startTime: '08:00', endTime: '12:00', isActive: true },
-  { id: '6', day: 'Kamis', startTime: '14:00', endTime: '18:00', isActive: false },
-  { id: '7', day: 'Jumat', startTime: '10:00', endTime: '16:00', isActive: true },
-]
+const generateNextDays = (numDays: number) => {
+  const dates = []
+  const today = new Date()
+  for (let i = 0; i < numDays; i++) {
+    const d = new Date(today)
+    d.setDate(today.getDate() + i)
+    const year = d.getFullYear()
+    const month = String(d.getMonth() + 1).padStart(2, '0')
+    const day = String(d.getDate()).padStart(2, '0')
+    const dateStr = `${year}-${month}-${day}`
+    const label = d.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' })
+    dates.push({ date: dateStr, label })
+  }
+  return dates
+}
 
 export default function DoctorSchedulePage() {
-  const [schedule, setSchedule] = useState<TimeSlot[]>(initialSchedule)
+  const [isLoading, setIsLoading] = useState(true)
   const [addDialogOpen, setAddDialogOpen] = useState(false)
   const [newSlot, setNewSlot] = useState({
-    day: '',
+    date: '',
     startTime: '',
     endTime: '',
   })
+  
+  const { user } = useAuthStore()
+  const { doctors, fetchDoctors, timeSlots, fetchDoctorTimeSlots, addTimeSlot, updateTimeSlotStatus, deleteTimeSlot } = useAppStore()
+  
+  const doctor = doctors.find((d) => d.userId === user?.id)
+  const schedule = timeSlots.filter(t => t.doctorId === doctor?.id)
 
-  const toggleSlot = (id: string) => {
-    setSchedule(
-      schedule.map((slot) =>
-        slot.id === id ? { ...slot, isActive: !slot.isActive } : slot
-      )
-    )
+  useEffect(() => {
+    fetchDoctors()
+  }, [fetchDoctors])
+
+  useEffect(() => {
+    const fetchSchedule = async () => {
+      if (!doctor?.id) return
+      setIsLoading(true)
+      await fetchDoctorTimeSlots(doctor.id)
+      setIsLoading(false)
+    }
+
+    fetchSchedule()
+  }, [doctor?.id, fetchDoctorTimeSlots])
+
+  const toggleSlot = async (id: string, currentStatus: boolean) => {
+    const newStatus = !currentStatus
+    await updateTimeSlotStatus(id, newStatus)
   }
 
-  const deleteSlot = (id: string) => {
-    setSchedule(schedule.filter((slot) => slot.id !== id))
+  const deleteSlot = async (id: string) => {
+    await deleteTimeSlot(id)
   }
 
-  const addSlot = () => {
-    if (newSlot.day && newSlot.startTime && newSlot.endTime) {
-      setSchedule([
-        ...schedule,
-        {
-          id: Date.now().toString(),
-          ...newSlot,
-          isActive: true,
-        },
-      ])
-      setNewSlot({ day: '', startTime: '', endTime: '' })
+  const addSlot = async () => {
+    if (newSlot.date && newSlot.startTime && newSlot.endTime && doctor?.id) {
+      await addTimeSlot({
+        doctorId: doctor.id,
+        date: newSlot.date,
+        startTime: newSlot.startTime,
+        endTime: newSlot.endTime,
+        isActive: true,
+        isBooked: false,
+      })
+      setNewSlot({ date: '', startTime: '', endTime: '' })
       setAddDialogOpen(false)
     }
   }
 
-  const getScheduleByDay = (day: string) => {
-    return schedule.filter((slot) => slot.day === day)
+  const nextDays = generateNextDays(7) // Tampilkan jadwal 7 hari ke depan
+
+  const getScheduleByDate = (dateStr: string) => {
+    return schedule.filter((slot) => {
+      // Pastikan format date dari DB bisa di-compare dengan dateStr (YYYY-MM-DD)
+      const slotDate = typeof slot.date === 'string' ? slot.date.split('T')[0] : new Date(slot.date).toISOString().split('T')[0]
+      return slotDate === dateStr
+    })
   }
 
   return (
@@ -97,7 +127,7 @@ export default function DoctorSchedulePage() {
             <div>
               <h1 className="text-2xl font-bold text-foreground">Jadwal Praktik</h1>
               <p className="text-muted-foreground">
-                Kelola jadwal praktik dan ketersediaan Anda
+                Kelola jadwal praktik dan ketersediaan Anda pada tanggal tertentu
               </p>
             </div>
             <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
@@ -111,24 +141,24 @@ export default function DoctorSchedulePage() {
                 <DialogHeader>
                   <DialogTitle>Tambah Jadwal Baru</DialogTitle>
                   <DialogDescription>
-                    Tambahkan slot waktu praktik baru
+                    Tambahkan slot waktu praktik untuk tanggal tertentu
                   </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4 py-4">
                   <FieldGroup>
                     <Field>
-                      <FieldLabel>Hari</FieldLabel>
+                      <FieldLabel>Tanggal</FieldLabel>
                       <Select
-                        value={newSlot.day}
-                        onValueChange={(value) => setNewSlot({ ...newSlot, day: value })}
+                        value={newSlot.date}
+                        onValueChange={(value) => setNewSlot({ ...newSlot, date: value })}
                       >
                         <SelectTrigger>
-                          <SelectValue placeholder="Pilih hari" />
+                          <SelectValue placeholder="Pilih tanggal" />
                         </SelectTrigger>
                         <SelectContent>
-                          {daysOfWeek.map((day) => (
-                            <SelectItem key={day} value={day}>
-                              {day}
+                          {nextDays.map((day) => (
+                            <SelectItem key={day.date} value={day.date}>
+                              {day.label}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -163,74 +193,82 @@ export default function DoctorSchedulePage() {
                     <Button variant="outline" onClick={() => setAddDialogOpen(false)}>
                       Batal
                     </Button>
-                    <Button onClick={addSlot}>Tambah</Button>
+                    <Button onClick={addSlot} disabled={!newSlot.date || !newSlot.startTime || !newSlot.endTime}>Tambah</Button>
                   </div>
                 </div>
               </DialogContent>
             </Dialog>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {daysOfWeek.map((day) => {
-              const daySchedule = getScheduleByDay(day)
-              return (
-                <Card key={day}>
-                  <CardHeader className="pb-3">
-                    <CardTitle className="flex items-center justify-between text-base">
-                      <span className="flex items-center gap-2">
-                        <Calendar className="h-4 w-4 text-primary" />
-                        {day}
-                      </span>
-                      <Badge variant="secondary">
-                        {daySchedule.filter((s) => s.isActive).length} slot
-                      </Badge>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    {daySchedule.length > 0 ? (
-                      daySchedule.map((slot) => (
-                        <div
-                          key={slot.id}
-                          className={`flex items-center justify-between rounded-lg border p-3 ${slot.isActive
-                              ? 'border-primary/20 bg-primary/5'
-                              : 'border-border bg-muted/50'
-                            }`}
-                        >
-                          <div className="flex items-center gap-2">
-                            <Clock className="h-4 w-4 text-muted-foreground" />
-                            <span
-                              className={`text-sm font-medium ${slot.isActive ? 'text-foreground' : 'text-muted-foreground line-through'
-                                }`}
-                            >
-                              {slot.startTime} - {slot.endTime}
-                            </span>
+          {isLoading ? (
+            <div className="flex justify-center py-12">
+              <Spinner className="h-8 w-8" />
+            </div>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {nextDays.map((day) => {
+                const daySchedule = getScheduleByDate(day.date)
+                return (
+                  <Card key={day.date}>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="flex items-center justify-between text-base">
+                        <span className="flex items-center gap-2">
+                          <Calendar className="h-4 w-4 text-primary" />
+                          <span className="truncate" title={day.label}>{day.label}</span>
+                        </span>
+                        <Badge variant="secondary">
+                          {daySchedule.filter((s) => s.isActive).length} slot
+                        </Badge>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      {daySchedule.length > 0 ? (
+                        daySchedule.map((slot) => (
+                          <div
+                            key={slot.id}
+                            className={`flex items-center justify-between rounded-lg border p-3 ${slot.isActive
+                                ? 'border-primary/20 bg-primary/5'
+                                : 'border-border bg-muted/50'
+                              }`}
+                          >
+                            <div className="flex items-center gap-2">
+                              <Clock className="h-4 w-4 text-muted-foreground" />
+                              <span
+                                className={`text-sm font-medium ${slot.isActive ? 'text-foreground' : 'text-muted-foreground line-through'
+                                  }`}
+                              >
+                                {slot.startTime} - {slot.endTime}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Switch
+                                checked={slot.isActive}
+                                onCheckedChange={() => toggleSlot(slot.id, slot.isActive)}
+                                title={slot.isActive ? "Nonaktifkan jadwal ini" : "Aktifkan jadwal ini"}
+                              />
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-destructive hover:text-destructive"
+                                onClick={() => deleteSlot(slot.id)}
+                                title="Hapus jadwal"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
                           </div>
-                          <div className="flex items-center gap-2">
-                            <Switch
-                              checked={slot.isActive}
-                              onCheckedChange={() => toggleSlot(slot.id)}
-                            />
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-destructive hover:text-destructive"
-                              onClick={() => deleteSlot(slot.id)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
+                        ))
+                      ) : (
+                        <div className="py-6 text-center text-sm text-muted-foreground">
+                          Tidak ada jadwal
                         </div>
-                      ))
-                    ) : (
-                      <div className="py-6 text-center text-sm text-muted-foreground">
-                        Tidak ada jadwal
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              )
-            })}
-          </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                )
+              })}
+            </div>
+          )}
 
           <Card className="mt-8">
             <CardHeader>

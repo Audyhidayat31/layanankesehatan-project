@@ -61,6 +61,7 @@ export interface TimeSlot {
   date: string
   startTime: string
   endTime: string
+  isActive: boolean
   isBooked: boolean
 }
 

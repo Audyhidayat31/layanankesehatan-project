@@ -40,7 +40,7 @@ export default function DoctorDetailPage({ params }: { params: Promise<{ id: str
   const router = useRouter()
   const [from, setFrom] = useState<string | null>(null)
   const { user, isAuthenticated } = useAuthStore()
-  const { createAppointment, doctors, fetchDoctors, appointments } = useAppStore()
+  const { createAppointment, doctors, fetchDoctors, appointments, timeSlots, fetchDoctorTimeSlots } = useAppStore()
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
@@ -63,20 +63,49 @@ export default function DoctorDetailPage({ params }: { params: Promise<{ id: str
   useEffect(() => {
     if (doctor) {
       setPracticeAddress(doctor.practiceAddress || doctor.hospital || '')
+      fetchDoctorTimeSlots(doctor.id)
     }
-  }, [doctor])
+  }, [doctor, fetchDoctorTimeSlots])
+
+  const doctorTimeSlots = useMemo(() => {
+    return timeSlots.filter(t => t.doctorId === doctor?.id)
+  }, [timeSlots, doctor?.id])
+
+  const dates = useMemo(() => {
+    // Only show dates that have at least one timeslot configured
+    const uniqueDates = Array.from(new Set(doctorTimeSlots.map(t => typeof t.date === 'string' ? t.date.split('T')[0] : new Date(t.date).toISOString().split('T')[0]))).sort()
+    return uniqueDates.map(dateStr => {
+      const [year, month, day] = dateStr.split('-').map(Number)
+      const d = new Date(year, month - 1, day)
+      return {
+        value: dateStr,
+        label: d.toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short' })
+      }
+    })
+  }, [doctorTimeSlots])
+
+  const activeBlocks = useMemo(() => {
+    const slotsForDate = doctorTimeSlots.filter(t => {
+      const slotDate = typeof t.date === 'string' ? t.date.split('T')[0] : new Date(t.date).toISOString().split('T')[0]
+      return slotDate === selectedDate && t.isActive
+    })
+    return slotsForDate.map(t => ({ startTime: t.startTime, endTime: t.endTime }))
+  }, [doctorTimeSlots, selectedDate])
 
   useEffect(() => {
     if (selectedDate && doctor) {
       setIsLoadingSlots(true)
+      
       fetch(`/api/appointments/booked?doctorId=${doctor.id}&date=${selectedDate}`)
         .then((res) => res.json())
-        .then((data) => {
-          if (data.success) {
-            setDbBookedSlots(data.bookedSlots)
+        .then((bookedData) => {
+          if (bookedData.success) {
+            setDbBookedSlots(bookedData.bookedSlots)
+          } else {
+            setDbBookedSlots([])
           }
         })
-        .catch((err) => console.error('Failed to fetch booked slots', err))
+        .catch(() => setDbBookedSlots([]))
         .finally(() => setIsLoadingSlots(false))
     } else {
       setDbBookedSlots([])
@@ -85,7 +114,6 @@ export default function DoctorDetailPage({ params }: { params: Promise<{ id: str
 
   const bookedSlots = useMemo(() => {
     if (!doctor) return []
-    // Get any non-cancelled local appointments for this doctor and date
     const localBooked = appointments
       .filter((apt) => {
         const aptDate = typeof apt.date === 'string'
@@ -101,6 +129,20 @@ export default function DoctorDetailPage({ params }: { params: Promise<{ id: str
 
     return Array.from(new Set([...dbBookedSlots, ...localBooked]))
   }, [dbBookedSlots, appointments, doctor, selectedDate])
+
+  const timeSlotsList = useMemo(() => {
+    const intervals = new Set<string>()
+    activeBlocks.forEach(block => {
+      let current = block.startTime
+      while (current < block.endTime) {
+        intervals.add(current)
+        const [h, m] = current.split(':').map(Number)
+        const date = new Date(2000, 0, 1, h, m + 30) // Use an arbitrary date to safely add minutes
+        current = `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`
+      }
+    })
+    return Array.from(intervals).sort()
+  }, [activeBlocks])
 
   useEffect(() => {
     if (selectedTime && bookedSlots.includes(selectedTime)) {
@@ -146,27 +188,9 @@ export default function DoctorDetailPage({ params }: { params: Promise<{ id: str
       .slice(0, 2)
   }
 
-  const generateDates = () => {
-    const dates = []
-    const today = new Date()
-    for (let i = 0; i < 7; i++) {
-      const date = new Date(today)
-      date.setDate(today.getDate() + i)
-      dates.push({
-        value: date.toISOString().split('T')[0],
-        label: date.toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short' }),
-      })
-    }
-    return dates
-  }
-
-  const timeSlots = [
-    '08:00', '08:30', '09:00', '09:30', '10:00', '10:30',
-    '11:00', '11:30', '14:00', '14:30', '15:00', '15:30',
-    '16:00', '16:30', '17:00', '17:30',
-  ]
 
   const handleBookAppointment = async () => {
+
     if (!isAuthenticated || !user) {
       router.push('/login')
       return
@@ -226,7 +250,6 @@ export default function DoctorDetailPage({ params }: { params: Promise<{ id: str
     }
   }
 
-  const dates = generateDates()
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -399,7 +422,7 @@ export default function DoctorDetailPage({ params }: { params: Promise<{ id: str
                             {isLoadingSlots && <Spinner className="h-3 w-3" />}
                           </FieldLabel>
                           <div className="grid grid-cols-4 gap-2">
-                            {timeSlots.map((time) => {
+                            {timeSlotsList.map((time) => {
                               const isBooked = bookedSlots.includes(time)
                               return (
                                 <button
