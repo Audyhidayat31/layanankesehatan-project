@@ -45,7 +45,7 @@ export async function POST(req: Request) {
     const id = `cm${Math.random().toString(36).slice(2, 11)}` // fallback fake id just in case
     const dbDate = new Date(date)
     await prisma.$executeRaw`
-      INSERT INTO "TimeSlot" (id, "doctorId", date, "startTime", "endTime", "isActive", "isBooked", "updatedAt")
+      INSERT INTO "TimeSlot" (id, "doctorId", date, "startTime", "endTime", "isActive", "isBooked")
       VALUES (
         gen_random_uuid()::text,
         ${doctorId}, 
@@ -53,8 +53,7 @@ export async function POST(req: Request) {
         ${startTime}, 
         ${endTime}, 
         true, 
-        false, 
-        NOW()
+        false
       )
     `
     // Fetch it back to get the real generated id
