@@ -1,19 +1,30 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { DashboardSidebar } from '@/components/dashboard/sidebar'
 import { DashboardHeader } from '@/components/dashboard/dashboard-header'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Search, FileText, Calendar, Stethoscope } from 'lucide-react'
-import { mockAppointments } from '@/lib/mock-data'
+import { useAuthStore, useAppStore } from '@/lib/store'
 
 export default function PatientRecordsPage() {
   const [searchTerm, setSearchTerm] = useState('')
+  const { user } = useAuthStore()
+  const { getAppointmentsByPatient, refreshData } = useAppStore()
+
+  useEffect(() => {
+    if (user?.id) {
+      refreshData(user.id, 'patient')
+    }
+  }, [user?.id, refreshData])
+
+  const patientId = user?.id === 'user-1' ? 'pat-1' : `pat-${user?.id}`
+  const allAppointments = user ? getAppointmentsByPatient(patientId) : []
 
   // Filter only completed appointments with diagnosis as records
-  const records = mockAppointments.filter(
+  const records = allAppointments.filter(
     (apt) => apt.status === 'completed' && apt.diagnosis
   )
 
