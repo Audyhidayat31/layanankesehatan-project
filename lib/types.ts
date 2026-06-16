@@ -27,6 +27,9 @@ export interface DoctorProfile {
   isVerified: boolean
   isOnline: boolean
   practiceAddress?: string
+  isOnlineEnabled?: boolean
+  isOfflineEnabled?: boolean
+  consultationDuration?: number
 }
 
 export interface PharmacyProfile {

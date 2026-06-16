@@ -64,6 +64,20 @@ export default function DoctorDetailPage({ params }: { params: Promise<{ id: str
     if (doctor) {
       setPracticeAddress(doctor.practiceAddress || doctor.hospital || '')
       fetchDoctorTimeSlots(doctor.id)
+      
+      if (doctor.isOnlineEnabled === false && doctor.isOfflineEnabled !== false) {
+        setAppointmentType('offline')
+      } else if (doctor.isOfflineEnabled === false && doctor.isOnlineEnabled !== false) {
+        setAppointmentType('online')
+      }
+      
+      // Auto-refresh timeslots every 5 seconds for real-time experience
+      const interval = setInterval(() => {
+        fetchDoctorTimeSlots(doctor.id)
+        fetchDoctors()
+      }, 5000)
+      
+      return () => clearInterval(interval)
     }
   }, [doctor, fetchDoctorTimeSlots])
 
@@ -132,17 +146,19 @@ export default function DoctorDetailPage({ params }: { params: Promise<{ id: str
 
   const timeSlotsList = useMemo(() => {
     const intervals = new Set<string>()
+    const duration = doctor?.consultationDuration || 30
+    
     activeBlocks.forEach(block => {
       let current = block.startTime
       while (current < block.endTime) {
         intervals.add(current)
         const [h, m] = current.split(':').map(Number)
-        const date = new Date(2000, 0, 1, h, m + 30) // Use an arbitrary date to safely add minutes
+        const date = new Date(2000, 0, 1, h, m + duration) // Use an arbitrary date to safely add minutes
         current = `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`
       }
     })
     return Array.from(intervals).sort()
-  }, [activeBlocks])
+  }, [activeBlocks, doctor?.consultationDuration])
 
   useEffect(() => {
     if (selectedTime && bookedSlots.includes(selectedTime)) {
@@ -368,6 +384,7 @@ export default function DoctorDetailPage({ params }: { params: Promise<{ id: str
                       variant={appointmentType === 'online' ? 'default' : 'outline'}
                       className="flex-1"
                       onClick={() => setAppointmentType('online')}
+                      disabled={doctor.isOnlineEnabled === false}
                     >
                       <Video className="mr-2 h-4 w-4" />
                       Online
@@ -376,15 +393,22 @@ export default function DoctorDetailPage({ params }: { params: Promise<{ id: str
                       variant={appointmentType === 'offline' ? 'default' : 'outline'}
                       className="flex-1"
                       onClick={() => setAppointmentType('offline')}
+                      disabled={doctor.isOfflineEnabled === false}
                     >
                       <Building className="mr-2 h-4 w-4" />
                       Offline
                     </Button>
                   </div>
+                  
+                  {doctor.isOnlineEnabled === false && doctor.isOfflineEnabled === false && (
+                    <div className="p-3 text-sm text-center text-destructive bg-destructive/10 rounded-lg">
+                      Mohon maaf, dokter ini sedang tidak menerima konsultasi untuk sementara waktu.
+                    </div>
+                  )}
 
                   <Dialog open={bookingDialogOpen} onOpenChange={setBookingDialogOpen}>
                     <DialogTrigger asChild>
-                      <Button className="w-full" size="lg">
+                      <Button className="w-full" size="lg" disabled={doctor.isOnlineEnabled === false && doctor.isOfflineEnabled === false}>
                         <Calendar className="mr-2 h-4 w-4" />
                         Pilih Jadwal
                       </Button>

@@ -131,6 +131,10 @@ export default function DoctorDashboardPage() {
 
   const doctorAppointments = appointments.filter(a => a.doctorId === doctor.id)
   
+  const completedAppointments = doctorAppointments.filter(a => a.status === 'completed')
+  const uniquePatientsCount = new Set(completedAppointments.map(a => a.patientId)).size
+  const totalIncome = completedAppointments.length * (doctor?.price || 0)
+
   const todayAppointments = doctorAppointments.filter(
     (apt) => apt.status === 'confirmed' || apt.status === 'pending'
   )
@@ -149,7 +153,7 @@ export default function DoctorDashboardPage() {
     },
     {
       label: 'Total Pasien',
-      value: 156,
+      value: uniquePatientsCount,
       icon: Users,
       color: 'text-accent',
       bgColor: 'bg-accent/10',
@@ -163,7 +167,7 @@ export default function DoctorDashboardPage() {
     },
     {
       label: 'Pendapatan Bulan Ini',
-      value: formatPrice(12500000),
+      value: formatPrice(totalIncome),
       icon: DollarSign,
       color: 'text-chart-4',
       bgColor: 'bg-chart-4/10',
@@ -358,22 +362,22 @@ export default function DoctorDashboardPage() {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between rounded-lg bg-muted p-4">
                     <span className="text-muted-foreground">Konsultasi Selesai</span>
-                    <span className="text-xl font-bold text-foreground">24</span>
+                    <span className="text-xl font-bold text-foreground">{completedAppointments.length}</span>
                   </div>
                   <div className="flex items-center justify-between rounded-lg bg-muted p-4">
-                    <span className="text-muted-foreground">Pasien Baru</span>
-                    <span className="text-xl font-bold text-foreground">8</span>
+                    <span className="text-muted-foreground">Total Pasien</span>
+                    <span className="text-xl font-bold text-foreground">{uniquePatientsCount}</span>
                   </div>
                   <div className="flex items-center justify-between rounded-lg bg-muted p-4">
                     <span className="text-muted-foreground">Rating Rata-rata</span>
                     <div className="flex items-center gap-1">
                       <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
-                      <span className="text-xl font-bold text-foreground">4.9</span>
+                      <span className="text-xl font-bold text-foreground">{doctor.rating}</span>
                     </div>
                   </div>
                   <div className="flex items-center justify-between rounded-lg bg-muted p-4">
                     <span className="text-muted-foreground">Pendapatan</span>
-                    <span className="text-xl font-bold text-primary">{formatPrice(3750000)}</span>
+                    <span className="text-xl font-bold text-primary">{formatPrice(totalIncome)}</span>
                   </div>
                 </div>
               </CardContent>

@@ -17,7 +17,6 @@ import {
   Menu,
   X,
   ShoppingCart,
-  Bell,
   User,
   LogOut,
   Settings,
@@ -124,11 +123,6 @@ export function Header() {
 
           {isAuthenticated ? (
             <>
-              <Button variant="ghost" size="icon" className="relative hidden md:flex hover:bg-primary/10 hover:text-primary rounded-full transition-colors">
-                <Bell className="h-5 w-5" />
-                <span className="absolute right-2 top-2 flex h-2 w-2 rounded-full bg-destructive" />
-              </Button>
-
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="flex items-center gap-2 pl-2 pr-3 rounded-full hover:bg-muted/50 border border-transparent hover:border-border/50 transition-all">

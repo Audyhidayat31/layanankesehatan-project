@@ -382,9 +382,14 @@ export default function PatientAppointmentsPage() {
                 </div>
               </div>
 
-              <div className="flex justify-end pt-2">
-                <Button onClick={() => setPrescriptionDialogOpen(false)} className="w-full sm:w-auto">
+              <div className="flex justify-end gap-2 pt-4 border-t mt-4">
+                <Button variant="outline" onClick={() => setPrescriptionDialogOpen(false)} className="w-full sm:w-auto">
                   Tutup
+                </Button>
+                <Button asChild className="w-full sm:w-auto">
+                  <Link href="/pharmacy">
+                    Beli Obat di Apotek
+                  </Link>
                 </Button>
               </div>
             </div>

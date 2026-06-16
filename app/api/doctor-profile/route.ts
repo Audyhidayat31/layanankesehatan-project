@@ -34,7 +34,7 @@ export async function GET(req: Request) {
 export async function PATCH(req: Request) {
   try {
     const body = await req.json()
-    const { doctorId, rating, specialization, hospital, experience, price, bio, education, practiceAddress } = body
+    const { doctorId, rating, specialization, hospital, experience, price, bio, education, practiceAddress, isOnlineEnabled, isOfflineEnabled, consultationDuration } = body
 
     if (!doctorId) {
       return NextResponse.json({ error: 'doctorId diperlukan' }, { status: 400 })
@@ -61,6 +61,9 @@ export async function PATCH(req: Request) {
     if (bio !== undefined) updateData.bio = bio
     if (education !== undefined) updateData.education = education
     if (practiceAddress !== undefined) updateData.practiceAddress = practiceAddress
+    if (isOnlineEnabled !== undefined) updateData.isOnlineEnabled = Boolean(isOnlineEnabled)
+    if (isOfflineEnabled !== undefined) updateData.isOfflineEnabled = Boolean(isOfflineEnabled)
+    if (consultationDuration !== undefined) updateData.consultationDuration = Number(consultationDuration)
 
     const updated = await prisma.doctorProfile.update({
       where: { id: doctorId },
@@ -74,6 +77,6 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ success: true, doctorProfile: updated })
   } catch (error) {
     console.error('Update doctor profile error:', error)
-    return NextResponse.json({ error: 'Gagal memperbarui profil dokter' }, { status: 500 })
+    return NextResponse.json({ error: 'Gagal memperbarui profil dokter', details: error instanceof Error ? error.message : String(error) }, { status: 500 })
   }
 }

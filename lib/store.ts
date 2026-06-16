@@ -334,7 +334,7 @@ export const useAppStore = create<AppState>()(
 
       fetchDoctors: async () => {
         try {
-          const res = await fetch('/api/doctors')
+          const res = await fetch(`/api/doctors?t=${Date.now()}`, { cache: 'no-store' })
           if (res.ok) {
             const json = await res.json()
             if (json.success) {
@@ -346,6 +346,9 @@ export const useAppStore = create<AppState>()(
                 reviewCount: dbDoc.reviewCount ?? 0,
                 isVerified: dbDoc.isVerified ?? false,
                 isOnline: dbDoc.isOnline ?? false,
+                isOnlineEnabled: dbDoc.isOnlineEnabled ?? true,
+                isOfflineEnabled: dbDoc.isOfflineEnabled ?? true,
+                consultationDuration: dbDoc.consultationDuration ?? 30,
                 availableSlots: dbDoc.availableSlots ?? [],
                 bio: dbDoc.bio ?? '',
                 education: dbDoc.education ?? [],

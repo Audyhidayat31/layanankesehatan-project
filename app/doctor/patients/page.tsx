@@ -1,6 +1,5 @@
 'use client'
 
-import { useState } from 'react'
 import { DashboardSidebar } from '@/components/dashboard/sidebar'
 import { DashboardHeader } from '@/components/dashboard/dashboard-header'
 import { Card, CardContent } from '@/components/ui/card'
@@ -23,17 +22,60 @@ import {
   MoreVertical,
 } from 'lucide-react'
 
-const initialPatients = [
-  { id: 'p1', name: 'Budi Santoso', lastVisit: '2024-04-20', condition: 'Hipertensi', totalVisits: 5 },
-  { id: 'p2', name: 'Siti Aminah', lastVisit: '2024-04-18', condition: 'Flu & Batuk', totalVisits: 2 },
-  { id: 'p3', name: 'Andi Pratama', lastVisit: '2024-04-15', condition: 'Diabetes Melitus', totalVisits: 12 },
-  { id: 'p4', name: 'Dewi Lestari', lastVisit: '2024-04-10', condition: 'Asma', totalVisits: 8 },
-  { id: 'p5', name: 'Ahmad Faisal', lastVisit: '2024-04-05', condition: 'Check-up Rutin', totalVisits: 3 },
-]
+import { useAuthStore, useAppStore } from '@/lib/store'
+import { useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
 
 export default function DoctorPatientsPage() {
-  const [patients, setPatients] = useState(initialPatients)
+  const router = useRouter()
+  const { user } = useAuthStore()
+  const { appointments, getDoctors, refreshData } = useAppStore()
   const [searchQuery, setSearchQuery] = useState('')
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+    if (!user) {
+      router.replace('/')
+      return
+    }
+    refreshData(user.id, 'doctor')
+  }, [user, router, refreshData])
+
+  // Get current doctor
+  const doctor = getDoctors().find((d) => d.userId === user?.id)
+
+  // Get appointments for this doctor (only confirmed or completed)
+  const doctorAppointments = doctor 
+    ? appointments.filter(a => a.doctorId === doctor.id && (a.status === 'completed' || a.status === 'confirmed'))
+    : []
+
+  // Group appointments by patient
+  const patientMap = new Map()
+  
+  doctorAppointments.forEach(apt => {
+    const pId = apt.patientId
+    if (!apt.patient || !apt.patient.user) return;
+
+    if (!patientMap.has(pId)) {
+      patientMap.set(pId, {
+        id: pId,
+        name: apt.patient.user.name,
+        lastVisit: apt.date,
+        condition: apt.diagnosis || apt.complaint || 'Pemeriksaan rutin',
+        totalVisits: 1
+      })
+    } else {
+      const existing = patientMap.get(pId)
+      existing.totalVisits += 1
+      if (new Date(apt.date) > new Date(existing.lastVisit)) {
+        existing.lastVisit = apt.date
+        existing.condition = apt.diagnosis || apt.complaint || existing.condition
+      }
+    }
+  })
+
+  const patients = Array.from(patientMap.values()).sort((a, b) => new Date(b.lastVisit).getTime() - new Date(a.lastVisit).getTime())
 
   const filteredPatients = patients.filter(p => 
     p.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -42,6 +84,8 @@ export default function DoctorPatientsPage() {
   const getInitials = (name: string) => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
   }
+
+  if (!mounted) return null
 
   return (
     <div className="min-h-screen bg-muted/30">

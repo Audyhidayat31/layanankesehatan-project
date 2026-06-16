@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 import { BookOpen, ArrowRight } from 'lucide-react'
+import { articles } from '@/lib/articles'
 
 export default function ArticlesPage() {
   return (
@@ -24,24 +25,32 @@ export default function ArticlesPage() {
           </p>
 
           <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-            {[1, 2, 3, 4, 5, 6].map((i) => (
-              <Card key={i} className="overflow-hidden text-left transition-all hover:shadow-lg">
-                <div className="aspect-video bg-muted" />
-                <CardHeader>
-                  <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-primary">
-                    Tips Kesehatan
+            {articles.map((article) => (
+              <Link href={`/articles/${article.id}`} key={article.id}>
+                <Card className="h-full overflow-hidden text-left transition-all hover:shadow-lg hover:-translate-y-1 duration-300">
+                  <div className="aspect-video relative overflow-hidden bg-muted">
+                    <img 
+                      src={article.image} 
+                      alt={article.title} 
+                      className="object-cover w-full h-full transition-transform duration-500 hover:scale-105"
+                    />
                   </div>
-                  <CardTitle className="line-clamp-2">Cara Menjaga Kesehatan Tubuh di Musim Pancaroba</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="mb-4 line-clamp-3 text-sm text-muted-foreground">
-                    Musim pancaroba seringkali membuat daya tahan tubuh menurun. Berikut adalah beberapa tips praktis untuk tetap bugar dan terhindar dari penyakit.
-                  </p>
-                  <Button variant="ghost" className="p-0 text-primary hover:bg-transparent hover:text-primary/80">
-                    Baca Selengkapnya <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-                </CardContent>
-              </Card>
+                  <CardHeader>
+                    <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-primary">
+                      {article.category}
+                    </div>
+                    <CardTitle className="line-clamp-2">{article.title}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="mb-4 line-clamp-3 text-sm text-muted-foreground">
+                      {article.summary}
+                    </p>
+                    <div className="flex items-center text-sm font-medium text-primary">
+                      Baca Selengkapnya <ArrowRight className="ml-2 h-4 w-4" />
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
             ))}
           </div>
 

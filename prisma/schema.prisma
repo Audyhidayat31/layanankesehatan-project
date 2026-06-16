@@ -111,6 +111,9 @@ model DoctorProfile {
   isVerified     Boolean  @default(true)
   isOnline       Boolean  @default(false)
   practiceAddress String?
+  isOnlineEnabled Boolean  @default(true)
+  isOfflineEnabled Boolean @default(true)
+  consultationDuration Int @default(30)
 
   availableSlots TimeSlot[]
   appointments   Appointment[]

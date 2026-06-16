@@ -60,6 +60,7 @@ export default function DoctorSchedulePage() {
     startTime: '',
     endTime: '',
   })
+  const [isUpdatingSetting, setIsUpdatingSetting] = useState(false)
   
   const { user } = useAuthStore()
   const { doctors, fetchDoctors, timeSlots, fetchDoctorTimeSlots, addTimeSlot, updateTimeSlotStatus, deleteTimeSlot } = useAppStore()
@@ -103,6 +104,26 @@ export default function DoctorSchedulePage() {
       })
       setNewSlot({ date: '', startTime: '', endTime: '' })
       setAddDialogOpen(false)
+    }
+  }
+
+  const handleUpdateSetting = async (field: string, value: boolean | string) => {
+    if (!doctor) return
+    setIsUpdatingSetting(true)
+    try {
+      await fetch('/api/doctor-profile', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          doctorId: doctor.id,
+          [field]: value
+        })
+      })
+      await fetchDoctors() // Refresh the local state
+    } catch (error) {
+      console.error('Failed to update setting:', error)
+    } finally {
+      setIsUpdatingSetting(false)
     }
   }
 
@@ -272,7 +293,10 @@ export default function DoctorSchedulePage() {
 
           <Card className="mt-8">
             <CardHeader>
-              <CardTitle>Pengaturan Konsultasi</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                Pengaturan Konsultasi
+                {isUpdatingSetting && <Spinner className="h-4 w-4" />}
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="flex items-center justify-between rounded-lg border border-border p-4">
@@ -282,7 +306,11 @@ export default function DoctorSchedulePage() {
                     Izinkan pasien untuk konsultasi via chat
                   </p>
                 </div>
-                <Switch defaultChecked />
+                <Switch 
+                  checked={doctor?.isOnlineEnabled !== false} 
+                  onCheckedChange={(val) => handleUpdateSetting('isOnlineEnabled', val)}
+                  disabled={isUpdatingSetting}
+                />
               </div>
               <div className="flex items-center justify-between rounded-lg border border-border p-4">
                 <div>
@@ -291,20 +319,19 @@ export default function DoctorSchedulePage() {
                     Izinkan pasien untuk konsultasi tatap muka di klinik
                   </p>
                 </div>
-                <Switch defaultChecked />
-              </div>
-              <div className="flex items-center justify-between rounded-lg border border-border p-4">
-                <div>
-                  <h4 className="font-medium text-foreground">Booking Otomatis</h4>
-                  <p className="text-sm text-muted-foreground">
-                    Terima booking pasien secara otomatis tanpa konfirmasi manual
-                  </p>
-                </div>
-                <Switch />
+                <Switch 
+                  checked={doctor?.isOfflineEnabled !== false}
+                  onCheckedChange={(val) => handleUpdateSetting('isOfflineEnabled', val)}
+                  disabled={isUpdatingSetting}
+                />
               </div>
               <div className="rounded-lg border border-border p-4">
                 <h4 className="mb-2 font-medium text-foreground">Durasi Konsultasi</h4>
-                <Select defaultValue="30">
+                <Select 
+                  value={doctor?.consultationDuration?.toString() || "30"}
+                  onValueChange={(val) => handleUpdateSetting('consultationDuration', val)}
+                  disabled={isUpdatingSetting}
+                >
                   <SelectTrigger className="w-48">
                     <SelectValue />
                   </SelectTrigger>

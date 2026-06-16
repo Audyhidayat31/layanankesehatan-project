@@ -14,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Search, ShoppingCart, Filter, Pill, AlertCircle } from 'lucide-react'
+import { Search, ShoppingCart, Filter, Pill, AlertCircle, CheckCircle } from 'lucide-react'
 import { medicineCategories } from '@/lib/mock-data'
 import { useCartStore, useAuthStore, useAppStore } from '@/lib/store'
 import { useRouter } from 'next/navigation'
@@ -23,7 +23,11 @@ export default function PharmacyPage() {
   const router = useRouter()
   const { user, isAuthenticated } = useAuthStore()
   const { addItem, items } = useCartStore()
-  const { medicines } = useAppStore()
+  const { medicines, getAppointmentsByPatient } = useAppStore()
+  
+  const patientId = user?.id === 'user-1' ? 'pat-1' : `pat-${user?.id}`
+  const patientAppointments = user ? getAppointmentsByPatient(patientId) : []
+  const hasPrescription = patientAppointments.some(apt => apt.status === 'completed' && apt.notes)
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('Semua Kategori')
   const [sortBy, setSortBy] = useState('name')
@@ -183,21 +187,29 @@ export default function PharmacyPage() {
                     </span>
                   </div>
 
-                  {medicine.requiresPrescription ? (
+                  {medicine.requiresPrescription && !hasPrescription ? (
                     <div className="mt-3 flex items-center gap-2 rounded-lg bg-destructive/10 p-2 text-xs text-destructive">
                       <AlertCircle className="h-4 w-4 shrink-0" />
                       Memerlukan resep dokter
                     </div>
                   ) : (
-                    <Button
-                      className="mt-3 w-full transition-all duration-300 hover:shadow-md group-hover:bg-primary/90"
-                      variant={isInCart(medicine.id) ? 'secondary' : 'default'}
-                      onClick={() => handleAddToCart(medicine)}
-                      disabled={medicine.stock === 0}
-                    >
-                      <ShoppingCart className="mr-2 h-4 w-4" />
-                      {isInCart(medicine.id) ? 'Tambah Lagi' : 'Tambah ke Keranjang'}
-                    </Button>
+                    <div className="mt-3 space-y-2">
+                      {medicine.requiresPrescription && hasPrescription && (
+                        <div className="flex items-center gap-2 rounded-lg bg-green-500/10 p-2 text-xs text-green-600">
+                          <CheckCircle className="h-4 w-4 shrink-0" />
+                          Resep otomatis terverifikasi
+                        </div>
+                      )}
+                      <Button
+                        className="w-full transition-all duration-300 hover:shadow-md group-hover:bg-primary/90"
+                        variant={isInCart(medicine.id) ? 'secondary' : 'default'}
+                        onClick={() => handleAddToCart(medicine)}
+                        disabled={medicine.stock === 0}
+                      >
+                        <ShoppingCart className="mr-2 h-4 w-4" />
+                        {isInCart(medicine.id) ? 'Tambah Lagi' : 'Tambah ke Keranjang'}
+                      </Button>
+                    </div>
                   )}
                 </CardContent>
               </Card>
