@@ -387,7 +387,7 @@ export default function PatientAppointmentsPage() {
                   Tutup
                 </Button>
                 <Button asChild className="w-full sm:w-auto">
-                  <Link href="/pharmacy">
+                  <Link href={`/pharmacy?search=${encodeURIComponent(selectedAppointment.notes || '')}`}>
                     Beli Obat di Apotek
                   </Link>
                 </Button>

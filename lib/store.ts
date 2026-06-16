@@ -713,6 +713,21 @@ export const useAppStore = create<AppState>()(
                 }
               });
               set({ appointments: merged })
+
+              // Cache user info from appointments to knownUsers
+              const usersFromAppointments: User[] = []
+              dbAppointments.forEach((apt: any) => {
+                if (apt.patient?.user) usersFromAppointments.push({ ...apt.patient.user, role: apt.patient.user.role?.toLowerCase() as any, createdAt: apt.patient.user.createdAt })
+                if (apt.doctor?.user) usersFromAppointments.push({ ...apt.doctor.user, role: apt.doctor.user.role?.toLowerCase() as any, createdAt: apt.doctor.user.createdAt })
+              })
+              if (usersFromAppointments.length > 0) {
+                const currentKnown = get().knownUsers
+                const mergedUsers = [...currentKnown]
+                usersFromAppointments.forEach(u => {
+                  if (!mergedUsers.some(k => k.id === u.id)) mergedUsers.push(u)
+                })
+                set({ knownUsers: mergedUsers })
+              }
             }
           }
 

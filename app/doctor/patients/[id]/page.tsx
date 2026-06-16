@@ -16,7 +16,7 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
   const resolvedParams = use(params)
   const router = useRouter()
   const { user, registeredUsers } = useAuthStore()
-  const { appointments, refreshData } = useAppStore()
+  const { appointments, refreshData, knownUsers } = useAppStore()
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
@@ -28,8 +28,15 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
 
   if (!mounted) return null
 
+  const allKnownUsers = [...registeredUsers]
+  knownUsers.forEach(ku => {
+    if (!allKnownUsers.some(u => u.id === ku.id)) {
+      allKnownUsers.push(ku as any) // ku has User type
+    }
+  })
+
   // resolvedParams.id is likely the userId of the patient
-  const patientUser = registeredUsers.find(u => u.id === resolvedParams.id)
+  const patientUser = allKnownUsers.find(u => u.id === resolvedParams.id)
 
   if (!patientUser) {
     return (

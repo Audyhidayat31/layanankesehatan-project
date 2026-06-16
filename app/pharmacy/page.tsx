@@ -17,10 +17,12 @@ import {
 import { Search, ShoppingCart, Filter, Pill, AlertCircle, CheckCircle } from 'lucide-react'
 import { medicineCategories } from '@/lib/mock-data'
 import { useCartStore, useAuthStore, useAppStore } from '@/lib/store'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { Suspense, useEffect } from 'react'
 
-export default function PharmacyPage() {
+function PharmacyContent() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { user, isAuthenticated } = useAuthStore()
   const { addItem, items } = useCartStore()
   const { medicines, getAppointmentsByPatient } = useAppStore()
@@ -28,7 +30,9 @@ export default function PharmacyPage() {
   const patientId = user?.id === 'user-1' ? 'pat-1' : `pat-${user?.id}`
   const patientAppointments = user ? getAppointmentsByPatient(patientId) : []
   const hasPrescription = patientAppointments.some(apt => apt.status === 'completed' && apt.notes)
-  const [searchQuery, setSearchQuery] = useState('')
+  
+  const defaultSearch = searchParams.get('search') || ''
+  const [searchQuery, setSearchQuery] = useState(defaultSearch)
   const [selectedCategory, setSelectedCategory] = useState('Semua Kategori')
   const [sortBy, setSortBy] = useState('name')
 
@@ -229,5 +233,19 @@ export default function PharmacyPage() {
       </main>
       <Footer />
     </div>
+  )
+}
+
+export default function PharmacyPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-screen items-center justify-center bg-muted/30">
+        <div className="text-center">
+          <p className="text-muted-foreground">Memuat Apotek...</p>
+        </div>
+      </div>
+    }>
+      <PharmacyContent />
+    </Suspense>
   )
 }
