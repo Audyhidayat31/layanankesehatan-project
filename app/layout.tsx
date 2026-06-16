@@ -17,12 +17,12 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'HealthServices - Platform Kesehatan Digital Indonesia',
+  title: 'MedConnect - Platform Kesehatan Digital Indonesia',
   description: 'Konsultasi dokter online, beli obat, dan layanan kesehatan lengkap. Terhubung dengan dokter terpercaya dan apotek terverifikasi.',
   keywords: ['kesehatan', 'dokter online', 'konsultasi dokter', 'apotek online', 'obat', 'telemedicine'],
-  authors: [{ name: 'HealthServices' }],
+  authors: [{ name: 'MedConnect' }],
   openGraph: {
-    title: 'HealthServices - Platform Kesehatan Digital Indonesia',
+    title: 'MedConnect - Platform Kesehatan Digital Indonesia',
     description: 'Konsultasi dokter online, beli obat, dan layanan kesehatan lengkap',
     type: 'website',
   },

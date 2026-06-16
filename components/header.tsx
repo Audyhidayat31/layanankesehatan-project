@@ -69,12 +69,11 @@ export function Header() {
   }
 
   return (
-    <header 
-      className={`sticky top-0 z-50 w-full transition-all duration-500 border-b ${
-        scrolled 
-          ? 'bg-background/70 backdrop-blur-2xl border-border/50 shadow-sm py-2' 
+    <header
+      className={`sticky top-0 z-50 w-full transition-all duration-500 border-b ${scrolled
+          ? 'bg-background/70 backdrop-blur-2xl border-border/50 shadow-sm py-2'
           : 'bg-background/40 backdrop-blur-md border-transparent py-4'
-      }`}
+        }`}
     >
       <div className="container mx-auto flex items-center justify-between px-4">
         <div className="flex items-center gap-10">
@@ -83,7 +82,7 @@ export function Header() {
               <Stethoscope className="h-6 w-6 text-white" />
             </div>
             <span className="text-2xl font-black tracking-tight text-foreground">
-              Health<span className="text-primary">Services</span>
+              Med<span className="text-primary">Connect</span>
             </span>
           </Link>
 
@@ -208,10 +207,9 @@ export function Header() {
       </div>
 
       {/* Mobile Menu */}
-      <div 
-        className={`md:hidden absolute top-full left-0 w-full bg-background/95 backdrop-blur-xl border-b border-border shadow-lg transition-all duration-300 overflow-hidden ${
-          mobileMenuOpen ? 'max-h-[400px] opacity-100' : 'max-h-0 opacity-0'
-        }`}
+      <div
+        className={`md:hidden absolute top-full left-0 w-full bg-background/95 backdrop-blur-xl border-b border-border shadow-lg transition-all duration-300 overflow-hidden ${mobileMenuOpen ? 'max-h-[400px] opacity-100' : 'max-h-0 opacity-0'
+          }`}
       >
         <nav className="container mx-auto flex flex-col gap-1 px-4 py-4">
           <Link

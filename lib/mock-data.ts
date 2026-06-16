@@ -52,7 +52,7 @@ export const mockUsers: User[] = [
   },
   {
     id: 'user-5',
-    name: 'Admin HealthServices',
+    name: 'Admin MedConnect',
     email: 'admin@gmail.com',
     role: 'admin',
     avatar: '/avatars/admin-1.jpg',

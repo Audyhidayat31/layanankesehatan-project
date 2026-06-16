@@ -6,7 +6,7 @@ export function Footer() {
     <footer className="bg-muted/30 border-t border-border/50 relative overflow-hidden">
       {/* Subtle background glow */}
       <div className="absolute top-0 right-1/4 w-96 h-96 bg-primary/5 rounded-full blur-[120px] pointer-events-none" />
-      
+
       <div className="container mx-auto px-4 py-16 md:py-24 relative z-10">
         <div className="grid gap-12 md:grid-cols-2 lg:grid-cols-4">
           <div className="space-y-6">
@@ -15,7 +15,7 @@ export function Footer() {
                 <Stethoscope className="h-6 w-6 text-white" />
               </div>
               <span className="text-2xl font-black tracking-tight text-foreground">
-                Health<span className="text-primary">Services</span>
+                Med<span className="text-primary">Connect</span>
               </span>
             </Link>
             <p className="text-muted-foreground leading-relaxed">
@@ -94,7 +94,7 @@ export function Footer() {
 
         <div className="mt-16 pt-8 border-t border-border/50 flex flex-col items-center justify-between gap-6 md:flex-row">
           <p className="text-sm text-muted-foreground font-medium">
-            &copy; {new Date().getFullYear()} HealthServices. Semua hak dilindungi.
+            &copy; {new Date().getFullYear()} MedConnect. Semua hak dilindungi.
           </p>
           <div className="flex items-center gap-4">
             <span className="text-xs text-muted-foreground font-medium">Terdaftar di:</span>

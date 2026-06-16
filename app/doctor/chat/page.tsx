@@ -420,7 +420,7 @@ function DoctorChat() {
                   <div className="bg-card/80 p-6 rounded-full mb-6">
                     <Phone className="h-16 w-16 text-muted-foreground/30" />
                   </div>
-                  <h2 className="text-xl font-medium text-foreground mb-2">HealthServices Web</h2>
+                  <h2 className="text-xl font-medium text-foreground mb-2">MedConnect Web</h2>
                   <p className="text-muted-foreground text-sm text-center max-w-md">
                     Pilih pasien dari daftar di sebelah kiri untuk mulai mengirim pesan.
                   </p>

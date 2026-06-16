@@ -125,7 +125,7 @@ export function DashboardHeader({ role }: DashboardHeaderProps) {
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
                   <Stethoscope className="h-4 w-4 text-primary-foreground" />
                 </div>
-                <span className="text-lg font-bold">HealthServices</span>
+                <span className="text-lg font-bold">MedConnect</span>
               </SheetTitle>
             </SheetHeader>
             <nav className="space-y-1 p-3">

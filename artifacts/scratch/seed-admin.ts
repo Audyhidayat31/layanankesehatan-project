@@ -22,7 +22,7 @@ async function main() {
 
   const admin = await prisma.user.create({
     data: {
-      name: 'Admin HealthServices',
+      name: 'Admin MedConnect',
       email: adminEmail,
       password: 'admin123',
       role: 'ADMIN',

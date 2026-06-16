@@ -94,7 +94,7 @@ export function DashboardSidebar({ role }: SidebarProps) {
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-sidebar-primary/20 transition-all duration-300 group-hover:bg-sidebar-primary group-hover:shadow-md">
               <Stethoscope className="h-5 w-5 text-sidebar-primary transition-colors duration-300 group-hover:text-sidebar-primary-foreground" />
             </div>
-            <span className="text-xl font-bold tracking-tight text-sidebar-foreground transition-colors duration-300 group-hover:text-sidebar-primary">HealthServices</span>
+            <span className="text-xl font-bold tracking-tight text-sidebar-foreground transition-colors duration-300 group-hover:text-sidebar-primary">MedConnect</span>
           </Link>
         </div>
 

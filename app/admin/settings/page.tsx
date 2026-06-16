@@ -20,7 +20,7 @@ export default function AdminSettingsPage() {
 
   // Mock form state
   const [profile, setProfile] = useState({
-    name: user?.name || 'Admin HealthServices',
+    name: user?.name || 'Admin MedConnect',
     email: user?.email || 'admin@gmail.com',
   })
 

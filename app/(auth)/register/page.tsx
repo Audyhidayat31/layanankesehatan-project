@@ -87,7 +87,7 @@ function RegisterForm() {
       <CardHeader className="text-center">
         <CardTitle className="text-2xl">Buat Akun Baru</CardTitle>
         <CardDescription>
-          Daftar untuk mulai menggunakan layanan HealthServices
+          Daftar untuk mulai menggunakan layanan MedConnect
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -235,7 +235,7 @@ export default function RegisterPage() {
         <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
           <Stethoscope className="h-6 w-6 text-primary-foreground" />
         </div>
-        <span className="text-2xl font-bold text-foreground">HealthServices</span>
+        <span className="text-2xl font-bold text-foreground">MedConnect</span>
       </Link>
 
       <Suspense fallback={<div className="flex items-center justify-center"><Spinner className="h-8 w-8" /></div>}>

@@ -39,7 +39,7 @@ export function HowItWorks() {
         <div className="mb-20 text-center max-w-3xl mx-auto slide-up-fade">
           <span className="text-primary font-semibold tracking-wider uppercase text-sm mb-4 block">Alur Layanan</span>
           <h2 className="mb-6 text-4xl font-extrabold tracking-tight text-foreground md:text-5xl">
-            Cara Kerja <span className="text-gradient">HealthServices</span>
+            Cara Kerja <span className="text-gradient">MedConnect</span>
           </h2>
           <p className="text-lg text-muted-foreground leading-relaxed">
             Konsultasi kesehatan kini dalam genggaman. Hanya dengan 4 langkah sederhana, kesehatan Anda akan tertangani dengan baik.

@@ -50,7 +50,7 @@ async function main() {
         doctorProfile: {
           create: {
             specialization: target.spec,
-            hospital: 'HealthServices Hospital',
+            hospital: 'MedConnect Hospital',
             experience: Math.floor(Math.random() * 10) + 5,
             price: 150000 + (Math.floor(Math.random() * 5) * 50000),
             isVerified: true,

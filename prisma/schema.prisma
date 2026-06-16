@@ -108,7 +108,7 @@ model DoctorProfile {
   price          Float
   bio            String?
   education      String[]
-  isVerified     Boolean  @default(false)
+  isVerified     Boolean  @default(true)
   isOnline       Boolean  @default(false)
   practiceAddress String?
 
@@ -125,7 +125,7 @@ model PharmacyProfile {
   city           String
   phone          String
   operatingHours String
-  isVerified     Boolean  @default(false)
+  isVerified     Boolean  @default(true)
   isOpen         Boolean  @default(true)
   rating         Float    @default(0)
   reviewCount    Int      @default(0)

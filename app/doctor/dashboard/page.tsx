@@ -78,7 +78,7 @@ export default function DoctorDashboardPage() {
       role: 'doctor',
     },
     specialization: 'Dokter',
-    hospital: 'HealthServices',
+    hospital: 'MedConnect',
     experience: 0,
     rating: 5.0,
     reviewCount: 0,
