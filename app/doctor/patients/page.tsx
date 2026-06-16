@@ -17,9 +17,6 @@ import {
 import {
   Search,
   User,
-  FileText,
-  MessageSquare,
-  MoreVertical,
 } from 'lucide-react'
 
 import { useAuthStore, useAppStore } from '@/lib/store'
@@ -123,7 +120,6 @@ export default function DoctorPatientsPage() {
                   <TableHead>Kunjungan Terakhir</TableHead>
                   <TableHead>Kondisi Utama</TableHead>
                   <TableHead>Total Konsultasi</TableHead>
-                  <TableHead className="text-right">Aksi</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -144,19 +140,6 @@ export default function DoctorPatientsPage() {
                       <span className="text-sm font-medium text-foreground">{patient.condition}</span>
                     </TableCell>
                     <TableCell className="text-sm">{patient.totalVisits} kali</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button variant="ghost" size="icon">
-                          <FileText className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon">
-                          <MessageSquare className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon">
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
