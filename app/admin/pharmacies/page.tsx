@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { DashboardSidebar } from '@/components/dashboard/sidebar'
 import { DashboardHeader } from '@/components/dashboard/dashboard-header'
 import { Card, CardContent } from '@/components/ui/card'
@@ -35,29 +35,16 @@ import {
   Building,
 } from 'lucide-react'
 
-const initialPharmacies = [
-  {
-    id: 'ph-1',
-    name: 'Apotek Sehat Jaya',
-    address: 'Jl. Sudirman No. 123, Jakarta Selatan',
-    city: 'Jakarta Selatan',
-    phone: '021-5551234',
-    operatingHours: '08:00 - 22:00',
-    isVerified: true,
-    rating: 4.8,
-    reviewCount: 120,
-    isOpen: true,
-  }
-]
-
 export default function AdminPharmaciesPage() {
-  const [pharmacies, setPharmacies] = useState(initialPharmacies)
+  const [pharmacies, setPharmacies] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [editingPharmacy, setEditingPharmacy] = useState<any>(null)
 
   const [formData, setFormData] = useState({
     name: '',
+    email: '',
     address: '',
     city: '',
     phone: '',
@@ -65,10 +52,29 @@ export default function AdminPharmaciesPage() {
     isVerified: false,
   })
 
+  useEffect(() => {
+    fetchPharmacies()
+  }, [])
+
+  const fetchPharmacies = async () => {
+    try {
+      setLoading(true)
+      const res = await fetch('/api/pharmacies')
+      const data = await res.json()
+      if (data.success) {
+        setPharmacies(data.pharmacies)
+      }
+    } catch (error) {
+      console.error('Failed to fetch pharmacies:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const filteredPharmacies = pharmacies.filter((pharmacy) => {
     return (
       pharmacy.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      pharmacy.city.toLowerCase().includes(searchQuery.toLowerCase())
+      pharmacy.city?.toLowerCase().includes(searchQuery.toLowerCase())
     )
   })
 
@@ -76,38 +82,60 @@ export default function AdminPharmaciesPage() {
     setEditingPharmacy(pharmacy)
     setFormData({
       name: pharmacy.name,
-      address: pharmacy.address,
-      city: pharmacy.city,
-      phone: pharmacy.phone,
-      operatingHours: pharmacy.operatingHours,
+      email: pharmacy.user?.email || '',
+      address: pharmacy.address || '',
+      city: pharmacy.city || '',
+      phone: pharmacy.phone || '',
+      operatingHours: pharmacy.operatingHours || '',
       isVerified: pharmacy.isVerified,
     })
     setIsDialogOpen(true)
   }
 
   const handleDelete = (id: string) => {
-    // Apotek deletion is disabled
+    // Apotek deletion is disabled for now
   }
 
-  const handleSubmit = () => {
-    if (editingPharmacy) {
-      setPharmacies(
-        pharmacies.map((p) =>
-          p.id === editingPharmacy.id ? { ...p, ...formData } : p
-        )
-      )
-    } else {
-      const newPharmacy = {
-        id: `ph-${Date.now()}`,
-        ...formData,
-        rating: 0,
-        reviewCount: 0,
-        isOpen: true,
+  const handleSubmit = async () => {
+    try {
+      if (editingPharmacy) {
+        const res = await fetch(`/api/pharmacies/${editingPharmacy.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(formData),
+        })
+        const data = await res.json()
+        if (data.success) {
+          setPharmacies(
+            pharmacies.map((p) =>
+              p.id === editingPharmacy.id ? { ...p, ...data.pharmacy } : p
+            )
+          )
+        } else {
+          alert(data.error || 'Gagal mengupdate apotek')
+          return
+        }
+      } else {
+        const res = await fetch('/api/pharmacies', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(formData),
+        })
+        const data = await res.json()
+        if (data.success) {
+          setPharmacies([data.pharmacy, ...pharmacies])
+        } else {
+          alert(data.error || 'Gagal membuat apotek')
+          return
+        }
       }
-      setPharmacies([...pharmacies, newPharmacy])
+      setIsDialogOpen(false)
+      setEditingPharmacy(null)
+      setFormData({ name: '', email: '', address: '', city: '', phone: '', operatingHours: '', isVerified: false })
+    } catch (error) {
+      console.error('Submit pharmacy error:', error)
+      alert('Terjadi kesalahan')
     }
-    setIsDialogOpen(false)
-    setEditingPharmacy(null)
   }
 
   return (
@@ -126,11 +154,20 @@ export default function AdminPharmaciesPage() {
             </div>
             <Dialog open={isDialogOpen} onOpenChange={(open) => {
               setIsDialogOpen(open)
-              if (!open) setEditingPharmacy(null)
+              if (!open) {
+                setEditingPharmacy(null)
+                setFormData({ name: '', email: '', address: '', city: '', phone: '', operatingHours: '', isVerified: false })
+              }
             }}>
+              <DialogTrigger asChild>
+                <Button>
+                  <Building className="mr-2 h-4 w-4" />
+                  Tambah Apotek
+                </Button>
+              </DialogTrigger>
               <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                  <DialogTitle>Edit Data Apotek</DialogTitle>
+                  <DialogTitle>{editingPharmacy ? 'Edit Data Apotek' : 'Tambah Apotek Baru'}</DialogTitle>
                   <DialogDescription>
                     Lengkapi informasi mitra apotek di bawah ini.
                   </DialogDescription>
@@ -144,6 +181,17 @@ export default function AdminPharmaciesPage() {
                       placeholder="Contoh: Apotek Sehat Jaya" 
                     />
                   </div>
+                  {!editingPharmacy && (
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Email Akun Apotek</label>
+                      <Input 
+                        type="email"
+                        value={formData.email} 
+                        onChange={(e) => setFormData({...formData, email: e.target.value})}
+                        placeholder="apotek@contoh.com" 
+                      />
+                    </div>
+                  )}
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Alamat Lengkap</label>
                     <Input 
@@ -193,7 +241,7 @@ export default function AdminPharmaciesPage() {
                 </div>
                 <div className="flex justify-end gap-2">
                   <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Batal</Button>
-                  <Button onClick={handleSubmit}>Simpan Perubahan</Button>
+                  <Button onClick={handleSubmit}>{editingPharmacy ? 'Simpan Perubahan' : 'Tambah Apotek'}</Button>
                 </div>
               </DialogContent>
             </Dialog>
@@ -225,7 +273,13 @@ export default function AdminPharmaciesPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredPharmacies.length > 0 ? (
+                {loading ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
+                      Memuat data...
+                    </TableCell>
+                  </TableRow>
+                ) : filteredPharmacies.length > 0 ? (
                   filteredPharmacies.map((pharmacy) => (
                     <TableRow key={pharmacy.id}>
                       <TableCell>
@@ -249,18 +303,18 @@ export default function AdminPharmaciesPage() {
                         <div className="space-y-1">
                           <div className="flex items-center gap-1 text-xs text-muted-foreground">
                             <MapPin className="h-3 w-3" />
-                            {pharmacy.address}
+                            {pharmacy.address || '-'}
                           </div>
                           <div className="flex items-center gap-1 text-xs text-muted-foreground">
                             <Phone className="h-3 w-3" />
-                            {pharmacy.phone}
+                            {pharmacy.phone || '-'}
                           </div>
                         </div>
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-1 text-sm text-muted-foreground">
                           <Clock className="h-3 w-3" />
-                          {pharmacy.operatingHours}
+                          {pharmacy.operatingHours || '-'}
                         </div>
                       </TableCell>
                       <TableCell>

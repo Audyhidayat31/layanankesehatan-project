@@ -86,16 +86,22 @@ export default function DoctorDetailPage({ params }: { params: Promise<{ id: str
   }, [timeSlots, doctor?.id])
 
   const dates = useMemo(() => {
-    // Only show dates that have at least one timeslot configured
+    const now = new Date()
+    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+
+    // Only show dates that have at least one timeslot configured and are >= today
     const uniqueDates = Array.from(new Set(doctorTimeSlots.map(t => typeof t.date === 'string' ? t.date.split('T')[0] : new Date(t.date).toISOString().split('T')[0]))).sort()
-    return uniqueDates.map(dateStr => {
-      const [year, month, day] = dateStr.split('-').map(Number)
-      const d = new Date(year, month - 1, day)
-      return {
-        value: dateStr,
-        label: d.toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short' })
-      }
-    })
+    
+    return uniqueDates
+      .filter(dateStr => dateStr >= todayStr)
+      .map(dateStr => {
+        const [year, month, day] = dateStr.split('-').map(Number)
+        const d = new Date(year, month - 1, day)
+        return {
+          value: dateStr,
+          label: d.toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short' })
+        }
+      })
   }, [doctorTimeSlots])
 
   const activeBlocks = useMemo(() => {
