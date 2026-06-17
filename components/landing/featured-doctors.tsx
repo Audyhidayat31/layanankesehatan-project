@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { AuthLink } from '@/components/auth-link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -133,7 +134,7 @@ export async function FeaturedDoctors() {
                 </div>
 
                 <Button className="w-full rounded-xl h-12 shadow-md transition-all duration-300 hover:shadow-lg group-hover:bg-primary group-hover:text-primary-foreground" asChild>
-                  <Link href={`/doctors/${doctor.id}`}>Buat Janji</Link>
+                  <AuthLink href={`/doctors/${doctor.id}`}>Buat Janji</AuthLink>
                 </Button>
               </CardContent>
             </Card>

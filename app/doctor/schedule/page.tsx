@@ -94,6 +94,21 @@ export default function DoctorSchedulePage() {
 
   const addSlot = async () => {
     if (newSlot.date && newSlot.startTime && newSlot.endTime && doctor?.id) {
+      if (newSlot.startTime >= newSlot.endTime) {
+        alert("Jam mulai harus lebih awal dari jam selesai")
+        return
+      }
+
+      const existingSlots = getScheduleByDate(newSlot.date)
+      const isOverlapping = existingSlots.some(slot => {
+        return newSlot.startTime < slot.endTime && newSlot.endTime > slot.startTime
+      })
+
+      if (isOverlapping) {
+        alert("Gagal menambahkan: Jadwal pada jam ini sudah ada atau bertabrakan.")
+        return
+      }
+
       await addTimeSlot({
         doctorId: doctor.id,
         date: newSlot.date,

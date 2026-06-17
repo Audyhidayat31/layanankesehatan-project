@@ -406,13 +406,23 @@ export default function DoctorDetailPage({ params }: { params: Promise<{ id: str
                     </div>
                   )}
 
+                  <Button 
+                    className="w-full" 
+                    size="lg" 
+                    disabled={doctor.isOnlineEnabled === false && doctor.isOfflineEnabled === false}
+                    onClick={(e) => {
+                      if (!isAuthenticated || !user) {
+                        e.preventDefault()
+                        router.push('/register')
+                        return
+                      }
+                      setBookingDialogOpen(true)
+                    }}
+                  >
+                    <Calendar className="mr-2 h-4 w-4" />
+                    Pilih Jadwal
+                  </Button>
                   <Dialog open={bookingDialogOpen} onOpenChange={setBookingDialogOpen}>
-                    <DialogTrigger asChild>
-                      <Button className="w-full" size="lg" disabled={doctor.isOnlineEnabled === false && doctor.isOfflineEnabled === false}>
-                        <Calendar className="mr-2 h-4 w-4" />
-                        Pilih Jadwal
-                      </Button>
-                    </DialogTrigger>
                     <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
                       <DialogHeader>
                         <DialogTitle>Pilih Jadwal Konsultasi</DialogTitle>
