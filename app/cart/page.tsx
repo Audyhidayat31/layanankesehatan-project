@@ -89,6 +89,7 @@ export default function CartPage() {
       }
 
       // 3. Tampilkan popup Midtrans
+      setCheckoutDialogOpen(false)
       if ((window as any).snap) {
         ;(window as any).snap.pay(tokenData.token, {
           onSuccess: async function (result: any) {
