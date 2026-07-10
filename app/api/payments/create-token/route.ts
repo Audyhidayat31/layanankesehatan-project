@@ -36,6 +36,9 @@ export async function POST(req: Request) {
       clientKey: process.env.MIDTRANS_CLIENT_KEY || ''
     });
 
+    const origin = req.headers.get('origin') || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    const referer = req.headers.get('referer') || `${origin}/patient/orders`;
+
     // 3. Persiapkan parameter payload sesuai data dari Database
     const parameter = {
       transaction_details: {
@@ -49,6 +52,9 @@ export async function POST(req: Request) {
       },
       credit_card: {
         secure: true
+      },
+      callbacks: {
+        finish: referer,
       }
     };
 
